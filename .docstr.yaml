@@ -1,0 +1,5 @@
+paths:
+  - src
+badge: docstr_cov/badge
+exclude: .*/migrations
+fail_under: 80
