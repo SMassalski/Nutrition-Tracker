@@ -59,6 +59,10 @@ class Ingredient(models.Model):
     name = models.CharField(max_length=50)
     dataset = models.CharField(max_length=50)
 
+    # docstr-coverage: inherited
+    def __str__(self):
+        return self.name
+
 
 class IngredientNutrient(models.Model):
     """Represents the amount per 100g of a nutrient in an ingredient"""
