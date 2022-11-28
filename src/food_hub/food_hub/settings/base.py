@@ -130,3 +130,4 @@ AUTH_USER_MODEL = "main.User"
 # Directory containing the data used to populate the database
 DATA_DIR = BASE_DIR.parent.parent / "data/"
 NUTRIENT_FILE = DATA_DIR / "nutrient.csv"
+FOOD_FILE = DATA_DIR / "food.csv"
