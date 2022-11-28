@@ -1,12 +1,12 @@
 """Tests of project utility functions"""
-from io import StringIO
 import csv
-from typing import Mapping, List
+from io import StringIO
+from typing import List, Mapping
 
 import pytest
+from util.parse_fdc_data import parse_nutrient_csv
 
 from .dummies import DummyNutrient
-from util.parse_fdc_data import parse_nutrient_csv
 
 
 @pytest.fixture
@@ -26,11 +26,11 @@ def dummy_nutrient_class():
     """Clear DummyNutrient saved list after test."""
     yield DummyNutrient
     DummyNutrient.clear_saved()
-    
+
 
 def verify_saved_nutrient(expected: List[Mapping]) -> None:
     """Check if the saved Nutrient instances match the expected records.
-    
+
     Parameters
     ----------
     expected

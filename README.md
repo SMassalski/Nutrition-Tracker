@@ -6,4 +6,3 @@
 
 [license badge]: https://img.shields.io/badge/License-MIT-brightgreen.svg
 [license]: https://opensource.org/licenses/MIT
-

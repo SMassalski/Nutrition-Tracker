@@ -1,7 +1,7 @@
 """Methods for parsing data from Food Data Central"""
+import csv
 import io
 import os
-import csv
 from typing import Union
 
 from django.conf import settings
