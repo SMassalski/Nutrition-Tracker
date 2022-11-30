@@ -14,7 +14,7 @@ repos:
     rev: v2.2.0
     hooks:
       - id: docstr-coverage
-        args: ["--verbose", "2"]
+        args: ["--verbose", "2", "--badge", ""]
   - repo: https://github.com/pycqa/isort
     rev: 5.10.1
     hooks:
