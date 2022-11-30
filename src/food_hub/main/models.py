@@ -71,4 +71,12 @@ class IngredientNutrient(models.Model):
     nutrient = models.ForeignKey(Nutrient, on_delete=models.CASCADE)
 
     # The amount is per 100g and the unit is defined in `nutrient.unit`
-    amount = models.IntegerField()
+    amount = models.FloatField()
+
+    # docstr-coverage: inherited
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                "ingredient", "nutrient", name="unique_ingredient_nutrient"
+            )
+        ]

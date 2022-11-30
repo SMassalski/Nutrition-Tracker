@@ -4,6 +4,10 @@ import io
 import os
 from typing import List, Union
 
+from main.models import Ingredient, IngredientNutrient, Nutrient
+
+# TODO: Use bulk create
+
 # Loading nutrient data
 
 UNIT_CONVERSION = {
@@ -91,6 +95,52 @@ def parse_food_csv(
             ingredient.dataset = record["data_type"]
 
             ingredient.save()
+
+
+def parse_food_nutrient_csv(
+    file: Union[str, os.PathLike, io.IOBase],
+    ingredient_nutrient_class=IngredientNutrient,
+    ingredient_class=Ingredient,
+    nutrient_class=Nutrient,
+):
+    """Load per ingredient nutrient data from a food nutrient csv
+
+    Parameters
+    ----------
+    file
+        File or path to the file containing nutrient data.
+    ingredient_nutrient_class
+        Class implementing the IngredientNutrient model.
+    ingredient_class
+        Class implementing the Ingredient model.
+    nutrient_class
+        Class implementing the Nutrient model.
+    """
+    nutrient_ids = {
+        fdc_id: id_
+        for fdc_id, id_ in nutrient_class.objects.values_list("fdc_id", "id")
+    }
+    ingredient_ids = {
+        fdc_id: id_
+        for fdc_id, id_ in ingredient_class.objects.values_list("fdc_id", "id")
+    }
+    ingredient_nutrient_list = []
+    with _open_or_pass(file, newline="") as f:
+        reader = csv.DictReader(f)
+        for record in reader:
+            fdc_id = int(record.get("fdc_id"))
+            ingredient_id = ingredient_ids.get(fdc_id)
+
+            if ingredient_id is None:
+                continue
+
+            ingredient_nutrient = ingredient_nutrient_class()
+            ingredient_nutrient.ingredient_id = ingredient_id
+            ingredient_nutrient.nutrient_id = nutrient_ids[int(record["nutrient_id"])]
+            ingredient_nutrient.amount = float(record["amount"])
+            ingredient_nutrient_list.append(ingredient_nutrient)
+
+    ingredient_nutrient_class.objects.bulk_create(ingredient_nutrient_list)
 
 
 def _open_or_pass(file: Union[str, os.PathLike, io.IOBase], *args, **kwargs):
