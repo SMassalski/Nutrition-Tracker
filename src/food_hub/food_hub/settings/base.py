@@ -132,3 +132,11 @@ DATA_DIR = BASE_DIR.parent.parent / "data/"
 NUTRIENT_FILE = DATA_DIR / "nutrient.csv"
 FOOD_FILE = DATA_DIR / "food.csv"
 FOOD_NUTRIENT_FILE = DATA_DIR / "food_nutrient.csv"
+
+
+# Rest Framework
+
+REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "PAGE_SIZE": 25,
+}

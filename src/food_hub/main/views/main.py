@@ -1,4 +1,4 @@
-"""main app views"""
+"""main app's regular views"""
 from django.http import HttpResponse
 
 

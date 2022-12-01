@@ -67,7 +67,9 @@ class Ingredient(models.Model):
 class IngredientNutrient(models.Model):
     """Represents the amount per 100g of a nutrient in an ingredient"""
 
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(
+        Ingredient, on_delete=models.CASCADE, related_name="nutrients"
+    )
     nutrient = models.ForeignKey(Nutrient, on_delete=models.CASCADE)
 
     # The amount is per 100g and the unit is defined in `nutrient.unit`
