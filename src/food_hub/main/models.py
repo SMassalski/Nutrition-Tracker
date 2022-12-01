@@ -45,7 +45,6 @@ class Nutrient(models.Model):
     # Nutrient's id in FDC database
     fdc_id = models.IntegerField(unique=True, null=True)
 
-    # docstr-coverage: inherited
     def __str__(self):
         return f"{self.name} ({self.PRETTY_UNITS[self.unit]})"
 
@@ -59,7 +58,6 @@ class Ingredient(models.Model):
     name = models.CharField(max_length=50)
     dataset = models.CharField(max_length=50)
 
-    # docstr-coverage: inherited
     def __str__(self):
         return self.name
 
@@ -75,7 +73,6 @@ class IngredientNutrient(models.Model):
     # The amount is per 100g and the unit is defined in `nutrient.unit`
     amount = models.FloatField()
 
-    # docstr-coverage: inherited
     class Meta:
         constraints = [
             models.UniqueConstraint(

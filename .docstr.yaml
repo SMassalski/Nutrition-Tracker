@@ -3,3 +3,7 @@ paths:
 badge: docstr_cov/badge
 exclude: .*/migrations
 fail_under: 80
+ignore_patterns:
+  .*:
+    - Meta
+    - __str__
