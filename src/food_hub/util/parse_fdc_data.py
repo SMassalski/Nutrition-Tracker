@@ -6,7 +6,8 @@ from typing import List, Union
 
 from main.models import Ingredient, IngredientNutrient, Nutrient
 
-# TODO: Use bulk create
+# Parsing functions require providing model classes for migration
+# compatibility and easier testing with fakes.
 
 # Loading nutrient data
 
@@ -31,6 +32,7 @@ def parse_nutrient_csv(nutrient_model, file: Union[str, os.PathLike, io.IOBase])
         File or path to the file containing nutrient data.
 
     """
+    nutrient_list = []
     with _open_or_pass(file, newline="") as f:
         reader = csv.DictReader(f)
         for nutrient_record in reader:
@@ -46,7 +48,8 @@ def parse_nutrient_csv(nutrient_model, file: Union[str, os.PathLike, io.IOBase])
             nutrient.name = nutrient_record.get("name")
             nutrient.fdc_id = int(nutrient_record.get("id"))
 
-            nutrient.save()
+            nutrient_list.append(nutrient)
+    nutrient_model.objects.bulk_create(nutrient_list)
 
 
 # Loading food data
@@ -77,6 +80,7 @@ def parse_food_csv(
         'foundation_food', 'agricultural_acquisition',
         'survey_fndds_food'
     """
+    ingredient_list = []
     with _open_or_pass(file, newline="") as f:
         if source_filter is not None:
             source_filter = set(source_filter)
@@ -96,7 +100,9 @@ def parse_food_csv(
             ingredient.name = record["description"]
             ingredient.dataset = record["data_type"]
 
-            ingredient.save()
+            ingredient_list.append(ingredient)
+
+    ingredient_model.objects.bulk_create(ingredient_list)
 
 
 def parse_food_nutrient_csv(
