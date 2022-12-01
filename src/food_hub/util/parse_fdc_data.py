@@ -1,4 +1,4 @@
-"""Methods for parsing data from Food Data Central"""
+"""Methods for parsing data from Food Data Central."""
 import csv
 import io
 import os
@@ -83,6 +83,8 @@ def parse_food_csv(
 
         reader = csv.DictReader(f)
         for record in reader:
+
+            # Filtering data sources
             if (
                 source_filter is not None
                 and record.get("data_type") not in source_filter
@@ -103,7 +105,10 @@ def parse_food_nutrient_csv(
     ingredient_class=Ingredient,
     nutrient_class=Nutrient,
 ):
-    """Load per ingredient nutrient data from a food nutrient csv
+    """Load per ingredient nutrient data from a food nutrient csv.
+
+    If either the ingredient or the nutrient of a record (row) is not
+    in the database the record will be skipped.
 
     Parameters
     ----------
@@ -116,6 +121,7 @@ def parse_food_nutrient_csv(
     nutrient_class
         Class implementing the Nutrient model.
     """
+    # Mappings used to convert FDC ids to local ids
     nutrient_ids = {
         fdc_id: id_
         for fdc_id, id_ in nutrient_class.objects.values_list("fdc_id", "id")
@@ -128,15 +134,17 @@ def parse_food_nutrient_csv(
     with _open_or_pass(file, newline="") as f:
         reader = csv.DictReader(f)
         for record in reader:
-            fdc_id = int(record.get("fdc_id"))
-            ingredient_id = ingredient_ids.get(fdc_id)
 
-            if ingredient_id is None:
+            # Get local ids from FDC id
+            ingredient_id = ingredient_ids.get(int(record.get("fdc_id")))
+            nutrient_id = nutrient_ids.get(int(record.get("nutrient_id")))
+
+            if ingredient_id is None or nutrient_id is None:
                 continue
 
             ingredient_nutrient = ingredient_nutrient_class()
             ingredient_nutrient.ingredient_id = ingredient_id
-            ingredient_nutrient.nutrient_id = nutrient_ids[int(record["nutrient_id"])]
+            ingredient_nutrient.nutrient_id = nutrient_id
             ingredient_nutrient.amount = float(record["amount"])
             ingredient_nutrient_list.append(ingredient_nutrient)
 
