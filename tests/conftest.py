@@ -4,7 +4,7 @@ from tempfile import gettempdir
 
 import pytest
 from django.conf import settings
-from main.models import Ingredient, IngredientNutrient, Nutrient
+from main.models import Ingredient, IngredientNutrient, MealComponent, Nutrient, User
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -83,4 +83,57 @@ def ingredient_nutrient_1_1(
     instance.amount = 1.5
     with django_db_blocker.unblock():
         instance.save()
+    return instance
+
+
+@pytest.fixture(scope="session")
+def ingredient_nutrient_1_2(
+    django_db_blocker, django_db_setup, ingredient_1, nutrient_2
+):
+    """
+    IngredientNutrient associating nutrient_2 with ingredient_1.
+    """
+    instance = IngredientNutrient()
+    instance.nutrient = nutrient_2
+    instance.ingredient = ingredient_1
+    instance.amount = 10
+    with django_db_blocker.unblock():
+        instance.save()
+    return instance
+
+
+@pytest.fixture(scope="session")
+def ingredient_nutrient_2_2(
+    django_db_blocker, django_db_setup, ingredient_2, nutrient_2
+):
+    """
+    IngredientNutrient associating nutrient_2 with ingredient_1.
+    """
+    instance = IngredientNutrient()
+    instance.nutrient = nutrient_2
+    instance.ingredient = ingredient_2
+    instance.amount = 10
+    with django_db_blocker.unblock():
+        instance.save()
+    return instance
+
+
+@pytest.fixture(scope="session")
+def user(django_db_blocker, django_db_setup):
+    """
+    User associating nutrient_2 with ingredient_1.
+    """
+    with django_db_blocker.unblock():
+        instance = User.objects.create_user("test_user", "test@example.com", "pass")
+    return instance
+
+
+@pytest.fixture(scope="session")
+def meal_component(django_db_blocker, django_db_setup, ingredient_1, ingredient_2):
+    """Meal component record and instance."""
+    instance = MealComponent(name="test_component", final_weight=200)
+    with django_db_blocker.unblock():
+        instance.save()
+        instance.ingredients.create(ingredient=ingredient_1, amount=100)
+        instance.ingredients.create(ingredient=ingredient_2, amount=100)
     return instance
