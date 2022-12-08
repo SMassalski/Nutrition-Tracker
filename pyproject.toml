@@ -37,7 +37,7 @@ profile = "black"
 django_find_project = false
 pythonpath = [".", "src/food_hub"]
 DJANGO_SETTINGS_MODULE = "food_hub.settings.test"
-addopts = "--no-migrations"
+addopts = "--no-migrations --cov --cov-report html"
 
 
 [tool.coverage.run]

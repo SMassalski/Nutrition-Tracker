@@ -8,14 +8,14 @@ from util.util import weighted_dict_sum
 
 
 class User(AbstractUser):
-    """Custom user model for future modification"""
+    """Custom user model for future modification."""
 
     pass
 
 
 class Nutrient(models.Model):
     """
-    Represents a single type of nutrient such as 'protein' or 'Calcium'
+    Represents a single type of nutrient such as 'protein' or 'Calcium'.
     """
 
     # Unit constants
@@ -54,7 +54,7 @@ class Nutrient(models.Model):
 
 
 class Ingredient(models.Model):
-    """Represents a food ingredient"""
+    """Represents a food ingredient."""
 
     # Ingredient's id in FDC database
     fdc_id = models.IntegerField(unique=True, null=True)
@@ -73,7 +73,7 @@ class Ingredient(models.Model):
 
 
 class IngredientNutrient(models.Model):
-    """Represents the amount per 100g of a nutrient in an ingredient"""
+    """Represents the amount per 100g of a nutrient in an ingredient."""
 
     ingredient = models.ForeignKey(
         Ingredient, on_delete=models.CASCADE, related_name="nutrients"

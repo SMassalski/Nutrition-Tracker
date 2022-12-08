@@ -20,7 +20,7 @@ def remove_temporary_media_dir():
 
 @pytest.fixture(scope="session")
 def ingredient_1(django_db_blocker, django_db_setup):
-    """Dummy Ingredient record and instance"""
+    """Ingredient record and instance."""
     ingredient = Ingredient()
     ingredient.name = "test_ingredient"
     ingredient.fdc_id = 1
@@ -33,7 +33,7 @@ def ingredient_1(django_db_blocker, django_db_setup):
 
 @pytest.fixture(scope="session")
 def ingredient_2(django_db_blocker, django_db_setup):
-    """Dummy Ingredient record and instance"""
+    """Ingredient record and instance."""
     ingredient = Ingredient()
     ingredient.name = "test_ingredient_2"
     ingredient.fdc_id = 2
@@ -46,7 +46,7 @@ def ingredient_2(django_db_blocker, django_db_setup):
 
 @pytest.fixture(scope="session")
 def nutrient_1(django_db_blocker, django_db_setup):
-    """Dummy Nutrient record and instance"""
+    """Nutrient record and instance."""
     nutrient = Nutrient()
     nutrient.name = "test_nutrient"
     nutrient.unit = "G"
@@ -59,7 +59,7 @@ def nutrient_1(django_db_blocker, django_db_setup):
 
 @pytest.fixture(scope="session")
 def nutrient_2(django_db_blocker, django_db_setup):
-    """Dummy Nutrient record and instance"""
+    """Nutrient record and instance."""
     nutrient = Nutrient()
     nutrient.name = "test_nutrient_2"
     nutrient.unit = "UG"
@@ -75,7 +75,7 @@ def ingredient_nutrient_1_1(
     django_db_blocker, django_db_setup, ingredient_1, nutrient_1
 ):
     """
-    Dummy IngredientNutrient associating nutrient_1 with ingredient_1
+    IngredientNutrient associating nutrient_1 with ingredient_1.
     """
     instance = IngredientNutrient()
     instance.nutrient = nutrient_1
