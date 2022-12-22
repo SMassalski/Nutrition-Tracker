@@ -3,3 +3,5 @@ coverage
 DEV_PLAN
 .idea
 data/
+node_modules
+docstr_coverage_badge.svg
