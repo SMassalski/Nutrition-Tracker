@@ -1,0 +1,92 @@
+@use "sass:map";
+
+// Bootstrap functions
+@import "../../../../node_modules/bootstrap/scss/functions";
+@import '../../../../node_modules/admin-lte/build/scss/bootstrap-variables';
+
+// Include default variable overrides here
+/*
+$primary: #2b8c69;
+$secondary: #396a64;
+$success: #20b43d;
+$info: #dcb476;
+$warning: #f7c91f;
+$danger: #f80f46;
+$light: #fdf2d3;
+$dark: #0e0c09;
+*/
+$primary: #2B8C69;
+$secondary: #33658A;
+$success: #20b43d;
+$info: #86BBD8;
+$warning: #F6AE2D;
+$danger: #F26419;
+$light: #ffffff;
+$dark: #04141F;
+
+
+$theme-colors: (
+    'primary': $primary,
+    'secondary': $secondary,
+    'success': $success,
+    'info': $info,
+    'warning': $warning,
+    'danger': $danger,
+    'light': $light,
+    'dark': $dark,
+);
+
+/*
+$white: #ffffff;
+
+$theme-colors: (
+    "light":      #ebe4d1,
+    "dark":       #0f1110,
+    "primary":    #134704,
+    "secondary":  #6b9122,
+    "info":       #eae600,
+    "success":    #03b700,
+    "warning":    #fdc700,
+    "danger":     #fa004d,
+);
+*/
+
+
+@debug "primary #{$primary}";
+@debug map.get($theme-colors, "primary");
+@import '../../../../node_modules/admin-lte/build/scss/variables';
+@debug "primary vars #{$primary}";
+@debug map.get($theme-colors, "primary");
+@import '../../../../node_modules/admin-lte/build/scss/variables-alt';
+@debug "primary vars-alt #{$primary}";
+@debug map.get($theme-colors, "primary");
+@import '../../../../node_modules/admin-lte/build/scss/mixins';
+@debug "primary mixins #{$primary}";
+@debug map.get($theme-colors, "primary");
+
+@import '../../../../node_modules/bootstrap/scss/bootstrap';
+@debug "primary bs #{$primary}";
+@debug map.get($theme-colors, "primary");
+
+
+
+@import '../../../../node_modules/admin-lte/build/scss/parts/core';
+@debug "primary core #{$primary}";
+@debug map.get($theme-colors, "primary");
+@import '../../../../node_modules/admin-lte/build/scss/parts/components';
+@debug "primary components #{$primary}";
+@debug map.get($theme-colors, "primary");
+@import '../../../../node_modules/admin-lte/build/scss/parts/extra-components';
+@debug "primary extra #{$primary}";
+@debug map.get($theme-colors, "primary");
+@import '../../../../node_modules/admin-lte/build/scss/parts/pages';
+@debug "primary pages #{$primary}";
+@debug map.get($theme-colors, "primary");
+@import '../../../../node_modules/admin-lte/build/scss/parts/plugins';
+@debug "primary plugins #{$primary}";
+@debug map.get($theme-colors, "primary");
+@import '../../../../node_modules/admin-lte/build/scss/parts/miscellaneous';
+@debug "primary misc #{$primary}";
+@debug map.get($theme-colors, "primary");
+
+$chart_palette: #33658A, #86BBD8, #2B8C69, #F6AE2D, #F26419;

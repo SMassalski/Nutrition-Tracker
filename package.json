@@ -23,12 +23,15 @@
   },
   "homepage": "https://github.com/SMassalski/Nutrient-Tracker#readme",
   "devDependencies": {
+    "sass": "^1.57.1",
+    "sass-loader": "^13.2.0",
     "webpack": "^5.75.0",
     "webpack-bundle-analyzer": "^4.7.0",
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
     "admin-lte": "^3.2.0",
+    "bootstrap": "4.6",
     "chart.js": "^4.1.1",
     "chartjs-plugin-annotation": "^2.1.0",
     "htmx.org": "^1.8.4"
