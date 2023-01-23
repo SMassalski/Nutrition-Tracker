@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}Title{% endblock title %}</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
+        <link rel="stylesheet" href="{% static 'bundle.css' %}">
+        <script src="{% static 'bundle.js' %}"></script>
+        <script src="{% static 'charts_wrapper.js' %}"></script>
+    </head>
+    <body class="hold-transition sidebar-mini" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        <div class="wrapper">
+            <!--
+            Preloader is recommended here because of weird sidebar behaviour
+            <div class="preloader">
+                <img src="path_to_img" alt="NutritionTrackerLogo" height="60" width="60">
+            </div>
+            -->
+            <!-- Navbar -->
+            {% include "main/components/navbar.html"%}
+
+            <!-- Sidebar -->
+            {% include "main/components/sidebar.html"%}
+
+            <div class="content-wrapper">
+                <div class="content-header">
+
+                </div>
+                <div class="content">
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+        {% block scripts%}{% endblock %}
+    </body>
+</html>
