@@ -41,7 +41,7 @@ class IngredientSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Ingredient
-        fields = ["url", "name"]
+        fields = ["id", "url", "name"]
 
 
 class IngredientDetailSerializer(serializers.ModelSerializer):

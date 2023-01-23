@@ -1,5 +1,6 @@
 """main app API URL Configuration"""
 from django.urls import path
+from rest_framework.urlpatterns import format_suffix_patterns
 
 from .views import api as views
 
@@ -16,3 +17,5 @@ urlpatterns = [
         "nutrients/<int:pk>", views.NutrientDetailView.as_view(), name="nutrient-detail"
     ),
 ]
+
+urlpatterns = format_suffix_patterns(urlpatterns, allowed=["json", "html", "api"])

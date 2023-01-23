@@ -1,6 +1,11 @@
 """main app URL Configuration"""
 from django.urls import path
+from django.views.generic import TemplateView
 
-from .views import main as views
-
-urlpatterns = [path("", views.home, name="home")]
+urlpatterns = [
+    path(
+        "new_meal/",
+        TemplateView.as_view(template_name="main/compose_meal.html"),
+        name="create-meal",
+    ),
+]
