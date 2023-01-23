@@ -1,0 +1,14 @@
+{% extends "main/base.html" %}
+{% block title %}Compose Meal{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-6">
+            {% include "main/cards/list_ingredients.html" with card_variant="card-outline card-primary" %}
+        </div>
+        <div class="col-lg-6">
+            {% include "main/cards/add_ingredients.html" with card_variant="card-outline card-info" %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+<form hx-post="{% url 'dashboard' %}">
+    <div class="row-md mt-4">
+        <div class="container">
+            <!-- TODO: This needs to be made responsive -->
+            <div class="row" style="min-height: 250px; height: 250px; max-height: 250px;">
+                <!-- Ingredient macronutrients -->
+                <div class="col-md-6">
+                    <canvas id="macroPieChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    {# ingredient.macronutrients|json_script:"macronutrient-data" #}
+                    <script>
+                        pieChart("macroPieChart",
+                        // JSON.parse(document.getElementById('macronutrient-data').textContent)
+                        {
+                            Proteins: 100,
+                            Carbohydrates: 150,
+                            Fats: 80
+                        });
+                </script>
+                </div>
+
+
+                <div class="col-md-6">
+                    <div class="d-flex flex-column align-items-end h-100">
+                        <!-- Other details -->
+                        <h5>{# ingredient.name #}Broccoli, frozen, spears, cooked, boiled, drained, with salt</h5>
+                        <div>
+                            {# Badges / tags #}
+                        </div>
+                        <!-- Add ingredient form inputs -->
+                        <div class="d-flex justify-content-end w-100 p-2 mt-auto">
+                            <input type="hidden" name="id" value="1001{# ingredient.id #}">
+                            <input class="w-100" type="number" name="amount" id="amount-field" placeholder="Amount (g)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row-md mt-3">
+        <div class="col-md-12 d-grid gap-2">
+            <button class="btn btn-primary" type="submit" style="width: 100%">Add Ingredient</button>
+        </div>
+    </div>
+</form>
