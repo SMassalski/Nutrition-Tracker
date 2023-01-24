@@ -23,7 +23,7 @@ def test_api_root_contains_links_to_list_views(rf):
     """
     url = reverse("api-root")
     request = rf.get(url)
-    response = views.api_root(request)
+    response = views.api_root(request, format="json")
     response.render()
     content = json.loads(response.content)
 
@@ -45,7 +45,7 @@ def test_ingredient_view_lists_ingredients(rf, db, ingredient_1, ingredient_2):
     """IngredientView response contains a list of ingredient records"""
     url = reverse("ingredient-list")
     request = rf.get(url)
-    response = views.IngredientView.as_view()(request)
+    response = views.IngredientView.as_view()(request, format="json")
     response.render()
     content = json.loads(response.content)["results"]
     assert len(content) == 2
@@ -57,10 +57,10 @@ def test_ingredient_view_fields(rf, db, ingredient_1):
     """IngredientView response entry contains the correct fields"""
     url = reverse("ingredient-list")
     request = rf.get(url)
-    response = views.IngredientView.as_view()(request)
+    response = views.IngredientView.as_view()(request, format="json")
     response.render()
     entry = json.loads(response.content)["results"][0]
-    assert set(entry.keys()) == {"name", "url"}
+    assert set(entry.keys()) == {"id", "name", "url"}
 
 
 def test_ingredient_detail_view_status_code(rf, db, ingredient_1):
@@ -78,7 +78,7 @@ def test_ingredient_detail_view_fields(rf, db, ingredient_1):
     pk = ingredient_1.pk
     url = reverse("ingredient-detail", args=[pk])
     request = rf.get(url)
-    response = views.IngredientDetailView.as_view()(request, pk=pk)
+    response = views.IngredientDetailView.as_view()(request, pk=pk, format="json")
     response.render()
     entry = json.loads(response.content)
 
@@ -92,7 +92,7 @@ def test_ingredient_detail_view_nutrients_field(
     pk = ingredient_1.pk
     url = reverse("ingredient-detail", args=[pk])
     request = rf.get(url)
-    response = views.IngredientDetailView.as_view()(request, pk=pk)
+    response = views.IngredientDetailView.as_view()(request, pk=pk, format="json")
     response.render()
     nutrient_entry = json.loads(response.content)["nutrients"][0]
 
@@ -113,7 +113,7 @@ def test_nutrient_view_lists_nutrients(rf, db, nutrient_1, nutrient_2):
     """NutrientView response contains a list of nutrient records"""
     url = reverse("nutrient-list")
     request = rf.get(url)
-    response = views.NutrientView.as_view()(request)
+    response = views.NutrientView.as_view()(request, format="json")
     response.render()
     content = json.loads(response.content)["results"]
     assert len(content) == 2
@@ -125,7 +125,7 @@ def test_nutrient_view_fields(rf, db, nutrient_1):
     """NutrientView response entry contains the correct fields"""
     url = reverse("nutrient-list")
     request = rf.get(url)
-    response = views.NutrientView.as_view()(request)
+    response = views.NutrientView.as_view()(request, format="json")
     response.render()
     entry = json.loads(response.content)["results"][0]
     assert set(entry.keys()) == {"name", "url"}
@@ -146,7 +146,7 @@ def test_nutrient_detail_view_fields(rf, db, nutrient_1):
     pk = nutrient_1.pk
     url = reverse("nutrient-detail", args=[pk])
     request = rf.get(url)
-    response = views.NutrientDetailView.as_view()(request, pk=pk)
+    response = views.NutrientDetailView.as_view()(request, pk=pk, format="json")
     response.render()
     entry = json.loads(response.content)
 
