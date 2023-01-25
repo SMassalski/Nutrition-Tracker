@@ -5,7 +5,7 @@ from .models import Ingredient, IngredientNutrient, Nutrient
 
 
 class NutrientSerializer(serializers.HyperlinkedModelSerializer):
-    """Serializer for nutrient list view"""
+    """Serializer for nutrient list view."""
 
     class Meta:
         model = Nutrient
@@ -13,7 +13,7 @@ class NutrientSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class NutrientDetailSerializer(serializers.ModelSerializer):
-    """Serializer for nutrient detail view"""
+    """Serializer for nutrient detail view."""
 
     class Meta:
         model = Nutrient
@@ -23,7 +23,7 @@ class NutrientDetailSerializer(serializers.ModelSerializer):
 class IngredientNutrientSerializer(serializers.ModelSerializer):
     """
     Serializer for the Ingredient - Nutrient relation from the
-    Ingredient side
+    Ingredient side.
     """
 
     url = serializers.HyperlinkedRelatedField(
@@ -37,7 +37,7 @@ class IngredientNutrientSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.HyperlinkedModelSerializer):
-    """Serializer for ingredient list view"""
+    """Serializer for ingredient list view."""
 
     class Meta:
         model = Ingredient
@@ -45,10 +45,20 @@ class IngredientSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class IngredientDetailSerializer(serializers.ModelSerializer):
-    """Serializer for ingredient detail view"""
+    """Serializer for ingredient detail view."""
 
     nutrients = IngredientNutrientSerializer(many=True)
 
     class Meta:
         model = Ingredient
         fields = ["fdc_id", "name", "dataset", "nutrients"]
+
+
+class IngredientPreviewSerializer(serializers.ModelSerializer):
+    """Serializer for previewing ingredients."""
+
+    macronutrients = serializers.ReadOnlyField(source="macronutrient_calories")
+
+    class Meta:
+        model = Ingredient
+        fields = ["id", "name", "macronutrients"]

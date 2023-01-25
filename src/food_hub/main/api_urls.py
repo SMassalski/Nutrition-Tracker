@@ -12,6 +12,11 @@ urlpatterns = [
         views.IngredientDetailView.as_view(),
         name="ingredient-detail",
     ),
+    path(
+        "ingredients/<int:pk>/preview",
+        views.IngredientPreview.as_view(),
+        name="ingredient-preview",
+    ),
     path("nutrients/", views.NutrientView.as_view(), name="nutrient-list"),
     path(
         "nutrients/<int:pk>", views.NutrientDetailView.as_view(), name="nutrient-detail"

@@ -71,6 +71,30 @@ class Ingredient(models.Model):
         """
         return {ig.nutrient: ig.amount for ig in self.nutrients.all()}
 
+    @property
+    def macronutrient_calories(self) -> Dict[Nutrient, float]:
+        """
+        The amount of calories per macronutrient in 100g of the
+        ingredient.
+        """
+        nutrients = self.nutrients.filter(
+            models.Q(nutrient__name__contains="carbohydrate")
+            | models.Q(nutrient__name__contains="lipid")
+            | models.Q(nutrient__name__contains="protein")
+        )
+        result = {ing_nut.nutrient.name: ing_nut.amount for ing_nut in nutrients}
+
+        # For consistency
+        result = dict(sorted(result.items()))
+
+        for macronutrient in [("carbohydrate", 4), ("protein", 4), ("lipid", 9)]:
+            for k, v in result.items():
+                if macronutrient[0] in k.lower():
+                    result[k] = v * macronutrient[1]
+                    break
+
+        return result
+
 
 class IngredientNutrient(models.Model):
     """Represents the amount per 100g of a nutrient in an ingredient."""

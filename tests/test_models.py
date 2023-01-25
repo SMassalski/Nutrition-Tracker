@@ -1,13 +1,38 @@
 """Tests of ORM models"""
 from datetime import datetime
 
+import pytest
 from main.models import (
     Ingredient,
+    IngredientNutrient,
     Meal,
     MealComponent,
     MealComponentIngredient,
     Nutrient,
 )
+
+
+@pytest.fixture()
+def ingredient_1_macronutrients(db, ingredient_1):
+    protein = Nutrient.objects.create(name="Protein")
+    fat = Nutrient.objects.create(name="Total lipid (fat)")
+    carbs = Nutrient.objects.create(name="Carbohydrate, by difference")
+
+    IngredientNutrient.objects.bulk_create(
+        [
+            IngredientNutrient(
+                ingredient_id=ingredient_1.id, nutrient_id=protein.id, amount=1
+            ),
+            IngredientNutrient(
+                ingredient_id=ingredient_1.id, nutrient_id=fat.id, amount=2
+            ),
+            IngredientNutrient(
+                ingredient_id=ingredient_1.id, nutrient_id=carbs.id, amount=3
+            ),
+        ]
+    )
+
+    return ingredient_1.macronutrient_calories
 
 
 # Ingredient model
@@ -27,6 +52,47 @@ def test_ingredient_nutritional_value_returns_nutrient_amounts(
     result = ingredient_1.nutritional_value()
     assert result[ingredient_nutrient_1_1.nutrient] == ingredient_nutrient_1_1.amount
     assert result[ingredient_nutrient_1_2.nutrient] == ingredient_nutrient_1_2.amount
+
+
+def test_ingredient_macronutrient_calories_returns_only_3_macronutrients(
+    ingredient_1_macronutrients,
+):
+    """
+    Ingredient.macronutrient_calories returns values only for protein
+    fat and carbohydrates.
+    """
+    result = ingredient_1_macronutrients
+    assert len(result.keys()) == 3
+    for macronutrient in ["carbohydrate", "lipid", "protein"]:
+        assert len([k for k in result.keys() if macronutrient in k.lower()]) == 1
+
+
+def test_ingredient_macronutrient_calories_converts_nutrients_to_calories_correctly(
+    ingredient_1_macronutrients,
+):
+    """
+    Ingredient.macronutrient_calories calculates calorie amounts
+    according to atwater conversion factors (4 kcal/g for protein and
+    carbs, 9 kcal/g for fats).
+    """
+    # Values depend on amounts in ingredient_1_macronutrients
+    assert ingredient_1_macronutrients == {
+        "Protein": 4,
+        "Total lipid (fat)": 18,
+        "Carbohydrate, by difference": 12,
+    }
+
+
+def test_ingredient_macronutrient_calories_returns_a_dict_sorted_by_keys(
+    ingredient_1_macronutrients,
+):
+    """
+    Ingredient.macronutrient_calories calculates return dict is sorted
+    by keys.
+    """
+    assert ingredient_1_macronutrients == dict(
+        sorted(ingredient_1_macronutrients.items())
+    )
 
 
 # Nutrient model

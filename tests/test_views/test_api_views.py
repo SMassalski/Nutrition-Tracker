@@ -63,6 +63,24 @@ def test_ingredient_view_fields(rf, db, ingredient_1):
     assert set(entry.keys()) == {"id", "name", "url"}
 
 
+def test_ingredient_view_html_format_uses_the_correct_template(rf, db, ingredient_1):
+    """IngredientView with html format uses the table row template."""
+    url = reverse("ingredient-list")
+    request = rf.get(url)
+    response = views.IngredientView.as_view()(request, format="html")
+    response.render()
+    assert response.template_name == "main/data/ingredient_names.html"
+
+
+def test_ingredient_preview_uses_the_correct_template(rf, db, ingredient_1):
+    """IngredientPreview uses the preview template."""
+    url = reverse("ingredient-list")
+    request = rf.get(url, args=[ingredient_1.id])
+    response = views.IngredientPreview.as_view()(request, pk=ingredient_1.id)
+    response.render()
+    assert response.template_name == "main/data/ingredient_preview.html"
+
+
 def test_ingredient_detail_view_status_code(rf, db, ingredient_1):
     """IngredientDetailView response has a 200 status code"""
     pk = ingredient_1.pk
