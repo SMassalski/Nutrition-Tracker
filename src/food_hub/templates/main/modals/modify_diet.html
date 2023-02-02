@@ -1,0 +1,119 @@
+{% extends "main/modals/base_modal.html"%}
+
+{% block title%}Diet Modifications{% endblock%}
+{% block no_footer %}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row-md">
+        <!-- Current Modifications -->
+        <div class="col-md-12 table-responsive bordered" style="min-height: 100px;">
+            <table class="table table-hover" style="margin-bottom: 0;">
+                <thead>
+                    <tr>
+                        <th>Modification</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tracked-nutrients">
+                    <tr>
+                        <td>Weight Training</td>
+                        <td class="table-actions">
+                            <a href="#"><i class="fa-solid fa-pen"></i></a>
+                            <a href="#"><i class="fa-solid fa-trash"></i></a>
+                        </td>
+                    </tr>
+                    <!-- Add / Edit modified nutrient -->
+                    <tr class="table-form">
+                        <form>
+                            <td>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <div class="row mb-2">
+                                        <div class="col">
+                                            <select class="form-control">
+                                                <option>Weight Training</option>
+                                                <option selected>Daily Nutrient Intake</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {# TODO: Expand on nutrient intake selected #}
+                                    <div class="row">
+                                        <div class="col">
+                                            <select class="form-control">
+                                                {# Nutrient selection #}
+                                                <option>Fiber</option>
+                                                <option>Vitamin A</option>
+                                                <option>Vitamin K</option>
+                                                <option>Iron (Fe)</option>
+                                                <option>Phosphorus (P)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col">
+                                            <select class="form-control">
+                                                {# Rule selection #}
+                                                <option>Excluded</option>
+                                                <option>Minimum</option>
+                                                <option>Maximum</option>
+                                                <option>At most</option>
+                                                <option>At least</option>
+                                            </select>
+                                        </div>
+                                        <div class="col">
+                                            <div class="input-group">
+                                                <input type="number" class="form-control">
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text" id="modifyDietUnit">mg</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </td>
+                            <td class="table-actions">
+                                <a href="#"><i class="fa-solid fa-check"></i></a>
+                                <a href="#"><i class="fa-solid fa-xmark"></i></i></a>
+                            </td>
+                        </form>
+                    </tr>
+                    <tr class="table-form">
+                        <form>
+                            <td>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <div class="row mb-2">
+                                        <div class="col">
+                                            {# TODO: Disable not customizable selections if already used #}
+                                            <select class="form-control">
+                                                <option selected>Weight Training</option>
+                                                <option>Daily Nutrient Intake</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {# TODO: Expand on modification selected #}
+                                    <div class="row">
+                                        <div class="col">
+                                            <p class="p-2">
+                                                Explaination of the effect of the selected modification.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </td>
+                            <td class="table-actions">
+                                <a href="#"><i class="fa-solid fa-check"></i></a>
+                                <a href="#"><i class="fa-solid fa-xmark"></i></i></a>
+                            </td>
+                        </form>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="table-append">
+                            <i class="fa-solid fa-circle-plus"></i>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock body %}

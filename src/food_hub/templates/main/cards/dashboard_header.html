@@ -1,0 +1,53 @@
+{% extends "main/cards/card_base.html" %}
+
+{% block no_header %}{% endblock %}
+{% block no_footer %}{% endblock %}
+{% block card_body %}
+<div class="container top-panel">
+    <div class="row">
+        <div class="col">
+            <div class="d-flex">
+                <a href="#">
+                    <i class="fa-solid fa-circle-plus"></i>
+                    <span>Quick Add</span>
+                </a>
+                <a href="#" data-toggle="modal" data-target="#trackedNutrientsModal">
+                    <i class="fa-solid fa-thumbtack"></i>
+                    <span>Track Nutrient</span>
+                </a>
+                <a href="#" data-toggle="modal" data-target="#modifyDietModal">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Modify Diet</span>
+                </a>
+                <a href="#" data-toggle="modal" data-target="#personalInfoModal">
+                    <i class="fa-solid fa-address-book"></i>
+                    <span>Personal Info</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3 pt-3 sub-panel">
+        <div class="col">
+            <div class="d-flex">
+                <a href="#">
+                    <i class="fa-solid fa-mug-saucer"></i>
+                    <span>Tea</span>
+                </a>
+                <a href="#">
+                    <i class="fa-solid fa-mug-hot"></i>
+                    <span>Coffee</span>
+                </a>
+                <a href="#">
+                    <i class="fa-solid fa-cookie-bite"></i>
+                    <span>Snack</span>
+                </a>
+                <a href="#">
+                    <i class="fa-solid fa-utensils"></i>
+                    <span>Meal</span>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock card_body %}

@@ -1,0 +1,29 @@
+{% extends "main/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            {% include "main/cards/dashboard_header.html" %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            {#% include "main/cards/dashboard_charts.html" with card_variant="card-outline card-secondary" %#}
+        </div>
+    </div>
+</div>
+<!-- Modals -->
+{% include "main/modals/personal_info.html" with modal_id="personalInfoModal" %}
+{% include "main/modals/tracked_nutrients.html" with modal_id="trackedNutrientsModal" size="large"%}
+{% include "main/modals/modify_diet.html" with modal_id="modifyDietModal" size="large" %}
+
+<script>
+    $(function () {
+        $('[data-toggle="popover"]').popover({
+            container: 'body',
+            trigger: 'focus'
+        })
+      });
+</script>
+{% endblock content %}

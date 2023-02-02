@@ -1,0 +1,33 @@
+{% extends "main/modals/base_modal.html"%}
+
+{% block title%}Personal Information{% endblock%}
+{% block body %}
+<form>
+    <div class="form-group row">
+        <label for="heightInput" class="col col-form-label">Height (cm)</label>
+        <div class="col">
+            <input type="number" id="heightInput" value="175{# TODO: dynamic value #}" class="form-control">
+        </div>
+    </div>
+    <div class="form-group row">
+        <label for="activityLevel" class="col col-form-label">
+            Activity Level
+            <button type="button" class="form-tip" data-toggle="popover" data-content="Activity level explanation{# TODO: explanation body #}" title="Activity Level">
+                <i class="fa-solid fa-circle-question"></i>
+            </button>
+        </label>
+        <div class="col">
+            <select class="form-control" id="activityLevel">
+                {# TODO: dynamic selection #}
+                <option>Sedentary</option>
+                <option>Lightly Active</option>
+                <option selected>Active</option>
+                <option>Very Active</option>
+            </select>
+        </div>
+    </div>
+</form>
+{% endblock body %}
+{% block footer %}
+<button type="button" class="btn btn-primary">Save changes</button>
+{% endblock footer %}
