@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 
 module.exports = {
     mode: "production",
@@ -24,7 +25,13 @@ module.exports = {
                 },
                 use: ["sass-loader"],
             },
+            {
+                test: require.resolve("jquery"),
+                loader: "expose-loader",
+                options: {
+                  exposes: ["$", "jQuery"],
+                },
+            },
         ],
     },
-
 };
