@@ -15,8 +15,8 @@ $danger: #f80f46;
 $light: #fdf2d3;
 $dark: #0e0c09;
 */
-$primary: #2B8C69;
-$secondary: #33658A;
+$primary: #33658A;
+$secondary: #2B8C69;
 $success: #20b43d;
 $info: #86BBD8;
 $warning: #F6AE2D;
@@ -51,42 +51,117 @@ $theme-colors: (
 );
 */
 
-
-@debug "primary #{$primary}";
-@debug map.get($theme-colors, "primary");
 @import '../../../../node_modules/admin-lte/build/scss/variables';
-@debug "primary vars #{$primary}";
-@debug map.get($theme-colors, "primary");
 @import '../../../../node_modules/admin-lte/build/scss/variables-alt';
-@debug "primary vars-alt #{$primary}";
-@debug map.get($theme-colors, "primary");
 @import '../../../../node_modules/admin-lte/build/scss/mixins';
-@debug "primary mixins #{$primary}";
-@debug map.get($theme-colors, "primary");
 
 @import '../../../../node_modules/bootstrap/scss/bootstrap';
-@debug "primary bs #{$primary}";
-@debug map.get($theme-colors, "primary");
 
 
 
 @import '../../../../node_modules/admin-lte/build/scss/parts/core';
-@debug "primary core #{$primary}";
-@debug map.get($theme-colors, "primary");
 @import '../../../../node_modules/admin-lte/build/scss/parts/components';
-@debug "primary components #{$primary}";
-@debug map.get($theme-colors, "primary");
 @import '../../../../node_modules/admin-lte/build/scss/parts/extra-components';
-@debug "primary extra #{$primary}";
-@debug map.get($theme-colors, "primary");
 @import '../../../../node_modules/admin-lte/build/scss/parts/pages';
-@debug "primary pages #{$primary}";
-@debug map.get($theme-colors, "primary");
 @import '../../../../node_modules/admin-lte/build/scss/parts/plugins';
-@debug "primary plugins #{$primary}";
-@debug map.get($theme-colors, "primary");
 @import '../../../../node_modules/admin-lte/build/scss/parts/miscellaneous';
-@debug "primary misc #{$primary}";
-@debug map.get($theme-colors, "primary");
 
 $chart_palette: #33658A, #86BBD8, #2B8C69, #F6AE2D, #F26419;
+
+$border_gray: #ced4da;
+
+.bordered {
+    border: 1px solid $border_gray;
+    border-radius: .3rem;
+}
+
+.table.table-head-fixed thead tr:nth-child(1) th {
+    box-shadow: inset 0 -1px 0 $border_gray;
+    border-top: 0px;
+}
+
+.table thead tr.nutrient-table-label:nth-child(1) th {
+    border-top: 0px;
+    border-bottom: 0px;
+}
+
+.bordered {
+    border: 1px solid $border_gray;
+    border-radius: .3rem;
+}
+
+.table-responsive.bordered {
+    padding: 0;
+}
+
+tr th.nutrient-progress {
+    width: 100%;
+}
+
+tr th.nutrient-label {
+    width: 50%;
+}
+
+.table {
+    td {
+        vertical-align: middle;
+    }
+    td.table-actions {
+        text-align: center;
+        a {
+            padding-left: 3px;
+            padding-right: 3px;
+        }
+    }
+    td.table-append {
+        text-align: center;
+        font-size: 1.5rem;
+        color: $info;
+        cursor: pointer;
+    }
+    tr.nutrient-table-label {
+        background-color: #E9ECEF;
+    }
+}
+
+.table-hover tbody {
+    tr:hover td.table-append {
+        background-color: theme-color-level(info, -10);
+    }
+    tr.table-form:hover td {
+        background-color: white;
+    }
+}
+
+.progress {
+    height: 1.3rem;
+    font-size: 1rem;
+    border-radius: 0.2rem;
+}
+
+.top-panel {
+    a {
+        color: $primary;
+    }
+
+    .sub-panel {
+        a {
+            color: $secondary;
+        }
+        border-top: 1px solid $border_gray;
+    }
+
+    .d-flex {
+        justify-content: space-evenly;
+    }
+}
+
+button.form-tip {
+    background-color: transparent;
+    border: none;
+    color: gray;
+}
+
+.amounts-table tbody tr td:nth-of-type(2) {
+    text-align: center;
+}
