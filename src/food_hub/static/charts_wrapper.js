@@ -32,3 +32,69 @@ const pieChart = function(elementId, data) {
         }
     });
 }
+
+
+/**
+ * Draw a chart.js line chart in a canvas element
+ * @param {string} elementId - The id of the canvas.
+ * @param {Object} data - Mapping in the format of {<label>: <value>}.
+ */
+const lineChart = function({elementId, data, target, title}) {
+
+    const ctx = document.getElementById(elementId);
+    const values = Object.values(data);
+    // Max of the array of values and set target + 2
+    const yMax = Math.max(values.reduce((a, b) => Math.max(a, b), -Infinity), target || 0) + 2
+
+    const options = {
+        responsive: true,
+
+        //Scales
+        scales: {
+            y: {
+                beginAtZero: true,
+
+                max: yMax
+            }
+        },
+
+        // Title
+        plugins: {
+            legend: false,
+            title: {
+                display: !!(title),
+                text: title
+            }
+        }
+
+    }
+
+    // Target line annotation
+    if( target ) {
+        options.plugins.annotation = {
+            annotations: {
+                line1: {
+                    type: 'line',
+                    yMin: target,
+                    yMax: target,
+                    borderColor: annotation_color,
+                    borderWidth: 1,
+                }
+            }
+        }
+    }
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Object.keys(data), //This will need to be thinned
+            datasets: [
+                {
+                    data: values,
+                    backgroundColor: primary
+                }
+            ]
+        },
+        options: options
+    });
+}

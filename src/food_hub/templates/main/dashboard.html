@@ -9,7 +9,17 @@
     </div>
     <div class="row">
         <div class="col">
-            {#% include "main/cards/dashboard_charts.html" with card_variant="card-outline card-secondary" %#}
+            {% include "main/cards/dashboard_macronutrient_charts.html" with card_variant="card-outline card-secondary" %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            {% include "main/cards/dashboard_tracked_charts.html" with card_variant="card-outline card-primary" %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            {% include "main/cards/dashboard_deficiency_charts.html" with card_variant="card-outline card-info" %}
         </div>
     </div>
 </div>
