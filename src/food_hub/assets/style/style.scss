@@ -66,7 +66,16 @@ $theme-colors: (
 @import '../../../../node_modules/admin-lte/build/scss/parts/plugins';
 @import '../../../../node_modules/admin-lte/build/scss/parts/miscellaneous';
 
-$chart_palette: #33658A, #86BBD8, #2B8C69, #F6AE2D, #F26419;
+$chart_palette: $primary, $info, $secondary, $warning, $danger;
+$chart_primary: $info;
+$chart_annotation: $danger;
+
+
+:root {
+    --chart_palette: #{$chart_palette};
+    --chart_primary: #{$chart_primary};
+    --chart_annotation: #{$chart_annotation};
+}
 
 $border_gray: #ced4da;
 
