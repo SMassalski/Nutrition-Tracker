@@ -5,16 +5,7 @@
 @import '../../../../node_modules/admin-lte/build/scss/bootstrap-variables';
 
 // Include default variable overrides here
-/*
-$primary: #2b8c69;
-$secondary: #396a64;
-$success: #20b43d;
-$info: #dcb476;
-$warning: #f7c91f;
-$danger: #f80f46;
-$light: #fdf2d3;
-$dark: #0e0c09;
-*/
+
 $primary: #33658A;
 $secondary: #2B8C69;
 $success: #20b43d;
@@ -36,28 +27,11 @@ $theme-colors: (
     'dark': $dark,
 );
 
-/*
-$white: #ffffff;
-
-$theme-colors: (
-    "light":      #ebe4d1,
-    "dark":       #0f1110,
-    "primary":    #134704,
-    "secondary":  #6b9122,
-    "info":       #eae600,
-    "success":    #03b700,
-    "warning":    #fdc700,
-    "danger":     #fa004d,
-);
-*/
-
 @import '../../../../node_modules/admin-lte/build/scss/variables';
 @import '../../../../node_modules/admin-lte/build/scss/variables-alt';
 @import '../../../../node_modules/admin-lte/build/scss/mixins';
 
 @import '../../../../node_modules/bootstrap/scss/bootstrap';
-
-
 
 @import '../../../../node_modules/admin-lte/build/scss/parts/core';
 @import '../../../../node_modules/admin-lte/build/scss/parts/components';
@@ -97,6 +71,10 @@ $border_gray: #ced4da;
 .bordered {
     border: 1px solid $border_gray;
     border-radius: .3rem;
+
+    table {
+        margin-bottom: 0;
+    }
 }
 
 .table-responsive.bordered {
@@ -131,6 +109,20 @@ tr th.nutrient-label {
     tr.nutrient-table-label {
         background-color: #E9ECEF;
     }
+    &.micronutrient-table {
+        tbody tr {
+            td:nth-of-type(3) {
+                white-space: nowrap;
+                text-align: end;
+            }
+            &.subrow {
+                td:nth-of-type(1) {
+                    padding-left: 1rem;
+                    box-shadow: inset 3px 0 $border_gray;
+                }
+            }
+        }
+    }
 }
 
 .table-hover tbody {
@@ -146,6 +138,10 @@ tr th.nutrient-label {
     height: 1.3rem;
     font-size: 1rem;
     border-radius: 0.2rem;
+
+    .progress-bar {
+        background-color: $info;
+    }
 }
 
 .top-panel {

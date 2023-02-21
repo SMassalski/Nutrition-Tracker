@@ -3,3 +3,38 @@
 {% block card_title %}Ingredients{% endblock %}
 {% block no_tools %}{% endblock %}
 {% block no_footer %}{% endblock %}
+
+{% block card_body %}
+<div class="row-md">
+    <div class="col-md-12 table-responsive bordered" style="min-height: 180px;">
+        <table class="table table-hover table-head-fixed amounts-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th style="width: 100px">Amount</th>
+                </tr>
+            </thead>
+            <tbody id="meal-ingredients">
+                <tr>
+                    <td>Broccoli, frozen, chopped, cooked, boiled, drained, with salt</td>
+                    <td>30 g</td>
+                </tr>
+                <tr>
+                    <td>Rice, white, medium-grain, raw, unenriched</td>
+                    <td>52 g</td>
+                </tr>
+                <tr>
+                    <td>Chicken, broilers or fryers, dark meat, thigh, meat only, raw</td>
+                    <td>44 g</td>
+                </tr>
+                <tr>
+                    <td>Tomatoes, red, ripe, raw, year round average</td>
+                    <td>27 g</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+{% endblock card_body %}
