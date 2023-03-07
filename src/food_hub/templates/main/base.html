@@ -1,16 +1,58 @@
-<!DOCTYPE html>
+{% comment %}
+Base template for all main site pages.
+
+Switches between navbar only layout for unauthenticated users and navbar + sidebar
+layout for authenticated users.
+
+Blocks
+------
+title
+    Html title value.
+content-header
+content
+top-scripts
+    Scripts within the head tag.
+bottom-scripts
+    Scripts at the end of the body tag.
+tooltip-script
+    Enabling tooltips from within the template.
+
+    To enable tooltips within a template add:
+
+    {% block tooltip-script %}
+        {% with use_tooltips=True %}
+            {{ block.super }}
+        {% endwith %}
+    {% endblock tooltip-script %}
+
+tooltip-config
+    Tooltip options in json format.
+
+Context Variables
+-----------------
+use_tooltips
+    Enables tooltips for all elements with data-toggle attribute
+    set to `tooltip`.
+
+
+
+
+
+{% endcomment %}
 {% load static %}
+<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{% block title %}Title{% endblock title %}</title>
+        <title>{% block title %}{% endblock title %}</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
         <link rel="stylesheet" href="{% static 'bundle.css' %}">
         <script src="{% static 'bundle.js' %}"></script>
         <script src="{% static 'charts_wrapper.js' %}"></script>
+        {% block top-scripts %}{% endblock top-scripts %}
     </head>
-    <body class="hold-transition sidebar-mini" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <body class="{% if user.is_authenticated %}hold-transition sidebar-mini{% else %}layout-top-nav{% endif %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
         <div class="wrapper">
             <!--
             Preloader is recommended here because of weird sidebar behaviour
@@ -22,11 +64,13 @@
             {% include "main/components/navbar.html"%}
 
             <!-- Sidebar -->
+            {% if user.is_authenticated %}
             {% include "main/components/sidebar.html"%}
+            {% endif %}
 
             <div class="content-wrapper">
                 <div class="content-header">
-
+                    {% block content-header %}{% endblock content-header %}
                 </div>
                 <div class="content">
                     {% block content %}{% endblock %}
@@ -34,5 +78,24 @@
             </div>
         </div>
         {% block scripts%}{% endblock %}
+        {% block tooltip-script %}
+        {% if use_tooltips %}
+        <script>
+            $(function () {
+                $('[data-toggle="tooltip"]').tooltip(
+                {% block tooltip-config %}
+                {
+                    container: 'body',
+                    placement: 'right',
+                    html: true,
+                    trigger: 'focus',
+                }
+                {% endblock tooltip-config %}
+                )
+              });
+        </script>
+        {% endif %}
+        {% endblock tooltip-script %}
+
     </body>
 </html>

@@ -1,9 +1,11 @@
 <nav class="main-header navbar navbar-expand navbar-light">
     <!-- Left -->
     <ul class="navbar-nav">
+        {% if user.is_authenticated %}
         <li class="nav-item">
             <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
         </li>
+        {% endif %}
         <li class="nav-item d-none d-sm-inline-block">
             <a href="{% url 'dashboard' %}" class="nav-link">Home</a>
         </li>
@@ -18,12 +20,34 @@
             <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
             </div>
         </li>
+
+        <!-- Account dropdown -->
+        {% if user.is_authenticated %}
         <li class="nav-item dropdown">
             <a class="nav-link" href="#" data-toggle="dropdown">
                 <i class="fa-solid fa-circle-user"></i>
             </a>
             <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                <span class="dropdown-header">Logged in as <strong>{{ user.username }}</strong></span>
+                <div class="dropdown-divider"></div>
+                <!-- TODO: click highlight color, post links style in stylesheet -->
+                <form action="{% url 'logout' %}" method="POST" class="inline dropdown-item" style="cursor: pointer;">
+                    {% csrf_token %}
+                    <a onclick="this.parentNode.submit();"
+                       style="display: inline-block; width: 100%; text-align: center;">
+                        Log out
+                    </a>
+                </form>
+
             </div>
         </li>
+        {% else %}
+        <li class="nav-item d-none d-sm-inline-block">
+            <a href="{% url 'login' %}" class="nav-link">Log In</a>
+        </li>
+        <li class="nav-item d-none d-sm-inline-block">
+            <a href="{% url 'registration' %}" class="nav-link">Sign Up</a>
+        </li>
+        {% endif %}
     </ul>
 </nav>
