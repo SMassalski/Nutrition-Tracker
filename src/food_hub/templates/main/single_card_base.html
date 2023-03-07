@@ -1,0 +1,22 @@
+{% extends "main/base.html" %}
+{% block content %}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-4 col-sm-8 col-12">
+            <div class="card">
+                {% block card-header %}
+                <div class="card-header">
+                    <div class="card-title">{% block card-title %}{% endblock card-title %}</div>
+                </div>
+                {% endblock card-header %}
+                <div class="card-body">
+                    <div class="container">
+                        {% block card-content %}{% endblock card-content %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

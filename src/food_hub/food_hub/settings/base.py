@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "main",
+    "authentication",
 ]
 
 MIDDLEWARE = [
@@ -124,9 +125,26 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Mail
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = env.str("EMAIL_HOST")
+EMAIL_PORT = env.int("EMAIL_PORT")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", False)
+EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL")
+
 # User model
 
 AUTH_USER_MODEL = "main.User"
+
+# Authentication
+
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "dashboard"
+LOGOUT_REDIRECT_URL = "login"  # TODO: Landing page
 
 
 # Data

@@ -1,0 +1,1 @@
+"""App implementing authentication functionality."""
