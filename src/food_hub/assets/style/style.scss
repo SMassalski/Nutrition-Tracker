@@ -194,3 +194,21 @@ button.form-tip {
         }
     }
 }
+
+ul.url-list {
+    li {
+        margin-bottom: 1rem;
+    }
+}
+
+.dropdown-menu .dropdown-item {
+    &:active {
+        background-color: gray;
+    }
+    a {
+        display: inline-block;
+        width: 100%;
+        text-align: center;
+        color: inherit;
+    }
+}

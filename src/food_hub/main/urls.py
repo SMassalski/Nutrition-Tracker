@@ -14,4 +14,11 @@ urlpatterns = [
         login_required(TemplateView.as_view(template_name="main/compose_meal.html")),
         name="create-meal",
     ),
+    path(
+        "settings/account",
+        login_required(
+            TemplateView.as_view(template_name="main/account_settings.html")
+        ),
+        name="account-settings",
+    ),
 ]

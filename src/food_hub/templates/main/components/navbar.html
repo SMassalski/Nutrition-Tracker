@@ -30,6 +30,10 @@
             <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
                 <span class="dropdown-header">Logged in as <strong>{{ user.username }}</strong></span>
                 <div class="dropdown-divider"></div>
+
+                <div class="dropdown-item">
+                    <a href="{% url 'account-settings' %}">Account Settings</a>
+                </div>
                 <!-- TODO: click highlight color, post links style in stylesheet -->
                 <form action="{% url 'logout' %}" method="POST" class="inline dropdown-item" style="cursor: pointer;">
                     {% csrf_token %}
