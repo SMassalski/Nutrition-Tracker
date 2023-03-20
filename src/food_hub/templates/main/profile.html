@@ -1,0 +1,38 @@
+{% extends "main/single_card_base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Profile{% endblock %}
+
+{% block card-attrs %}
+{% with card_size='medium' %}{{ block.super }}{% endwith %}
+{% endblock card-attrs %}
+
+{% block card-title %}Profile{% endblock card-title %}
+
+{% block card-tools %}
+{% if from_registration %}
+<a href="{% url 'dashboard' %}" class="mr-2">Skip</a>
+{% endif %}
+{% endblock card-tools %}
+
+{% block card-content %}
+{% if from_registration %}
+<div class="form-descriptor row p-3 m-1 mb-3 bordered">
+    <p class="mb-0">
+        This information helps us personalize intake recommendations.<br/> You can provide this information
+        later or not provide it at all.
+    </p>
+</div>
+{% endif %}
+<form action="{% url 'profile' %}" method="POST">
+    {% csrf_token %}
+    {{ form|crispy}}
+    <div class="form-group row">
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Save</button>
+    </div>
+</form>
+{% endblock card-content %}
+{% block tooltip-script %}
+    {% with use_tooltips=True %}
+        {{ block.super }}
+    {% endwith %}
+{% endblock tooltip-script %}

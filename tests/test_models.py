@@ -2,31 +2,24 @@
 from datetime import datetime
 
 import pytest
-from main.models import (
-    Ingredient,
-    IngredientNutrient,
-    Meal,
-    MealComponent,
-    MealComponentIngredient,
-    Nutrient,
-)
+from main import models
 
 
 @pytest.fixture()
 def ingredient_1_macronutrients(db, ingredient_1):
-    protein = Nutrient.objects.create(name="Protein")
-    fat = Nutrient.objects.create(name="Total lipid (fat)")
-    carbs = Nutrient.objects.create(name="Carbohydrate, by difference")
+    protein = models.Nutrient.objects.create(name="Protein")
+    fat = models.Nutrient.objects.create(name="Total lipid (fat)")
+    carbs = models.Nutrient.objects.create(name="Carbohydrate, by difference")
 
-    IngredientNutrient.objects.bulk_create(
+    models.IngredientNutrient.objects.bulk_create(
         [
-            IngredientNutrient(
+            models.IngredientNutrient(
                 ingredient_id=ingredient_1.id, nutrient_id=protein.id, amount=1
             ),
-            IngredientNutrient(
+            models.IngredientNutrient(
                 ingredient_id=ingredient_1.id, nutrient_id=fat.id, amount=2
             ),
-            IngredientNutrient(
+            models.IngredientNutrient(
                 ingredient_id=ingredient_1.id, nutrient_id=carbs.id, amount=3
             ),
         ]
@@ -38,7 +31,7 @@ def ingredient_1_macronutrients(db, ingredient_1):
 # Ingredient model
 def test_ingredient_string_representation():
     """Ingredient model's string representation is its name"""
-    ingredient = Ingredient(dataset="test_dataset", name="test_name")
+    ingredient = models.Ingredient(dataset="test_dataset", name="test_name")
     assert str(ingredient) == ingredient.name
 
 
@@ -101,14 +94,19 @@ def test_nutrient_string_representation():
     Nutrient model's string representation follows the format
     <name> (<pretty unit symbol>).
     """
-    nutrient = Nutrient(name="test_name", unit="UG")
-    assert str(nutrient) == f"{nutrient.name} ({Nutrient.PRETTY_UNITS[nutrient.unit]})"
+    nutrient = models.Nutrient(name="test_name", unit="UG")
+    assert (
+        str(nutrient)
+        == f"{nutrient.name} ({models.Nutrient.PRETTY_UNITS[nutrient.unit]})"
+    )
 
 
 # Meal Component model
 def test_meal_component_string_representation():
     """MealComponent model's string representation is its name"""
-    assert str(MealComponent(name="test_meal_component")) == "test_meal_component"
+    assert (
+        str(models.MealComponent(name="test_meal_component")) == "test_meal_component"
+    )
 
 
 def test_meal_component_nutritional_value_calculates_nutrients(
@@ -147,9 +145,9 @@ def test_meal_component_ingredient_string_representation():
     MealComponentIngredient model's string representation is the name of
     the component and the ingredient.
     """
-    ingredient = Ingredient(name="test_ingredient")
-    component = MealComponent(name="test_component")
-    meal_component_ingredient = MealComponentIngredient(
+    ingredient = models.Ingredient(name="test_ingredient")
+    component = models.MealComponent(name="test_component")
+    meal_component_ingredient = models.MealComponentIngredient(
         ingredient=ingredient, meal_component=component
     )
     assert str(meal_component_ingredient) == "test_component - test_ingredient"
@@ -160,7 +158,7 @@ def test_meal_string_representation():
     """
     Meal model's string representation is its name and formatted date.
     """
-    meal = Meal(
+    meal = models.Meal(
         name="test_meal", date=datetime(day=1, month=1, year=2000, hour=12, minute=0)
     )
     assert str(meal) == "test_meal (12:00 - 01 Jan 2000)"
@@ -185,14 +183,16 @@ def test_meal_nutritional_value_calculates_nutrients(
     # 10g of nutrient_2 in 100g of meal_component
 
     # 20g of nutrient_1 in 100g of meal_component_2
-    meal_component_2 = MealComponent.objects.create(
+    meal_component_2 = models.MealComponent.objects.create(
         name="test_component_2", final_weight=100
     )
-    ingredient_3 = Ingredient(name="test_ingredient_3", fdc_id=111, dataset="dataset")
+    ingredient_3 = models.Ingredient(
+        name="test_ingredient_3", fdc_id=111, dataset="dataset"
+    )
     ingredient_3.save()
     ingredient_3.nutrients.create(nutrient=nutrient_1, amount=20)
     meal_component_2.ingredients.create(ingredient=ingredient_3, amount=100)
-    meal = Meal.objects.create(user=user, name="test_meal")
+    meal = models.Meal.objects.create(user=user, name="test_meal")
 
     # 100g each of meal_component and meal_component_2
     meal.components.create(component=meal_component, amount=100)
@@ -201,3 +201,10 @@ def test_meal_nutritional_value_calculates_nutrients(
     result = meal.nutritional_value()
     assert result[nutrient_1] == 20.75
     assert result[nutrient_2] == 10
+
+
+def test_profile_string_representation(db):
+    user = models.User.objects.create_user(username="profile_test_user")
+    profile = models.Profile(user=user)
+
+    assert str(profile) == "profile_test_user's profile"

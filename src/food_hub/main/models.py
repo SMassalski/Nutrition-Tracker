@@ -1,16 +1,52 @@
 """main app DjangoORM models."""
 from typing import Dict
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 from util.util import weighted_dict_sum
 
 
+# TODO: Unique user email
 class User(AbstractUser):
     """Custom user model for future modification."""
 
     pass
+
+
+# A profile should not be required to use the app. Recommended intake
+# calculations can use assumptions and averages when relevant
+# information is not provided
+class Profile(models.Model):
+    """
+    Represents user information used for calculating intake
+    recommendations.
+    """
+
+    activity_choices = [
+        ("S", "Sedentary"),
+        ("LA", "Low Active"),
+        ("A", "Active"),
+        ("VA", "Very Active"),
+    ]
+    sex_choices = [
+        ("M", "Male"),
+        ("F", "Female"),
+    ]
+
+    age = models.PositiveIntegerField(null=True, blank=True)
+    height = models.PositiveIntegerField(null=True, blank=True)
+    activity_level = models.CharField(
+        max_length=2, choices=activity_choices, blank=True
+    )
+    sex = models.CharField(max_length=1, choices=sex_choices, blank=True)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True
+    )
+
+    def __str__(self):
+        return f"{self.user}'s profile"
 
 
 class Nutrient(models.Model):

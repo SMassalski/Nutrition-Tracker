@@ -33,6 +33,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "crispy_forms",
+    "crispy_bootstrap4",
     "rest_framework",
     "main",
     "authentication",
@@ -166,3 +168,7 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
     ],
 }
+
+# Crispy Forms
+
+CRISPY_TEMPLATE_PACK = "bootstrap4"

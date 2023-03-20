@@ -3,7 +3,7 @@ from authentication.forms import CustomUserCreationForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 
 
 # User authentication views
@@ -22,8 +22,7 @@ def register_user(request):
             password = form.cleaned_data["password1"]
             user = authenticate(request, username=username, password=password)
             login(request, user)
-            # TODO: User info setup page
-            return redirect("dashboard")
+            return redirect(f"{reverse('profile')}?from=registration")
     else:
         form = CustomUserCreationForm()
     return render(request, "auth/registration.html", {"form": form})

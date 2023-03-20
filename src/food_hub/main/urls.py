@@ -2,6 +2,7 @@
 from django.contrib.auth.decorators import login_required
 from django.urls import path
 from django.views.generic import TemplateView
+from main.views import main as views
 
 urlpatterns = [
     path(
@@ -21,4 +22,5 @@ urlpatterns = [
         ),
         name="account-settings",
     ),
+    path("profile/", views.profile_view, name="profile"),
 ]

@@ -1,7 +1,34 @@
 """main app's regular views"""
-from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+from main.forms import ProfileForm
 
 
-def home(_request):
-    """Initial home view."""
-    return HttpResponse("<h1>Hello World!</h1>")
+@login_required
+def profile_view(request):
+    """
+    View for setting up a user profile for intake recommendation
+    calculations.
+    """
+    instance = getattr(request.user, "profile", None)
+    from_registration = request.GET.get("from") == "registration"
+    if request.method == "POST":
+        form = ProfileForm(request.POST, instance=instance)
+
+        if form.is_valid():
+            profile = form.save(commit=False)
+            profile.user = request.user
+            profile.save()
+            # TODO: Indication that changes were saved.
+            return redirect("dashboard")
+    else:
+        form = ProfileForm(instance=instance)
+
+    return render(
+        request,
+        "main/profile.html",
+        {
+            "form": form,
+            "from_registration": from_registration,
+        },
+    )
