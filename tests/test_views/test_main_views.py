@@ -17,6 +17,7 @@ def test_profile_post_request_creates_a_profile_record(db, user, client):
             "sex": "M",
             "activity_level": "A",
             "height": 178,
+            "weight": 75,
         },
     )
     assert hasattr(user, "profile")
@@ -27,7 +28,9 @@ def test_profile_post_request_updates_a_profile_record(db, user, client):
     A correct POST request to profile_view updates user's profile
     record for a logged-in user.
     """
-    profile = Profile(age=20, sex="M", activity_level="VA", height=178, user=user)
+    profile = Profile(
+        age=20, sex="M", activity_level="VA", height=178, user=user, weight=75
+    )
     profile.save()
     url = reverse("profile")
     client.force_login(user)
@@ -38,6 +41,7 @@ def test_profile_post_request_updates_a_profile_record(db, user, client):
             "sex": "M",
             "activity_level": "A",
             "height": 178,
+            "weight": 75,
         },
     )
     profile.refresh_from_db()

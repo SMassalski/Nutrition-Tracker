@@ -203,8 +203,94 @@ def test_meal_nutritional_value_calculates_nutrients(
     assert result[nutrient_2] == 10
 
 
+# Profile model tests
+# The initialism EER refers to "estimated energy requirement"
+
+
 def test_profile_string_representation(db):
+    """
+    Profile model's string representation follows the format of
+    `<associated user's username>'s profile`.
+    """
     user = models.User.objects.create_user(username="profile_test_user")
     profile = models.Profile(user=user)
 
     assert str(profile) == "profile_test_user's profile"
+
+
+def test_profile_energy_calculation_for_a_man():
+    """
+    Profile's calculate energy method correctly calculates the EER of
+    an adult male.
+    """
+    profile = models.Profile(
+        age=35, weight=80, height=180, sex="M", activity_level="LA"
+    )
+    assert profile.calculate_energy() == 2819
+
+
+def test_profile_energy_calculation_for_a_woman():
+    """
+    Profile's calculate energy method correctly calculates the EER of
+    an adult female.
+    """
+    profile = models.Profile(age=35, weight=60, height=170, sex="F", activity_level="A")
+    assert profile.calculate_energy() == 2393
+
+
+def test_profile_energy_calculation_for_a_boy():
+    """
+    Profile's calculate energy method correctly calculates the EER of
+    a non-adult male.
+    """
+    profile = models.Profile(age=15, weight=50, height=170, sex="M", activity_level="S")
+    assert profile.calculate_energy() == 2055
+
+
+def test_profile_energy_calculation_for_a_girl():
+    """
+    Profile's calculate energy method correctly calculates the EER of
+    a non-adult female.
+    """
+    profile = models.Profile(age=6, weight=35, height=140, sex="F", activity_level="A")
+    assert profile.calculate_energy() == 2142
+
+
+def test_profile_energy_calculation_for_a_2_yo():
+    """
+    Profile's calculate energy method correctly calculates the EER of
+    a 2-year-old child.
+    """
+    profile = models.Profile(age=2, weight=12, height=140, sex="F", activity_level="A")
+    assert profile.calculate_energy() == 988
+
+
+def test_profile_energy_calculation_for_a_lt_1_yo():
+    """
+    Profile's calculate energy method correctly calculates the EER of
+    a 1-year-old child.
+    """
+    profile = models.Profile(age=0, weight=9, height=140, sex="F", activity_level="A")
+    assert profile.calculate_energy() == 723
+
+
+def test_profile_create_calculates_energy(db, user):
+    """Saving a new profile record automatically calculates the EER."""
+    profile = models.Profile(
+        age=35, weight=80, height=180, sex="M", activity_level="LA", user=user
+    )
+    profile.save()
+    profile.refresh_from_db()
+    assert profile.energy_requirement == 2819
+
+
+def test_profile_update_calculates_energy(db, user):
+    """Updating a profile record automatically calculates the EER."""
+    profile = models.Profile(
+        age=35, weight=80, height=180, sex="M", activity_level="LA", user=user
+    )
+    profile.save()
+    profile.weight = 70
+    profile.save()
+    profile.refresh_from_db()
+    assert profile.energy_requirement == 2643
