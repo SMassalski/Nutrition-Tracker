@@ -157,7 +157,9 @@ def parse_food_nutrient_csv(
     ingredient_nutrient_class.objects.bulk_create(ingredient_nutrient_list)
 
 
-def _open_or_pass(file: Union[str, os.PathLike, io.IOBase], *args, **kwargs):
+def _open_or_pass(
+    file: Union[str, os.PathLike, io.IOBase], *args, **kwargs
+):  # pragma: no cover
     """Open a file if `file` is a path.
 
     If `file` is an instance of a subclass of io.IOBase the function

@@ -36,7 +36,6 @@
                 <div class="dropdown-item">
                     <a href="{% url 'account-settings' %}">Account Settings</a>
                 </div>
-                <!-- TODO: click highlight color, post links style in stylesheet -->
                 <form action="{% url 'logout' %}" method="POST" class="inline dropdown-item" style="cursor: pointer;">
                     {% csrf_token %}
                     <a onclick="this.parentNode.submit();"
