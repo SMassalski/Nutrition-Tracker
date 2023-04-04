@@ -24,8 +24,10 @@ class Profile(models.Model):
     recommendations.
     """
 
-    # TODO: Column for tracking age (last time age was edited)?
-    # TODO: Column for age unit (months / years)?
+    # TODO: Additional age functionality
+    #  * Column for age unit (months / years)
+    #  * Column for tracking age (last time age was edited)
+    #  * Energy calculations for ages < 3yo
     # Estimated Energy Requirement equation constants and coefficients
     # dependant on age and sex. The physical activity coefficient is
     # additionally dependant on activity level

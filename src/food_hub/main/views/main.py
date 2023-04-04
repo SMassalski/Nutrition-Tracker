@@ -19,8 +19,7 @@ def profile_view(request):
             profile = form.save(commit=False)
             profile.user = request.user
             profile.save()
-            # TODO: Indication that changes were saved.
-            return redirect("dashboard")
+            return redirect("profile-done")
     else:
         form = ProfileForm(instance=instance)
 
