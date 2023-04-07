@@ -1,5 +1,5 @@
 """Tests of general utility functions."""
-from util.util import weighted_dict_sum
+from util import weighted_dict_sum
 
 
 def test_weighted_dict_sum_treats_missing_keys_as_zeros():

@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
-from util.util import weighted_dict_sum
+from util import weighted_dict_sum
 
 
 # TODO: Unique user email
