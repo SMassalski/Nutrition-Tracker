@@ -100,7 +100,7 @@ def test_ingredient_detail_view_fields(rf, db, ingredient_1):
     response.render()
     entry = json.loads(response.content)
 
-    assert set(entry.keys()) == {"fdc_id", "name", "dataset", "nutrients"}
+    assert set(entry.keys()) == {"external_id", "name", "dataset", "nutrients"}
 
 
 def test_ingredient_detail_view_nutrients_field(
@@ -168,4 +168,4 @@ def test_nutrient_detail_view_fields(rf, db, nutrient_1):
     response.render()
     entry = json.loads(response.content)
 
-    assert set(entry.keys()) == {"fdc_id", "name", "unit"}
+    assert set(entry.keys()) == {"external_id", "name", "unit"}

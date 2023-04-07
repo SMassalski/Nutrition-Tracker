@@ -23,7 +23,7 @@ def ingredient_1(django_db_blocker, django_db_setup):
     """Ingredient record and instance."""
     ingredient = Ingredient()
     ingredient.name = "test_ingredient"
-    ingredient.fdc_id = 1
+    ingredient.external_id = 1
     ingredient.dataset = "test_dataset"
 
     with django_db_blocker.unblock():
@@ -36,7 +36,7 @@ def ingredient_2(django_db_blocker, django_db_setup):
     """Ingredient record and instance."""
     ingredient = Ingredient()
     ingredient.name = "test_ingredient_2"
-    ingredient.fdc_id = 2
+    ingredient.external_id = 2
     ingredient.dataset = "test_dataset"
 
     with django_db_blocker.unblock():
@@ -50,7 +50,7 @@ def nutrient_1(django_db_blocker, django_db_setup):
     nutrient = Nutrient()
     nutrient.name = "test_nutrient"
     nutrient.unit = "G"
-    nutrient.fdc_id = 100  # Starting from 100 to avoid sharing ids with Ingredient
+    nutrient.external_id = 100  # Starting from 100 to avoid sharing ids with Ingredient
 
     with django_db_blocker.unblock():
         nutrient.save()
@@ -63,7 +63,7 @@ def nutrient_2(django_db_blocker, django_db_setup):
     nutrient = Nutrient()
     nutrient.name = "test_nutrient_2"
     nutrient.unit = "UG"
-    nutrient.fdc_id = 101
+    nutrient.external_id = 101
 
     with django_db_blocker.unblock():
         nutrient.save()

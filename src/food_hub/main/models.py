@@ -157,6 +157,15 @@ class Profile(models.Model):
         return round(result)
 
 
+class FoodDataSource(models.Model):
+    """Represents a source of nutrient and ingredient data."""
+
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Nutrient(models.Model):
     """
     Represents a single type of nutrient such as 'protein' or 'Calcium'.
@@ -191,7 +200,10 @@ class Nutrient(models.Model):
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
 
     # Nutrient's id in FDC database
-    fdc_id = models.IntegerField(unique=True, null=True)
+    external_id = models.IntegerField(unique=True, null=True)
+    data_source = models.ForeignKey(
+        FoodDataSource, on_delete=models.SET_NULL, null=True
+    )
 
     def __str__(self):
         return f"{self.name} ({self.PRETTY_UNITS.get(self.unit, self.unit)})"
@@ -201,7 +213,10 @@ class Ingredient(models.Model):
     """Represents a food ingredient."""
 
     # Ingredient's id in FDC database
-    fdc_id = models.IntegerField(unique=True, null=True)
+    external_id = models.IntegerField(unique=True, null=True)
+    data_source = models.ForeignKey(
+        FoodDataSource, on_delete=models.SET_NULL, null=True
+    )
 
     name = models.CharField(max_length=50)
     dataset = models.CharField(max_length=50)

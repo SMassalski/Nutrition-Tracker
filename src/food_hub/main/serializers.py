@@ -17,7 +17,7 @@ class NutrientDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Nutrient
-        fields = ["fdc_id", "name", "unit"]
+        fields = ["external_id", "name", "unit"]
 
 
 class IngredientNutrientSerializer(serializers.ModelSerializer):
@@ -51,7 +51,7 @@ class IngredientDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
-        fields = ["fdc_id", "name", "dataset", "nutrients"]
+        fields = ["external_id", "name", "dataset", "nutrients"]
 
 
 class IngredientPreviewSerializer(serializers.ModelSerializer):

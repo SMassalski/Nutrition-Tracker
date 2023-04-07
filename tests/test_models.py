@@ -187,7 +187,7 @@ def test_meal_nutritional_value_calculates_nutrients(
         name="test_component_2", final_weight=100
     )
     ingredient_3 = models.Ingredient(
-        name="test_ingredient_3", fdc_id=111, dataset="dataset"
+        name="test_ingredient_3", external_id=111, dataset="dataset"
     )
     ingredient_3.save()
     ingredient_3.nutrients.create(nutrient=nutrient_1, amount=20)
@@ -294,3 +294,10 @@ def test_profile_update_calculates_energy(db, user):
     profile.save()
     profile.refresh_from_db()
     assert profile.energy_requirement == 2643
+
+
+def test_food_data_source_string_representation():
+    """
+    The string representation of a FoodDataSource instance is its name.
+    """
+    assert str(models.FoodDataSource(name="test_name")) == "test_name"
