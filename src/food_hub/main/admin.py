@@ -15,3 +15,13 @@ class CustomUserAdmin(UserAdmin):
     """User model representation in the admin panel."""
 
     inlines = UserAdmin.inlines + (ProfileInline,)
+
+
+@admin.register(models.Nutrient)
+class NutrientAdmin(admin.ModelAdmin):
+    """Nutrient model representation in the admin panel."""
+
+
+@admin.register(models.InternalNutrient)
+class InternalNutrientAdmin(admin.ModelAdmin):
+    """InternalNutrient model representation in the admin panel."""

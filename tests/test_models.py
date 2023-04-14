@@ -301,3 +301,10 @@ def test_food_data_source_string_representation():
     The string representation of a FoodDataSource instance is its name.
     """
     assert str(models.FoodDataSource(name="test_name")) == "test_name"
+
+
+def test_internal_nutrient_string_representation():
+    """
+    The string representation of a FoodDataSource instance is its name.
+    """
+    assert str(models.InternalNutrient(name="test_name")) == "test_name"

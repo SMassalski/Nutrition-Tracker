@@ -166,6 +166,19 @@ class FoodDataSource(models.Model):
         return self.name
 
 
+# This is needed, because there can be many nutrient entries referring
+# to the same actual nutrient.
+class InternalNutrient(models.Model):
+    """
+    A standardized nutrient model for recommendation calculation.
+    """
+
+    name = models.CharField(max_length=32, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Nutrient(models.Model):
     """
     Represents a single type of nutrient such as 'protein' or 'Calcium'.
@@ -203,6 +216,9 @@ class Nutrient(models.Model):
     external_id = models.IntegerField(unique=True, null=True)
     data_source = models.ForeignKey(
         FoodDataSource, on_delete=models.SET_NULL, null=True
+    )
+    internal_nutrient = models.ForeignKey(
+        InternalNutrient, on_delete=models.SET_NULL, null=True
     )
 
     def __str__(self):
