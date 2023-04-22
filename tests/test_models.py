@@ -303,8 +303,11 @@ def test_food_data_source_string_representation():
     assert str(models.FoodDataSource(name="test_name")) == "test_name"
 
 
+# IntermediateNutrient model
 def test_internal_nutrient_string_representation():
     """
-    The string representation of a FoodDataSource instance is its name.
+    Nutrient model's string representation follows the format
+    <name> (<pretty unit symbol>).
     """
-    assert str(models.InternalNutrient(name="test_name")) == "test_name"
+    nutrient = models.IntermediateNutrient(name="test nutrient", unit="UG")
+    assert str(nutrient) == "test nutrient (µg)"

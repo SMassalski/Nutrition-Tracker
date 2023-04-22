@@ -168,15 +168,41 @@ class FoodDataSource(models.Model):
 
 # This is needed, because there can be many nutrient entries referring
 # to the same actual nutrient.
-class InternalNutrient(models.Model):
+class IntermediateNutrient(models.Model):
     """
     A standardized nutrient model for recommendation calculation.
     """
 
+    # Unit constants
+    CALORIES = "KCAL"
+    GRAMS = "G"
+    MILLIGRAMS = "MG"
+    MICROGRAMS = "UG"
+    INTERNATIONAL_UNITS = "IU"
+
+    # Unit choices for unit field
+    UNIT_CHOICES = [
+        (CALORIES, "calories"),
+        (GRAMS, "grams"),
+        (MILLIGRAMS, "milligrams"),
+        (MICROGRAMS, "micrograms"),
+        (INTERNATIONAL_UNITS, "IU"),
+    ]
+
+    # Unit symbols for string representation
+    PRETTY_UNITS = {
+        CALORIES: "kcal",
+        GRAMS: "g",
+        MILLIGRAMS: "mg",
+        MICROGRAMS: "µg",
+        INTERNATIONAL_UNITS: "IU",
+    }
+
     name = models.CharField(max_length=32, unique=True)
+    unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.PRETTY_UNITS.get(self.unit, self.unit)})"
 
 
 class Nutrient(models.Model):
@@ -218,7 +244,7 @@ class Nutrient(models.Model):
         FoodDataSource, on_delete=models.SET_NULL, null=True
     )
     internal_nutrient = models.ForeignKey(
-        InternalNutrient, on_delete=models.SET_NULL, null=True
+        IntermediateNutrient, on_delete=models.SET_NULL, null=True
     )
 
     def __str__(self):
@@ -228,10 +254,13 @@ class Nutrient(models.Model):
 class Ingredient(models.Model):
     """Represents a food ingredient."""
 
-    # Ingredient's id in FDC database
+    # Ingredient's id in the data source database
     external_id = models.IntegerField(unique=True, null=True)
     data_source = models.ForeignKey(
         FoodDataSource, on_delete=models.SET_NULL, null=True
+    )
+    intermediate_nutrients = models.ManyToManyField(
+        IntermediateNutrient, through="IntermediateIngredientNutrient"
     )
 
     name = models.CharField(max_length=50)
@@ -286,6 +315,25 @@ class IngredientNutrient(models.Model):
         constraints = [
             models.UniqueConstraint(
                 "ingredient", "nutrient", name="unique_ingredient_nutrient"
+            )
+        ]
+
+
+class IntermediateIngredientNutrient(models.Model):
+    """
+    An intermediate model for ingredient nutrient m2m relation using
+    the new nutrient model.
+    """
+
+    nutrient = models.ForeignKey(IntermediateNutrient, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+
+    amount = models.FloatField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                "ingredient", "nutrient", name="unique_ingredient_intermediate_nutrient"
             )
         ]
 
