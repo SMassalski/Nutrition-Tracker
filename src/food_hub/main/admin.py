@@ -22,6 +22,6 @@ class NutrientAdmin(admin.ModelAdmin):
     """Nutrient model representation in the admin panel."""
 
 
-@admin.register(models.InternalNutrient)
-class InternalNutrientAdmin(admin.ModelAdmin):
+@admin.register(models.IntermediateNutrient)
+class IntermediateNutrientAdmin(admin.ModelAdmin):
     """InternalNutrient model representation in the admin panel."""
