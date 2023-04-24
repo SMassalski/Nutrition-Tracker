@@ -17,7 +17,7 @@ class NutrientDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Nutrient
-        fields = ["external_id", "name", "unit"]
+        fields = ["name", "unit"]
 
 
 class IngredientNutrientSerializer(serializers.ModelSerializer):
@@ -47,7 +47,7 @@ class IngredientSerializer(serializers.HyperlinkedModelSerializer):
 class IngredientDetailSerializer(serializers.ModelSerializer):
     """Serializer for ingredient detail view."""
 
-    nutrients = IngredientNutrientSerializer(many=True)
+    nutrients = IngredientNutrientSerializer(many=True, source="ingredientnutrient_set")
 
     class Meta:
         model = Ingredient

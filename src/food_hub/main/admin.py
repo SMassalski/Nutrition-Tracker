@@ -20,8 +20,3 @@ class CustomUserAdmin(UserAdmin):
 @admin.register(models.Nutrient)
 class NutrientAdmin(admin.ModelAdmin):
     """Nutrient model representation in the admin panel."""
-
-
-@admin.register(models.IntermediateNutrient)
-class IntermediateNutrientAdmin(admin.ModelAdmin):
-    """InternalNutrient model representation in the admin panel."""

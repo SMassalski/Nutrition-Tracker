@@ -190,7 +190,7 @@ def test_meal_nutritional_value_calculates_nutrients(
         name="test_ingredient_3", external_id=111, dataset="dataset"
     )
     ingredient_3.save()
-    ingredient_3.nutrients.create(nutrient=nutrient_1, amount=20)
+    ingredient_3.ingredientnutrient_set.create(nutrient=nutrient_1, amount=20)
     meal_component_2.ingredients.create(ingredient=ingredient_3, amount=100)
     meal = models.Meal.objects.create(user=user, name="test_meal")
 
@@ -301,13 +301,3 @@ def test_food_data_source_string_representation():
     The string representation of a FoodDataSource instance is its name.
     """
     assert str(models.FoodDataSource(name="test_name")) == "test_name"
-
-
-# IntermediateNutrient model
-def test_internal_nutrient_string_representation():
-    """
-    Nutrient model's string representation follows the format
-    <name> (<pretty unit symbol>).
-    """
-    nutrient = models.IntermediateNutrient(name="test nutrient", unit="UG")
-    assert str(nutrient) == "test nutrient (µg)"

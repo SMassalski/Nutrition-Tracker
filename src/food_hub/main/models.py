@@ -166,11 +166,9 @@ class FoodDataSource(models.Model):
         return self.name
 
 
-# This is needed, because there can be many nutrient entries referring
-# to the same actual nutrient.
-class IntermediateNutrient(models.Model):
+class Nutrient(models.Model):
     """
-    A standardized nutrient model for recommendation calculation.
+    Represents nutrients contained in ingredients.
     """
 
     # Unit constants
@@ -178,7 +176,6 @@ class IntermediateNutrient(models.Model):
     GRAMS = "G"
     MILLIGRAMS = "MG"
     MICROGRAMS = "UG"
-    INTERNATIONAL_UNITS = "IU"
 
     # Unit choices for unit field
     UNIT_CHOICES = [
@@ -186,7 +183,6 @@ class IntermediateNutrient(models.Model):
         (GRAMS, "grams"),
         (MILLIGRAMS, "milligrams"),
         (MICROGRAMS, "micrograms"),
-        (INTERNATIONAL_UNITS, "IU"),
     ]
 
     # Unit symbols for string representation
@@ -195,57 +191,10 @@ class IntermediateNutrient(models.Model):
         GRAMS: "g",
         MILLIGRAMS: "mg",
         MICROGRAMS: "µg",
-        INTERNATIONAL_UNITS: "IU",
     }
 
     name = models.CharField(max_length=32, unique=True)
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
-
-    def __str__(self):
-        return f"{self.name} ({self.PRETTY_UNITS.get(self.unit, self.unit)})"
-
-
-class Nutrient(models.Model):
-    """
-    Represents a single type of nutrient such as 'protein' or 'Calcium'.
-    """
-
-    # Unit constants
-    CALORIES = "KCAL"
-    GRAMS = "G"
-    MILLIGRAMS = "MG"
-    MICROGRAMS = "UG"
-    INTERNATIONAL_UNITS = "IU"
-
-    # Unit choices for unit field
-    UNIT_CHOICES = [
-        (CALORIES, "calories"),
-        (GRAMS, "grams"),
-        (MILLIGRAMS, "milligrams"),
-        (MICROGRAMS, "micrograms"),
-        (INTERNATIONAL_UNITS, "IU"),
-    ]
-
-    # Unit symbols for string representation
-    PRETTY_UNITS = {
-        CALORIES: "kcal",
-        GRAMS: "g",
-        MILLIGRAMS: "mg",
-        MICROGRAMS: "µg",
-        INTERNATIONAL_UNITS: "IU",
-    }
-
-    name = models.CharField(max_length=50)
-    unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
-
-    # Nutrient's id in FDC database
-    external_id = models.IntegerField(unique=True, null=True)
-    data_source = models.ForeignKey(
-        FoodDataSource, on_delete=models.SET_NULL, null=True
-    )
-    internal_nutrient = models.ForeignKey(
-        IntermediateNutrient, on_delete=models.SET_NULL, null=True
-    )
 
     def __str__(self):
         return f"{self.name} ({self.PRETTY_UNITS.get(self.unit, self.unit)})"
@@ -259,9 +208,7 @@ class Ingredient(models.Model):
     data_source = models.ForeignKey(
         FoodDataSource, on_delete=models.SET_NULL, null=True
     )
-    intermediate_nutrients = models.ManyToManyField(
-        IntermediateNutrient, through="IntermediateIngredientNutrient"
-    )
+    nutrients = models.ManyToManyField(Nutrient, through="IngredientNutrient")
 
     name = models.CharField(max_length=50)
     dataset = models.CharField(max_length=50)
@@ -273,7 +220,7 @@ class Ingredient(models.Model):
         """
         Create a dict mapping nutrient to its amount in the ingredient.
         """
-        return {ig.nutrient: ig.amount for ig in self.nutrients.all()}
+        return {ig.nutrient: ig.amount for ig in self.ingredientnutrient_set.all()}
 
     @property
     def macronutrient_calories(self) -> Dict[Nutrient, float]:
@@ -281,7 +228,7 @@ class Ingredient(models.Model):
         The amount of calories per macronutrient in 100g of the
         ingredient.
         """
-        nutrients = self.nutrients.filter(
+        nutrients = self.ingredientnutrient_set.filter(
             models.Q(nutrient__name__contains="carbohydrate")
             | models.Q(nutrient__name__contains="lipid")
             | models.Q(nutrient__name__contains="protein")
@@ -300,32 +247,13 @@ class Ingredient(models.Model):
         return result
 
 
+# TODO: Change amounts if unit changes (use signals probably)
 class IngredientNutrient(models.Model):
-    """Represents the amount per 100g of a nutrient in an ingredient."""
+    """
+    Represents the amount of a nutrient in 100g of an ingredient.
+    """
 
-    ingredient = models.ForeignKey(
-        Ingredient, on_delete=models.CASCADE, related_name="nutrients"
-    )
     nutrient = models.ForeignKey(Nutrient, on_delete=models.CASCADE)
-
-    # The amount is per 100g and the unit is defined in `nutrient.unit`
-    amount = models.FloatField()
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                "ingredient", "nutrient", name="unique_ingredient_nutrient"
-            )
-        ]
-
-
-class IntermediateIngredientNutrient(models.Model):
-    """
-    An intermediate model for ingredient nutrient m2m relation using
-    the new nutrient model.
-    """
-
-    nutrient = models.ForeignKey(IntermediateNutrient, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
 
     amount = models.FloatField()
