@@ -12,16 +12,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("main", "0009_alter_ingredientnutrient_ingredient"),
-        (
-            "main",
-            "0010_meal_mealcomponent_mealcomponentingredient_and_more_squashed_0014_rename_final_mass_mealcomponent_final_weight",
-        ),
-        ("main", "0015_profile_alter_mealcomponent_final_weight_squash"),
-        ("main", "0016_profile_energy_requirement_profile_weight_and_more"),
-    ]
-
     dependencies = [
         ("main", "0008_ingredient_nutrient_data"),
     ]

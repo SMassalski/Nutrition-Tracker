@@ -83,7 +83,10 @@ def parse_ingredient_nutrients(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("main", "0007_alter_ingredientnutrient_amount"),
+        (
+            "main",
+            "0006_ingredientnutrient_unique_together_constraint_and_amount_to_float_field",
+        ),
     ]
 
     operations = [migrations.RunPython(parse_ingredient_nutrients)]

@@ -9,11 +9,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("main", "0006_ingredientnutrient_unique_ingredient_nutrient"),
-        ("main", "0007_alter_ingredientnutrient_amount"),
-    ]
-
     dependencies = [
         ("main", "0005_ingredient_data"),
     ]

@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("main", "0019_fooddatasource_data_create_FDC_record"),
+        ("main", "0019_fooddatasource_data_create_FDC_record_data"),
     ]
 
     operations = [

@@ -59,7 +59,7 @@ def parse_nutrients(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("main", "0002_alter_nutrient_unit"),
+        ("main", "0001_initial_squashed"),
     ]
 
     operations = [migrations.RunPython(parse_nutrients)]

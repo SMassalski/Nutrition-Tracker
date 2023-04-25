@@ -14,10 +14,6 @@ def create_fdc_data_source(apps, _):
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("main", "0019_fooddatasource_data_create_FDC_record"),
-    ]
-
     dependencies = [
         ("main", "0018_fooddatasource_rename_fdc_id_ingredient_external_id_and_more"),
     ]

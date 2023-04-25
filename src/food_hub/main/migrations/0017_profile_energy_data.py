@@ -125,7 +125,10 @@ def update_energy_requirements(apps, _):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("main", "0016_profile_energy_requirement_profile_weight_and_more"),
+        (
+            "main",
+            "0009_meal_associated_and_profile_models_and_ingredientnutrien_ingredient_related_name",
+        ),
     ]
 
     operations = [

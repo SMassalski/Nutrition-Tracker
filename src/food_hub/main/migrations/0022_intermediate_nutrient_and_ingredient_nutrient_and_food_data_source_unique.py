@@ -10,14 +10,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("main", "0022_alter_fooddatasource_name"),
-        ("main", "0023_internalnutrient_nutrient_internal_nutrient"),
-        ("main", "0024_alter_internalnutrient_name"),
-        ("main", "0025_rename_internalnutrient_intermediatenutrient_and_more"),
-        ("main", "0026_intermediatenutrient_unit"),
-    ]
-
     dependencies = [
         ("main", "0021_ingredient_and_nutrient_fdc_datasource_data"),
     ]
@@ -49,7 +41,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to="main.internalnutrient",
+                to="main.intermediatenutrient",
             ),
         ),
         migrations.CreateModel(

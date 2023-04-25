@@ -13,8 +13,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [("main", "0001_initial"), ("main", "0002_alter_nutrient_unit")]
-
     dependencies = [
         ("auth", "0012_alter_user_first_name_max_length"),
     ]

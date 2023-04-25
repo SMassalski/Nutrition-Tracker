@@ -629,7 +629,10 @@ def delete_transferred_nutrient_data(apps, _):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("main", "0026_intermediatenutrient_unit"),
+        (
+            "main",
+            "0022_intermediate_nutrient_and_ingredient_nutrient_and_food_data_source_unique",
+        ),
     ]
 
     operations = [
