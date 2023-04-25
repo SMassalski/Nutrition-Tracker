@@ -7,11 +7,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("main", "0015_profile_alter_mealcomponent_final_weight"),
-        ("main", "0016_profile_user"),
-    ]
-
     dependencies = [
         (
             "main",
