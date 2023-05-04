@@ -56,3 +56,51 @@ def open_or_pass(
     if isinstance(file, io.IOBase):
         return file
     return open(file, *args, **kwargs)
+
+
+def get_conversion_factor(from_unit: str, to_unit: str, name: str = None) -> float:
+    """Get the factor needed to convert between two units.
+
+    Parameters
+    ----------
+    from_unit
+        Unit to be converted from.
+    to_unit
+        Unit to be converted to.
+    name
+        The name of the nutrient being converted. Required only when
+        one of the units is `IU`
+    Returns
+    -------
+    float
+    """
+
+    # skip if units are the same
+    if from_unit == to_unit:
+        return 1.0
+
+    # 1 of the unit denoted by the `key` == `value` of grams
+    gram_conversion_factors = {
+        "UG": 1e-6,
+        "MG": 0.001,
+        "G": 1,
+        "IU": {"Vitamin A": 0.3 * 1e-6, "Vitamin D": 0.025 * 1e-6},
+    }
+
+    # From nutrient's unit to grams
+    if from_unit == "IU":
+        f2g = gram_conversion_factors["IU"].get(name)
+    else:
+        f2g = gram_conversion_factors.get(from_unit)
+    if f2g is None:
+        raise ValueError(f"Unit {from_unit} was not recognized.")
+
+    # From grams to target unit
+    if to_unit == "IU":
+        g2t = gram_conversion_factors["IU"].get(name)
+    else:
+        g2t = gram_conversion_factors.get(to_unit)
+    if g2t is None:
+        raise ValueError(f"Unit {to_unit} was not recognized.")
+
+    return f2g / g2t

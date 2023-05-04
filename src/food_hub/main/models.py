@@ -203,6 +203,8 @@ class Nutrient(models.Model):
 class Ingredient(models.Model):
     """Represents a food ingredient."""
 
+    # TODO: external_id unique together with data_source not by itself
+    # TODO: dataset nullable
     # Ingredient's id in the data source database
     external_id = models.IntegerField(unique=True, null=True)
     data_source = models.ForeignKey(
