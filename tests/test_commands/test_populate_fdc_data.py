@@ -15,7 +15,7 @@ def fdc_data_file_paths():
     os.write(
         fd,
         b'"fdc_id","data_type","description","food_category_id","publication_date"\n'
-        b'"3","branded_food","test_ingredient_3","","2020-11-13"\n'
+        b'"3","survey_fndds_food","test_ingredient_3","","2020-11-13"\n'
         b'"4","sr_legacy_food","test_ingredient_4","","2019-04-01"\n',
     )
     os.close(fd)

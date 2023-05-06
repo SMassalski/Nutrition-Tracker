@@ -2,15 +2,21 @@
 import io
 
 import pytest
+from django.conf import settings
+from django.db import connection
 from main import models
-from main.management.commands.populatefdcdata import (
+from main.management.commands._populatefdcdata import (
     NoNutrientException,
     create_fdc_data_source,
-    get_nutrient_units,
     handle_nonstandard,
     parse_food_csv,
     parse_food_nutrient_csv,
+    parse_nutrient_csv,
 )
+
+# NOTE: Nonstandard nutrient is a nutrient that needs o be handled
+#  differently based on the differences in the way they are stored
+#  in the FDC data and the app's database.
 
 # FDC ids of nutrients that need to be handled differently
 CYSTEINE = 1232
@@ -128,7 +134,7 @@ def food_csv():
     """
     file = io.StringIO(
         '"fdc_id","data_type","description","food_category_id","publication_date"\n'
-        '"1","branded_food","test_ingredient_1","","2020-11-13"\n'
+        '"1","survey_fndds_food","test_ingredient_1","","2020-11-13"\n'
         '"2","sr_legacy_food","test_ingredient_2","","2019-04-01"\n'
     )
     yield file
@@ -158,7 +164,7 @@ def test_parse_food_csv_reads_data(db, fdc_data_source, food_csv):
     result = result[0]
     assert result.name == "test_ingredient_1"
     assert result.external_id == 1
-    assert result.dataset == "branded_food"
+    assert result.dataset == "survey_fndds_food"
     assert result.data_source == fdc_data_source
 
 
@@ -184,19 +190,27 @@ def nutrient_csv():
     file = io.StringIO(
         '"id","name","unit_name","nutrient_nbr","rank"\n'
         '"1","nutrient_1","UG","201","200.0"\n'
-        '"2","nutrient_2","MG","201","200.0"\n'
-        '"3","nutrient_3","G","201","200.0"\n'
+        '"2","nutrient_2","MG","202","200.0"\n'
+        '"3","nutrient_3","G","203","200.0"\n'
     )
     yield file
     file.close()
 
 
-class TestGetNutrientUnits:
-    """Tests of the get_nutrient_units() function."""
+@pytest.fixture
+def debug_mode():
+    """Set 'settings.DEBUG' to True for the duration of the test."""
+    settings.DEBUG = True
+    yield
+    settings.DEBUG = False
 
-    def test_get_nutrient_units(self, nutrient_csv):
+
+class TestParseNutrient:
+    """Tests of the parse_nutrient_csv() function."""
+
+    def test_parse_nutrient_units(self, nutrient_csv):
         """
-        get_nutrient_units() correctly extracts information about a
+        parse_nutrient_csv() correctly extracts information about a
         nutrient's unit from FDC's nutrient.csv.
         """
         expected = {
@@ -204,11 +218,21 @@ class TestGetNutrientUnits:
             2: "MG",
             3: "G",
         }
-        assert get_nutrient_units(nutrient_csv) == expected
+        result, _ = parse_nutrient_csv(nutrient_csv)
+        assert result == expected
+
+    def test_parse_nutrient_nbr(self, nutrient_csv):
+        """
+        parse_nutrient_csv() correctly creates a mapping for nutrient's
+        nbr to their FDC ids.
+        """
+        expected = {"201": 1, "202": 2, "203": 3}
+        _, result = parse_nutrient_csv(nutrient_csv)
+        assert result == expected
 
     def test_get_nutrient_units_nonstandard_unit(self, nutrient_csv):
         """
-        get_nutrient_units() translates nonstandard units (like MCG_RE)
+        parse_nutrient_csv() translates nonstandard units (like MCG_RE)
         to their respective standard counterparts.
         """
         append_file(
@@ -218,7 +242,7 @@ class TestGetNutrientUnits:
             '"6","nutrient_6","MG_ATE","201","200.0"\n',
         )
 
-        result = get_nutrient_units(nutrient_csv)
+        result, _ = parse_nutrient_csv(nutrient_csv)
         assert result[4] == "UG"
         assert result[5] == "MG"
         assert result[6] == "MG"
@@ -361,6 +385,7 @@ class TestParseFoodNutrient:
             ingredient__external_id=10
         ).exists()
 
+    # TODO: This might be better done through mocking
     def test_parse_food_nutrient_exceptions(
         self, db, food_nutrient_csv, real_nutrient_csv, ingredient_and_nutrient_data
     ):
@@ -402,31 +427,55 @@ class TestParseFoodNutrient:
         )
         parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv)
 
-        ingredient = models.Ingredient.objects.get(external_id=4)
+        ing = models.Ingredient.objects.get(external_id=4)
 
-        assert (
-            ingredient.ingredientnutrient_set.get(nutrient__name="Vitamin A").amount
-            == 1
-        )
+        assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin A").amount == 1
 
         # Vitamin D IU nutrient conversion (40 IU in food_nutrient_csv to 1 mcg)
-        assert (
-            ingredient.ingredientnutrient_set.get(nutrient__name="Vitamin D").amount
-            == 1
-        )
-        assert (
-            ingredient.ingredientnutrient_set.get(nutrient__name="Vitamin B9").amount
-            == 1
-        )
-        assert (
-            ingredient.ingredientnutrient_set.get(nutrient__name="Vitamin K").amount
-            == 6
-        )
+        assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin D").amount == 1
+        assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin B9").amount == 1
+        assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin K").amount == 6
 
         # Cysteine has unit conversion from g to mg
-        assert (
-            ingredient.ingredientnutrient_set.get(nutrient__name="Cysteine").amount == 1
+        assert ing.ingredientnutrient_set.get(nutrient__name="Cysteine").amount == 1
+
+    def test_parse_food_nutrient_batch_size(
+        self,
+        db,
+        food_nutrient_csv,
+        real_nutrient_csv,
+        ingredient_and_nutrient_data,
+        debug_mode,
+    ):
+        """
+        parse_food_nutrient_csv() separates creating IngredientNutrient
+        records to batches of the specified size.
+        """
+        start_conn_nbr = len(connection.queries)
+        parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv, batch_size=1)
+        assert len(connection.queries) - start_conn_nbr == 5
+
+    def test_parse_food_nutrient_batch_size_nonstandard(
+        self,
+        db,
+        food_nutrient_csv,
+        real_nutrient_csv,
+        ingredient_and_nutrient_data,
+        debug_mode,
+    ):
+        """
+        parse_food_nutrient_csv() separates creating IngredientNutrient
+        records to batches of the specified size when handling
+        nonstandard nutrients.
+        """
+        append_file(
+            food_nutrient_csv, '"13706915","4","1104","2","","71","","","","","",""\n'
         )
+
+        append_file(real_nutrient_csv, '"1104","Vitamin A, IU","IU","201","200.0"\n')
+        start_conn_nbr = len(connection.queries)
+        parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv, batch_size=1)
+        assert len(connection.queries) - start_conn_nbr == 6
 
 
 # Separate to avoid ingredient_and_nutrient_data_fixture
@@ -442,5 +491,4 @@ def test_parse_food_nutrient_no_nutrients_in_db(
     # nutrient_1 is not a required nutrient
 
     with pytest.raises(NoNutrientException):
-        print(models.Nutrient.objects.all())
         parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv)
