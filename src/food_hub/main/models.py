@@ -5,14 +5,15 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
-from util import weighted_dict_sum
+from util import get_conversion_factor, weighted_dict_sum
 
 
-# TODO: Unique user email
 class User(AbstractUser):
     """Custom user model for future modification."""
 
-    pass
+    models.EmailField(
+        blank=True, max_length=254, verbose_name="email address", unique=True
+    ),
 
 
 # A profile should not be required to use the app. Recommended intake
@@ -169,6 +170,13 @@ class FoodDataSource(models.Model):
 class Nutrient(models.Model):
     """
     Represents nutrients contained in ingredients.
+
+    Notes
+    -----
+    Special consideration should be given when updating the nutrient's
+    unit value. The save method updates the amount values of related
+    IngredientNutrients, but when using bulk_update() the amounts must
+    be changed manually
     """
 
     # Unit constants
@@ -199,21 +207,86 @@ class Nutrient(models.Model):
     def __str__(self):
         return f"{self.name} ({self.PRETTY_UNITS.get(self.unit, self.unit)})"
 
+    # NOTE: from_db and save method overrides to update amount values
+    #   of related IngredientNutrient records so the actual amount
+    #   remains unchanged (when changing unit from grams to milligrams
+    #   the amounts are multiplied x 1000)
+
+    # docstr-coverage: inherited
+    def __init__(self, *args, **kwargs):
+        self._old_unit = None
+        super().__init__(*args, **kwargs)
+
+    # docstr-coverage: inherited
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+
+        # Remember the unit that is saved in the database
+        try:
+            instance._old_unit = values[field_names.index("unit")]
+        except ValueError:
+            # If deferred unit won't appear in 'field_names'
+            instance._old_unit = models.DEFERRED
+
+        return instance
+
+    def save(self, update_amounts: bool = True, *args, **kwargs) -> None:
+        """Save the current instance.
+
+        Overridden method to allow amount updates.
+
+        Parameters
+        ----------
+        update_amounts
+            Whether to update the amount values of related
+            IngredientNutrient records when changing the nutrient's unit
+            so that the actual amount remains unchanged.
+        args
+            Arguments passed to the base save method.
+        kwargs
+            Keyword arguments passed to the base save method.
+        """
+        # If old_unit is None don't update the amounts.
+        old_unit = self._old_unit or self.unit
+
+        # Get the unit from the database if it was deferred
+        if old_unit is models.DEFERRED:
+            old_unit = Nutrient.objects.values("unit").get(id=self.id)["unit"]
+
+        super().save(*args, **kwargs)
+
+        update_amounts = (
+            update_amounts and not self._state.adding and self.unit != old_unit
+        )
+
+        if update_amounts:
+            factor = get_conversion_factor(old_unit, self.unit, self.name)
+            self.ingredientnutrient_set.update(amount=models.F("amount") * factor)
+
+        self._old_unit = self.unit
+
 
 class Ingredient(models.Model):
     """Represents a food ingredient."""
 
-    # TODO: external_id unique together with data_source not by itself
-    # TODO: dataset nullable
     # Ingredient's id in the data source database
-    external_id = models.IntegerField(unique=True, null=True)
+    external_id = models.IntegerField(null=True)
     data_source = models.ForeignKey(
         FoodDataSource, on_delete=models.SET_NULL, null=True
     )
     nutrients = models.ManyToManyField(Nutrient, through="IngredientNutrient")
 
     name = models.CharField(max_length=50)
-    dataset = models.CharField(max_length=50)
+    dataset = models.CharField(max_length=50, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("data_source", "external_id"),
+                name="unique_ingredient_data_source_and_external_id",
+            )
+        ]
 
     def __str__(self):
         return self.name
@@ -249,7 +322,6 @@ class Ingredient(models.Model):
         return result
 
 
-# TODO: Change amounts if unit changes (use signals probably)
 class IngredientNutrient(models.Model):
     """
     Represents the amount of a nutrient in 100g of an ingredient.
@@ -263,7 +335,7 @@ class IngredientNutrient(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                "ingredient", "nutrient", name="unique_ingredient_intermediate_nutrient"
+                "ingredient", "nutrient", name="unique_ingredient_nutrient"
             )
         ]
 

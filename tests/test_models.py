@@ -101,6 +101,83 @@ def test_nutrient_string_representation():
     )
 
 
+def test_save_updates_amounts_from_db(db, ingredient_1):
+    """
+    Updating a nutrient's unit changes the amount value of related
+    IngredientNutrient records so that the actual amount remains
+    unchanged. Test for when the instance was loaded from the database.
+    """
+    nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+    ing_nut = models.IngredientNutrient.objects.create(
+        ingredient=ingredient_1, nutrient=nutrient, amount=1
+    )
+
+    nutrient = models.Nutrient.objects.get(pk=nutrient.id)
+    nutrient.unit = "MG"
+    nutrient.save()
+
+    ing_nut.refresh_from_db()
+
+    assert ing_nut.amount == 1000
+
+
+def test_save_updates_amounts_created(db, ingredient_1):
+    """
+    Updating a nutrient's unit changes the amount value of related
+    IngredientNutrient records so that the actual amount remains
+    unchanged. Test for when the instance was created and saved.
+    """
+    nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+    ing_nut = models.IngredientNutrient.objects.create(
+        ingredient=ingredient_1, nutrient=nutrient, amount=1
+    )
+
+    nutrient.unit = "MG"
+    nutrient.save()
+
+    ing_nut.refresh_from_db()
+
+    assert ing_nut.amount == 1000
+
+
+def test_save_updates_amounts_from_db_deferred(db, ingredient_1):
+    """
+    Updating a nutrient's unit changes the amount value of related
+    IngredientNutrient records so that the actual amount remains
+    unchanged. Test for when the instance was loaded from the database,
+    but the unit field was deferred.
+    """
+    nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+    ing_nut = models.IngredientNutrient.objects.create(
+        ingredient=ingredient_1, nutrient=nutrient, amount=1
+    )
+
+    nutrient = models.Nutrient.objects.defer("unit").get(id=nutrient.id)
+    nutrient.unit = "MG"
+    nutrient.save()
+
+    ing_nut.refresh_from_db()
+
+    assert ing_nut.amount == 1000
+
+
+def test_save_update_amounts_false(db, ingredient_1):
+    """
+    Updating a nutrient's unit doesn't change the amount value of related
+    IngredientNutrient records if save was called with `update_amounts`
+    set to False.
+    """
+    nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+    ing_nut = models.IngredientNutrient.objects.create(
+        ingredient=ingredient_1, nutrient=nutrient, amount=1
+    )
+
+    nutrient.unit = "MG"
+    nutrient.save(update_amounts=False)
+
+    assert ing_nut.amount == 1
+
+
 # Meal Component model
 def test_meal_component_string_representation():
     """MealComponent model's string representation is its name"""
