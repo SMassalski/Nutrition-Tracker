@@ -4,6 +4,7 @@ from typing import Dict
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.lookups import LessThanOrEqual
 from django.utils import timezone
 from util import get_conversion_factor, weighted_dict_sum
 
@@ -265,6 +266,88 @@ class Nutrient(models.Model):
             self.ingredientnutrient_set.update(amount=models.F("amount") * factor)
 
         self._old_unit = self.unit
+
+
+class RecommendationManager(models.Manager):
+    """Manager class for intake recommendations."""
+
+    def for_profile(self, profile: Profile) -> models.QuerySet:
+        """Retrieve a queryset of recommendations matching a profile.
+
+        Returns
+        -------
+        models.Queryset
+            Recommendations that match the profile's age and sex.
+        """
+        return self.filter(
+            age_min__lte=profile.age,
+            age_max__gte=profile.age,
+            sex__in=[profile.sex, "B"],
+        )
+
+
+class IntakeRecommendation(models.Model):
+    """
+    Represents dietary intake recommendations for a selected
+    demographic.
+    """
+
+    # NOTE: Different recommendation types will use the amount fields
+    #  in different ways
+    type_choices = [
+        ("AI", "AI/UL"),  # amount_min=AI, amount_max=UL
+        # AI-KCAL is amount/1000kcal Adequate Intake; mainly for fiber
+        # intake.
+        ("AIK", "AI-KCAL"),
+        ("AMDR", "AMDR"),
+        ("RDA", "RDA/UL"),  # amount_min=RDA, amount_max=UL
+        ("UL", "UL"),
+    ]
+    sex_choices = [
+        ("B", "Both"),
+        ("F", "Female"),
+        ("M", "Male"),
+    ]
+
+    amount_help_text = (
+        "Use of the amount fields differs depending on the selected"
+        " <em>dri_type</em>.</br>"
+        "AMDR - <em>amount_min</em> and <em>amount_max</em> are the"
+        " lower and the upper limits of the range respectively.</br>"
+        "AI/UL and RDA/UL - <em>amount_min</em> is the RDA or AI "
+        "value. <em>amount_max</em> is the UL value (if available)."
+        "</br>UL and AIK - use only <em>amount_min</em>."
+    )
+
+    nutrient = models.ForeignKey(
+        Nutrient, on_delete=models.CASCADE, related_name="recommendations"
+    )
+    dri_type = models.CharField(max_length=4, choices=type_choices)
+    sex = models.CharField(max_length=1, choices=sex_choices)
+    age_min = models.PositiveIntegerField()
+    age_max = models.PositiveIntegerField(null=True)
+    amount_min = models.FloatField(help_text=amount_help_text)
+    amount_max = models.FloatField(null=True)
+
+    objects = RecommendationManager()
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=LessThanOrEqual(models.F("age_min"), models.F("age_max")),
+                name="recommendation_age_min_max",
+            ),
+            models.CheckConstraint(
+                check=LessThanOrEqual(models.F("amount_min"), models.F("amount_max")),
+                name="recommendation_amount_min_max",
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.nutrient.name} : {self.age_min} - {self.age_max or ''}"
+            f" [{self.sex}]"
+        )
 
 
 class Ingredient(models.Model):

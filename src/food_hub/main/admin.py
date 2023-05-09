@@ -20,3 +20,8 @@ class CustomUserAdmin(UserAdmin):
 @admin.register(models.Nutrient)
 class NutrientAdmin(admin.ModelAdmin):
     """Nutrient model representation in the admin panel."""
+
+
+@admin.register(models.IntakeRecommendation)
+class RecommendationAdmin(admin.ModelAdmin):
+    """IntakeRecommendation model representation in the admin panel."""

@@ -378,3 +378,109 @@ def test_food_data_source_string_representation():
     The string representation of a FoodDataSource instance is its name.
     """
     assert str(models.FoodDataSource(name="test_name")) == "test_name"
+
+
+# Nutrient Recommendation tests
+def test_recommendation_manger_for_profile_by_sex(db, nutrient_1):
+    """
+    RecommendationManager.for_profile() correctly selects
+    IntakeRecommendations matching a profile based on sex.
+    """
+    profile = models.Profile(sex="F", age=50)
+
+    recommends = models.IntakeRecommendation.objects.bulk_create(
+        [
+            models.IntakeRecommendation(
+                nutrient=nutrient_1,
+                dri_type="UL",
+                sex="B",
+                age_min=18,
+                age_max=60,
+                amount_min=0,
+                amount_max=10,
+            ),
+            models.IntakeRecommendation(
+                nutrient=nutrient_1,
+                dri_type="RDA",
+                sex="F",
+                age_min=18,
+                age_max=60,
+                amount_min=3,
+                amount_max=10,
+            ),
+            models.IntakeRecommendation(
+                nutrient=nutrient_1,
+                dri_type="UL",
+                sex="M",
+                age_min=18,
+                age_max=60,
+                amount_min=0,
+                amount_max=10,
+            ),
+        ]
+    )
+
+    for_profile = models.IntakeRecommendation.objects.for_profile(profile)
+    assert for_profile.count() == 2
+    assert recommends[2] not in for_profile
+
+
+def test_recommendation_manger_for_profile_by_age(db, nutrient_1):
+    """
+    RecommendationManager.for_profile() correctly selects
+    IntakeRecommendations matching a profile based on age.
+    """
+    profile = models.Profile(sex="M", age=50)
+
+    recommends = models.IntakeRecommendation.objects.bulk_create(
+        [
+            models.IntakeRecommendation(
+                nutrient=nutrient_1,
+                dri_type="UL",
+                sex="M",
+                age_min=18,
+                age_max=50,
+                amount_min=0,
+                amount_max=10,
+            ),
+            models.IntakeRecommendation(
+                nutrient=nutrient_1,
+                dri_type="RDA",
+                sex="M",
+                age_min=50,
+                age_max=60,
+                amount_min=3,
+                amount_max=10,
+            ),
+            models.IntakeRecommendation(
+                nutrient=nutrient_1,
+                dri_type="RDA",
+                sex="M",
+                age_min=20,
+                age_max=30,
+                amount_min=3,
+                amount_max=10,
+            ),
+        ]
+    )
+
+    for_profile = models.IntakeRecommendation.objects.for_profile(profile)
+    assert for_profile.count() == 2
+    assert recommends[2] not in for_profile
+
+
+def test_recommendation_str():
+    """
+    IntakeRecommendation's string representation follows the format
+    <nutrient_name> : <age_range> [<sex>].
+    """
+    nutrient = models.Nutrient(name="test_name")
+    recommendation = models.IntakeRecommendation(
+        nutrient=nutrient,
+        dri_type="UL",
+        sex="M",
+        age_min=18,
+        age_max=50,
+    )
+
+    assert str(recommendation) == "test_name : 18 - 50 [M]"
