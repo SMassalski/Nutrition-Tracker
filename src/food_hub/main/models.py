@@ -418,7 +418,7 @@ class IngredientNutrient(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                "ingredient", "nutrient", name="unique_ingredient_intermediate_nutrient"
+                "ingredient", "nutrient", name="unique_ingredient_nutrient"
             )
         ]
 
