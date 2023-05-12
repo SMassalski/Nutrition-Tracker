@@ -12,18 +12,23 @@ class ProfileInline(admin.TabularInline):
     model = main.models.user.Profile
 
 
-@admin.register(main.models.user.User)
+@admin.register(models.User)
 class CustomUserAdmin(UserAdmin):
     """User model representation in the admin panel."""
 
     inlines = UserAdmin.inlines + (ProfileInline,)
 
 
-@admin.register(main.models.foods.Nutrient)
+@admin.register(models.Nutrient)
 class NutrientAdmin(admin.ModelAdmin):
     """Nutrient model representation in the admin panel."""
 
 
-@admin.register(main.models.foods.IntakeRecommendation)
+@admin.register(models.IntakeRecommendation)
 class RecommendationAdmin(admin.ModelAdmin):
     """IntakeRecommendation model representation in the admin panel."""
+
+
+@admin.register(models.NutrientType)
+class NutrientTypeAdmin(admin.ModelAdmin):
+    """NutrientType model representation in the admin panel."""

@@ -5,6 +5,7 @@ from .foods import (
     IngredientNutrient,
     IntakeRecommendation,
     Nutrient,
+    NutrientType,
 )
 from .meals import Meal, MealComponent, MealComponentAmount, MealComponentIngredient
 from .user import Profile, User

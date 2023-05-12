@@ -19,6 +19,18 @@ class FoodDataSource(models.Model):
         return self.name
 
 
+class NutrientType(models.Model):
+    """
+    Represents a type a nutrient might be classified by, e.g.
+    Amino acid or Macronutrient.
+    """
+
+    name = models.CharField(max_length=32, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Nutrient(models.Model):
     """
     Represents nutrients contained in ingredients.
@@ -55,6 +67,7 @@ class Nutrient(models.Model):
 
     name = models.CharField(max_length=32, unique=True)
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
+    types = models.ManyToManyField(NutrientType, related_name="nutrients")
 
     def __str__(self):
         return f"{self.name} ({self.PRETTY_UNITS.get(self.unit, self.unit)})"
