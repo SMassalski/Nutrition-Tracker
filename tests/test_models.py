@@ -494,7 +494,7 @@ def test_recommendation_manger_for_profile_age_max_is_none(db, nutrient_1):
 def test_recommendation_str():
     """
     IntakeRecommendation's string representation follows the format
-    <nutrient_name> : <age_range> [<sex>].
+    <nutrient_name> : <age_range> [<sex>] (<dri_type>).
     """
     nutrient = models.Nutrient(name="test_name")
     recommendation = models.IntakeRecommendation(
@@ -505,4 +505,4 @@ def test_recommendation_str():
         age_max=50,
     )
 
-    assert str(recommendation) == "test_name : 18 - 50 [M]"
+    assert str(recommendation) == "test_name : 18 - 50 [M] (UL)"

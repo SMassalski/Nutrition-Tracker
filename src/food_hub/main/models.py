@@ -325,7 +325,7 @@ class IntakeRecommendation(models.Model):
     )
 
     nutrient = models.ForeignKey(
-        Nutrient, on_delete=models.CASCADE, related_name="recommendations"
+        Nutrient, on_delete=models.DO_NOTHING, related_name="recommendations"
     )
     dri_type = models.CharField(max_length=6, choices=type_choices)
     sex = models.CharField(max_length=1, choices=sex_choices)
@@ -346,12 +346,16 @@ class IntakeRecommendation(models.Model):
                 check=LessThanOrEqual(models.F("amount_min"), models.F("amount_max")),
                 name="recommendation_amount_min_max",
             ),
+            models.UniqueConstraint(
+                fields=("sex", "age_min", "age_max", "dri_type", "nutrient"),
+                name="recommendation_unique_demographic_nutrient_and_type",
+            ),
         ]
 
     def __str__(self):
         return (
             f"{self.nutrient.name} : {self.age_min} - {self.age_max or ''}"
-            f" [{self.sex}]"
+            f" [{self.sex}] ({self.dri_type})"
         )
 
 
