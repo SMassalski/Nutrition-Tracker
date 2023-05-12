@@ -2,7 +2,7 @@
 import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from main.models import Nutrient
+from main.models.foods import Nutrient
 
 
 def test_populate_recommendation_data_no_nutrients_raises_error(db):

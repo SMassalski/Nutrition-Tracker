@@ -1,6 +1,6 @@
 """Tests of main app's regular (non-api) views."""
 from django.urls import reverse
-from main.models import Profile
+from main.models.user import Profile
 
 
 def test_profile_post_request_creates_a_profile_record(db, user, client):

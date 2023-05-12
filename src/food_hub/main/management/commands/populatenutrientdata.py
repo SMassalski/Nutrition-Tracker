@@ -1,6 +1,6 @@
 """Command and associated functions for populating nutrient data."""
 from django.core.management.base import BaseCommand
-from main.models import Nutrient
+from main.models.foods import Nutrient
 
 
 class Command(BaseCommand):

@@ -4,7 +4,7 @@ from typing import Tuple
 from crispy_forms import bootstrap, layout
 from crispy_forms.helper import FormHelper
 from django import forms
-from main.models import Profile
+from main.models.user import Profile
 
 
 class ProfileForm(forms.ModelForm):

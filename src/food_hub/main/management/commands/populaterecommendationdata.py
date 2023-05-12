@@ -2,7 +2,7 @@
 Command for populating the database with intake recommendation data.
 """
 from django.core.management.base import BaseCommand, CommandError
-from main.models import IntakeRecommendation, Nutrient
+from main.models.foods import IntakeRecommendation, Nutrient
 
 from ._recommendations import recommendations
 

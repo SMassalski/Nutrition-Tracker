@@ -4,7 +4,9 @@ from tempfile import gettempdir
 
 import pytest
 from django.conf import settings
-from main.models import Ingredient, IngredientNutrient, MealComponent, Nutrient, User
+from main.models.foods import Ingredient, IngredientNutrient, Nutrient
+from main.models.meals import MealComponent
+from main.models.user import User
 
 
 @pytest.fixture(scope="session", autouse=True)

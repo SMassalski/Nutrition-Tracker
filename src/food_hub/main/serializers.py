@@ -1,7 +1,7 @@
 """main app's serializers"""
 from rest_framework import serializers
 
-from .models import Ingredient, IngredientNutrient, Nutrient
+from .models.foods import Ingredient, IngredientNutrient, Nutrient
 
 
 class NutrientSerializer(serializers.HyperlinkedModelSerializer):

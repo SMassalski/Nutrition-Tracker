@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
 from .. import serializers
-from ..models import Ingredient, Nutrient
+from ..models.foods import Ingredient, Nutrient
 
 
 @api_view(["GET"])

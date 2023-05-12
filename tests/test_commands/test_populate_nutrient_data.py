@@ -1,7 +1,7 @@
 """Tests of the populate_nutrient_data command."""
 from django.core.management import call_command
 from main.management.commands.populatenutrientdata import create_nutrients
-from main.models import Nutrient
+from main.models.foods import Nutrient
 
 _names = [
     "Asparagine",

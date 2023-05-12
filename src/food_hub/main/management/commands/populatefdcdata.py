@@ -4,6 +4,7 @@ files.
 """
 from pathlib import Path
 
+import main.models.foods
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from main import models
@@ -119,7 +120,7 @@ class Command(BaseCommand):
         # Create Ingredients
         create_fdc_data_source()
         ing_count = len(
-            models.Ingredient.objects.bulk_create(
+            main.models.foods.Ingredient.objects.bulk_create(
                 parse_food_csv(food_file, options["dataset_filter"]),
                 ignore_conflicts=True,
             )

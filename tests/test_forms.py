@@ -1,6 +1,6 @@
 """Tests of main app's forms and form utility functions."""
 from main import forms
-from main.models import Profile
+from main.models.user import Profile
 
 
 def test_profile_form_initial_height_unit_conversion():

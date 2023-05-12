@@ -4,7 +4,7 @@ import io
 import os
 from typing import Dict, List, Tuple, Union
 
-from main import models
+import main.models.foods
 from main.management.commands.populatenutrientdata import NoNutrientException
 from util import get_conversion_factor, open_or_pass
 
@@ -151,9 +151,9 @@ PREFERRED_NONSTANDARD = {
 }
 
 
-def create_fdc_data_source() -> models.FoodDataSource:
+def create_fdc_data_source() -> main.models.foods.FoodDataSource:
     """Create a FoodDataSource record for USDA's Food Data Central."""
-    return models.FoodDataSource.objects.get_or_create(name="FDC")
+    return main.models.foods.FoodDataSource.objects.get_or_create(name="FDC")
 
 
 def parse_nutrient_csv(
@@ -191,7 +191,7 @@ def parse_nutrient_csv(
 def parse_food_csv(
     file: Union[str, os.PathLike, io.IOBase],
     dataset_filter: List[str] = None,
-) -> List[models.Ingredient]:
+) -> List[main.models.foods.Ingredient]:
     """Load ingredient data from the Foods csv file.
 
     Parameters
@@ -204,14 +204,14 @@ def parse_food_csv(
 
     Returns
     -------
-    List[models.Ingredient]
+    List[main.models.foods.Ingredient]
 
     Notes
     -----
     FDC datasets include:
         'sr_legacy_food', 'survey_fndds_food'
     """
-    data_source = models.FoodDataSource.objects.get(name="FDC")
+    data_source = main.models.foods.FoodDataSource.objects.get(name="FDC")
     ingredient_list = []
 
     # If no dataset_filter was provided use FDC_DATA_SOURCES that
@@ -225,7 +225,7 @@ def parse_food_csv(
             if record.get("data_type") not in dataset_filter:
                 continue
 
-            ingredient = models.Ingredient()
+            ingredient = main.models.foods.Ingredient()
             ingredient.external_id = int(record["fdc_id"])
             ingredient.name = record["description"]
             ingredient.dataset = record["data_type"]
@@ -256,7 +256,9 @@ def parse_food_nutrient_csv(
         If `None` saves all records in a single batch. Helps with memory
         limitations.
     """
-    nutrients = models.Nutrient.objects.filter(name__in=FDC_TO_NUTRIENT.values())
+    nutrients = main.models.foods.Nutrient.objects.filter(
+        name__in=FDC_TO_NUTRIENT.values()
+    )
     # Raise exception if nutrients in FDC_TO_NUTRIENT are not in the DB
     if not nutrients.exists():
         raise NoNutrientException("No nutrients found.")
@@ -281,7 +283,7 @@ def parse_food_nutrient_csv(
 
     # Mappings used to convert FDC ids to ingredients.
     ingredient_ids = {}
-    for ing in models.Ingredient.objects.filter(data_source__name="FDC"):
+    for ing in main.models.foods.Ingredient.objects.filter(data_source__name="FDC"):
         ingredient_ids[ing.external_id] = ing
 
     result = []  # List of created (not saved) IngredientNutrients
@@ -312,31 +314,33 @@ def parse_food_nutrient_csv(
                 handle_nonstandard(ing, nut, nutrient_id, nonstandard, amount)
                 continue
 
-            ingredient_nutrient = models.IngredientNutrient(
+            ingredient_nutrient = main.models.foods.IngredientNutrient(
                 ingredient=ing, nutrient=nut, amount=amount
             )
             result.append(ingredient_nutrient)
 
             # Batch separation
             if batch_size is not None and len(result) >= batch_size:
-                models.IngredientNutrient.objects.bulk_create(result)
+                main.models.foods.IngredientNutrient.objects.bulk_create(result)
                 result = []
 
     # Create IngredientNutrients from data in nonstandard.
     for ing, nutrients in nonstandard.items():
         ing_nuts = [
-            models.IngredientNutrient(ingredient=ing, nutrient=nutrient, amount=amount)
+            main.models.foods.IngredientNutrient(
+                ingredient=ing, nutrient=nutrient, amount=amount
+            )
             for nutrient, amount in nutrients.items()
         ]
         # Batch separation
         size = len(result) + len(ing_nuts)
         if batch_size is not None and size >= batch_size:
-            models.IngredientNutrient.objects.bulk_create(result)
+            main.models.foods.IngredientNutrient.objects.bulk_create(result)
             result = []
 
         result.extend(ing_nuts)
 
-    models.IngredientNutrient.objects.bulk_create(result)
+    main.models.foods.IngredientNutrient.objects.bulk_create(result)
 
 
 def handle_nonstandard(ingredient, nutrient, fdc_id, output_dict, amount) -> None:
