@@ -5,6 +5,7 @@ import os
 from typing import Dict, List, Tuple, Union
 
 from main import models
+from main.management.commands.populatenutrientdata import NoNutrientException
 from util import get_conversion_factor, open_or_pass
 
 # Nonstandard units and their standard counterparts.
@@ -33,6 +34,7 @@ FDC_TO_NUTRIENT = {
     1093: "Sodium",
     1095: "Zinc",
     1096: "Chromium",
+    1098: "Copper",
     1099: "Fluoride",
     1100: "Iodine",
     1101: "Manganese",
@@ -56,6 +58,7 @@ FDC_TO_NUTRIENT = {
     1167: "Vitamin B3",
     1170: "Vitamin B5",
     1175: "Vitamin B6",
+    1176: "Vitamin B7",
     1177: "Vitamin B9",
     1178: "Vitamin B12",
     1183: "Vitamin K",
@@ -84,11 +87,15 @@ FDC_TO_NUTRIENT = {
     1232: "Cysteine",
     1233: "Glutamine",
     1253: "Cholesterol",
-    1257: "Trans fatty acid",
+    1257: "Trans fatty acids",
     1258: "Saturated fatty acids",
     1292: "Monounsaturated fatty acids",
     1293: "Polyunsaturated fatty acids",
     2000: "Sugars",
+    1235: "Sugars (added)",
+    1404: "alpha-Linolenic acid",
+    1316: "Linoleic acid",
+    1180: "Choline",
 }
 
 # Set of data sources in occurring in the FDC db.
@@ -368,10 +375,3 @@ def handle_nonstandard(ingredient, nutrient, fdc_id, output_dict, amount) -> Non
     # Summed up because vitamin K appears as 3 different molecules.
     elif fdc_id in {1183, 1184, 1185}:
         output_dict[ingredient][nutrient] += amount
-
-
-class NoNutrientException(Exception):
-    """
-    Raised when the nutrients required for a process are not present
-    in the database.
-    """

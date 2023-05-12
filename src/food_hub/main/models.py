@@ -280,8 +280,8 @@ class RecommendationManager(models.Manager):
             Recommendations that match the profile's age and sex.
         """
         return self.filter(
+            models.Q(age_max__gte=profile.age) | models.Q(age_max__isnull=True),
             age_min__lte=profile.age,
-            age_max__gte=profile.age,
             sex__in=[profile.sex, "B"],
         )
 
@@ -299,8 +299,11 @@ class IntakeRecommendation(models.Model):
         # AI-KCAL is amount/1000kcal Adequate Intake; mainly for fiber
         # intake.
         ("AIK", "AI-KCAL"),
+        ("AI/KG", "AI/KG"),
+        ("ALAP", "As Low As Possible"),  # As Low As Possible
         ("AMDR", "AMDR"),
         ("RDA", "RDA/UL"),  # amount_min=RDA, amount_max=UL
+        ("RDA/KG", "RDA/KG"),
         ("UL", "UL"),
     ]
     sex_choices = [
@@ -312,21 +315,23 @@ class IntakeRecommendation(models.Model):
     amount_help_text = (
         "Use of the amount fields differs depending on the selected"
         " <em>dri_type</em>.</br>"
-        "AMDR - <em>amount_min</em> and <em>amount_max</em> are the"
+        "* AMDR - <em>amount_min</em> and <em>amount_max</em> are the"
         " lower and the upper limits of the range respectively.</br>"
-        "AI/UL and RDA/UL - <em>amount_min</em> is the RDA or AI "
-        "value. <em>amount_max</em> is the UL value (if available)."
-        "</br>UL and AIK - use only <em>amount_min</em>."
+        "* AI/UL, RDA/UL, AIK, AI/KG, RDA/KG - <em>amount_min</em> is "
+        "the RDA or AI value. <em>amount_max</em> is the UL value "
+        "(if available).</br>"
+        "* UL and AIK - use only <em>amount_min</em>.</br>"
+        "* ALAP - ignores both."
     )
 
     nutrient = models.ForeignKey(
         Nutrient, on_delete=models.CASCADE, related_name="recommendations"
     )
-    dri_type = models.CharField(max_length=4, choices=type_choices)
+    dri_type = models.CharField(max_length=6, choices=type_choices)
     sex = models.CharField(max_length=1, choices=sex_choices)
     age_min = models.PositiveIntegerField()
     age_max = models.PositiveIntegerField(null=True)
-    amount_min = models.FloatField(help_text=amount_help_text)
+    amount_min = models.FloatField(help_text=amount_help_text, null=True)
     amount_max = models.FloatField(null=True)
 
     objects = RecommendationManager()

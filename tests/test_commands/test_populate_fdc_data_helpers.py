@@ -6,13 +6,13 @@ from django.conf import settings
 from django.db import connection
 from main import models
 from main.management.commands._populatefdcdata import (
-    NoNutrientException,
     create_fdc_data_source,
     handle_nonstandard,
     parse_food_csv,
     parse_food_nutrient_csv,
     parse_nutrient_csv,
 )
+from main.management.commands.populatenutrientdata import NoNutrientException
 
 # NOTE: Nonstandard nutrient is a nutrient that needs o be handled
 #  differently based on the differences in the way they are stored

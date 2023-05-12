@@ -469,6 +469,28 @@ def test_recommendation_manger_for_profile_by_age(db, nutrient_1):
     assert recommends[2] not in for_profile
 
 
+def test_recommendation_manger_for_profile_age_max_is_none(db, nutrient_1):
+    """
+    RecommendationManager.for_profile() treats recommendations with
+    `age_max` set to None as a recommendation without an upper age
+    limit.
+    """
+    profile = models.Profile(sex="M", age=999)
+    rec = models.IntakeRecommendation(
+        nutrient=nutrient_1,
+        dri_type="UL",
+        sex="M",
+        age_min=18,
+        age_max=None,
+        amount_min=0,
+        amount_max=10,
+    )
+    rec.save()
+
+    for_profile = models.IntakeRecommendation.objects.for_profile(profile)
+    assert for_profile.first() == rec
+
+
 def test_recommendation_str():
     """
     IntakeRecommendation's string representation follows the format

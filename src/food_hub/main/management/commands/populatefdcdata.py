@@ -9,11 +9,11 @@ from django.core.management.base import BaseCommand, CommandError
 from main import models
 
 from ._populatefdcdata import (
-    NoNutrientException,
     create_fdc_data_source,
     parse_food_csv,
     parse_food_nutrient_csv,
 )
+from .populatenutrientdata import NoNutrientException
 
 
 class Command(BaseCommand):

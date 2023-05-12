@@ -31,6 +31,7 @@ def create_nutrients():
         {"name": "Calcium", "unit": "MG"},
         {"name": "Chlorine", "unit": "G"},
         {"name": "Chromium", "unit": "UG"},
+        {"name": "Copper", "unit": "UG"},
         {"name": "Fluoride", "unit": "MG"},
         {"name": "Iodine", "unit": "UG"},
         {"name": "Iron", "unit": "MG"},
@@ -50,6 +51,7 @@ def create_nutrients():
         {"name": "Vitamin B3", "unit": "MG"},
         {"name": "Vitamin B5", "unit": "MG"},
         {"name": "Vitamin B6", "unit": "MG"},
+        {"name": "Vitamin B7", "unit": "UG"},
         {"name": "Vitamin B9", "unit": "UG"},
         {"name": "Vitamin B12", "unit": "UG"},
         {"name": "Vitamin A", "unit": "UG"},
@@ -82,9 +84,20 @@ def create_nutrients():
         {"name": "Saturated fatty acids", "unit": "G"},
         {"name": "Monounsaturated fatty acids", "unit": "G"},
         {"name": "Polyunsaturated fatty acids", "unit": "G"},
-        {"name": "Trans fatty acid", "unit": "G"},
+        {"name": "Trans fatty acids", "unit": "G"},
         {"name": "Cholesterol", "unit": "MG"},
         {"name": "Sugars", "unit": "G"},
+        {"name": "Sugars (added)", "unit": "G"},
+        {"name": "alpha-Linolenic acid", "unit": "G"},
+        {"name": "Linoleic acid", "unit": "G"},
+        {"name": "Choline", "unit": "MG"},
     ]
     instances = [Nutrient(**data) for data in nutrient_data]
     Nutrient.objects.bulk_create(instances, ignore_conflicts=True)
+
+
+class NoNutrientException(Exception):
+    """
+    Raised when the nutrients required for a process are not present
+    in the database.
+    """
