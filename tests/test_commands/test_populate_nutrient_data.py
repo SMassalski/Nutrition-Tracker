@@ -1,82 +1,10 @@
 """Tests of the populate_nutrient_data command."""
 from django.core.management import call_command
+from main.management.commands._data import FULL_NUTRIENT_DATA
 from main.management.commands.populatenutrientdata import create_nutrients
-from main.models.foods import Nutrient
+from main.models import Nutrient
 
-_names = [
-    "Asparagine",
-    "Phosphorus",
-    "Vitamin D3",
-    "Vitamin C",
-    "Vitamin D",
-    "Saturated fatty acids",
-    "Chromium",
-    "Threonine",
-    "Vanadium",
-    "Tryptophan",
-    "Arsenic",
-    "Cysteine",
-    "Trans fatty acids",
-    "Monounsaturated fatty acids",
-    "Iodine",
-    "Lysine",
-    "Ash",
-    "Polyunsaturated fatty acids",
-    "Vitamin K",
-    "Alanine",
-    "Potassium",
-    "Sodium",
-    "Iron",
-    "Vitamin B2",
-    "Vitamin B6",
-    "Aspartic acid",
-    "Glutamine",
-    "Serine",
-    "Isoleucine",
-    "Vitamin A",
-    "Cholesterol",
-    "Vitamin D2",
-    "Protein",
-    "Vitamin B5",
-    "Manganese",
-    "Fiber",
-    "Fluoride",
-    "Chlorine",
-    "Glycine",
-    "Glutamic acid",
-    "Magnesium",
-    "Silicon",
-    "Zinc",
-    "Vitamin B12",
-    "Energy",
-    "Nickel",
-    "Lipid",
-    "Sugars",
-    "Leucine",
-    "Phenylalanine",
-    "Vitamin B9",
-    "Calcium",
-    "Carbohydrate",
-    "Methionine",
-    "Proline",
-    "Histidine",
-    "Selenium",
-    "Vitamin B1",
-    "Tyrosine",
-    "Water",
-    "Molybdenum",
-    "Arginine",
-    "Valine",
-    "Vitamin B3",
-    "Vitamin E",
-    "Boron",
-    "Sugars (added)",
-    "alpha-Linolenic acid",
-    "Linoleic acid",
-    "Choline",
-    "Vitamin B7",
-    "Copper",
-]
+NAMES = [nut["name"] for nut in FULL_NUTRIENT_DATA]
 
 
 def test_create_nutrients(db):
@@ -85,7 +13,7 @@ def test_create_nutrients(db):
     """
 
     create_nutrients()
-    assert Nutrient.objects.filter(name__in=_names).count() == len(_names)
+    assert Nutrient.objects.filter(name__in=NAMES).count() == len(NAMES)
 
 
 def test_create_nutrients_already_existing_nutrient(db):
@@ -103,4 +31,4 @@ def test_populate_nutrient_data_command(db):
     specified nutrients.
     """
     call_command("populatenutrientdata")
-    assert Nutrient.objects.filter(name__in=_names).count() == len(_names)
+    assert Nutrient.objects.filter(name__in=NAMES).count() == len(NAMES)
