@@ -5,7 +5,7 @@ from tempfile import mkstemp
 
 import pytest
 from django.core.management import CommandError, call_command
-from main.models.foods import Ingredient, Nutrient
+from main.models import Ingredient, Nutrient
 
 
 @pytest.fixture(scope="session")

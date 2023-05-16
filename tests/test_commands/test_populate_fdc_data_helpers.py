@@ -1,19 +1,18 @@
 """Tests of the populate_fdc_data command helper functions."""
 import io
 
-import main.models.foods
 import pytest
 from django.conf import settings
 from django.db import connection
 from main import models
 from main.management.commands._populatefdcdata import (
+    NoNutrientException,
     create_fdc_data_source,
     handle_nonstandard,
     parse_food_csv,
     parse_food_nutrient_csv,
     parse_nutrient_csv,
 )
-from main.management.commands.populatenutrientdata import NoNutrientException
 
 # NOTE: Nonstandard nutrient is a nutrient that needs o be handled
 #  differently based on the differences in the way they are stored
@@ -105,7 +104,7 @@ def test_handle_nonstandard_keeps_amount_with_preferred_nutrient(
 def test_create_fdc_data_source(db):
     """create_fdc_data_source saves an FDC FoodDataSource record."""
     create_fdc_data_source()
-    assert main.models.foods.FoodDataSource.objects.filter(name="FDC").exists()
+    assert models.FoodDataSource.objects.filter(name="FDC").exists()
 
 
 def test_create_fdc_data_source_already_exists(db):
@@ -113,7 +112,7 @@ def test_create_fdc_data_source_already_exists(db):
     create_fdc_data_source doesn't raise an exception if an FDC record
     already exists.
     """
-    main.models.foods.FoodDataSource.objects.create(name="FDC")
+    models.FoodDataSource.objects.create(name="FDC")
     create_fdc_data_source()
 
 
@@ -147,7 +146,7 @@ def food_csv():
 def fdc_data_source(django_db_blocker, django_db_setup):
     """A FoodDataSource record for FDC"""
     with django_db_blocker.unblock():
-        instance = main.models.foods.FoodDataSource.objects.create(name="FDC")
+        instance = models.FoodDataSource.objects.create(name="FDC")
     yield instance
     with django_db_blocker.unblock():
         instance.delete()
@@ -291,36 +290,36 @@ def ingredient_and_nutrient_data(django_db_blocker, django_db_setup, fdc_data_so
     Multiple Ingredient and Nutrient records saved to the database.
     """
     with django_db_blocker.unblock():
-        nutrients = main.models.foods.Nutrient.objects.bulk_create(
+        nutrients = models.Nutrient.objects.bulk_create(
             [
-                main.models.foods.Nutrient(name="Protein", unit="G"),
-                main.models.foods.Nutrient(name="Iron", unit="MG"),
-                main.models.foods.Nutrient(name="Vitamin A", unit="UG"),
-                main.models.foods.Nutrient(name="Vitamin D", unit="UG"),
-                main.models.foods.Nutrient(name="Vitamin B9", unit="UG"),
-                main.models.foods.Nutrient(name="Vitamin K", unit="UG"),
-                main.models.foods.Nutrient(name="Cysteine", unit="MG"),
+                models.Nutrient(name="Protein", unit="G"),
+                models.Nutrient(name="Iron", unit="MG"),
+                models.Nutrient(name="Vitamin A", unit="UG"),
+                models.Nutrient(name="Vitamin D", unit="UG"),
+                models.Nutrient(name="Vitamin B9", unit="UG"),
+                models.Nutrient(name="Vitamin K", unit="UG"),
+                models.Nutrient(name="Cysteine", unit="MG"),
             ]
         )
 
-        ingredients = main.models.foods.Ingredient.objects.bulk_create(
+        ingredients = models.Ingredient.objects.bulk_create(
             [
                 #  external_id 1 and 2 are taken by ingredient_1
                 #  and ingredient_2 fixtures. This won't be a problem
                 #  after the unique constraint is fixed.
-                main.models.foods.Ingredient(
+                models.Ingredient(
                     name="ingredient_3",
                     external_id=3,
                     dataset="x",
                     data_source=fdc_data_source,
                 ),
-                main.models.foods.Ingredient(
+                models.Ingredient(
                     name="ingredient_4",
                     external_id=4,
                     dataset="x",
                     data_source=fdc_data_source,
                 ),
-                main.models.foods.Ingredient(
+                models.Ingredient(
                     name="ingredient_5",
                     external_id=5,
                     dataset="x",
@@ -332,12 +331,8 @@ def ingredient_and_nutrient_data(django_db_blocker, django_db_setup, fdc_data_so
     yield nutrients, ingredients
 
     with django_db_blocker.unblock():
-        main.models.foods.Nutrient.objects.filter(
-            pk__in=[n.pk for n in nutrients]
-        ).delete()
-        main.models.foods.Ingredient.objects.filter(
-            pk__in=[i.pk for i in ingredients]
-        ).delete()
+        models.Nutrient.objects.filter(pk__in=[n.pk for n in nutrients]).delete()
+        models.Ingredient.objects.filter(pk__in=[i.pk for i in ingredients]).delete()
 
 
 class TestParseFoodNutrient:
@@ -352,9 +347,7 @@ class TestParseFoodNutrient:
         """
         parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv)
 
-        in_1 = main.models.foods.IngredientNutrient.objects.get(
-            ingredient__external_id=3
-        )
+        in_1 = models.IngredientNutrient.objects.get(ingredient__external_id=3)
         assert in_1.nutrient.name == "Protein"
         assert in_1.amount == 0
 
@@ -371,7 +364,7 @@ class TestParseFoodNutrient:
         )
         parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv)
 
-        assert not main.models.foods.IngredientNutrient.objects.filter(
+        assert not models.IngredientNutrient.objects.filter(
             ingredient__external_id=10
         ).exists()
 
@@ -388,7 +381,7 @@ class TestParseFoodNutrient:
         )
         parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv)
 
-        assert not main.models.foods.IngredientNutrient.objects.filter(
+        assert not models.IngredientNutrient.objects.filter(
             ingredient__external_id=10
         ).exists()
 
@@ -434,7 +427,7 @@ class TestParseFoodNutrient:
         )
         parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv)
 
-        ing = main.models.foods.Ingredient.objects.get(external_id=4)
+        ing = models.Ingredient.objects.get(external_id=4)
 
         assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin A").amount == 1
 
