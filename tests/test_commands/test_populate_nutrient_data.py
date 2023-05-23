@@ -2,11 +2,12 @@
 from django.core.management import call_command
 from main.management.commands._data import FULL_NUTRIENT_DATA, NUTRIENT_TYPES
 from main.management.commands.populatenutrientdata import (
+    create_energy,
     create_nutrient_types,
     create_nutrients,
     create_recommendations,
 )
-from main.models import IntakeRecommendation, Nutrient, NutrientType
+from main.models import IntakeRecommendation, Nutrient, NutrientEnergy, NutrientType
 
 NAMES = [nut["name"] for nut in FULL_NUTRIENT_DATA]
 
@@ -61,6 +62,17 @@ def test_create_recommendations(db):
     assert instance.recommendations.count() == len(nutrient["recommendations"])
 
 
+def test_create_energy(db):
+    """
+    create_energy() creates NutrientEnergy records for nutrients in
+    `nutrient_dict` according to the information in _data.
+    """
+    # Protein 4 kcal/g
+    instance = Nutrient.objects.create(name="Protein", unit="G")
+    create_energy({instance.name: instance})
+    assert instance.energy.amount == 4
+
+
 def test_populate_nutrient_data_command_saves_nutrients(db):
     """
     The populate_nutrient_data command saves to the database all
@@ -91,3 +103,17 @@ def test_populate_nutrient_data_command_saves_intake_recommendations(db):
 
     call_command("populatenutrientdata")
     assert IntakeRecommendation.objects.count() == count
+
+
+def test_populate_nutrient_data_command_saves_nutrient_energy(db):
+    """
+    The populate_nutrient_data command saves to the database all
+    specified nutrient energies.
+    """
+    count = 0
+    for nutrient in FULL_NUTRIENT_DATA:
+        if nutrient.get("energy", False):
+            count += 1
+
+    call_command("populatenutrientdata")
+    assert NutrientEnergy.objects.count() == count

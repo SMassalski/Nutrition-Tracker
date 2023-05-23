@@ -1,30 +1,25 @@
 """Tests of ORM models"""
 from datetime import datetime
 
-import main.models.foods
-import main.models.meals
-import main.models.user
 import pytest
 from main import models
 
 
 @pytest.fixture()
 def ingredient_1_macronutrients(db, ingredient_1):
-    protein = main.models.foods.Nutrient.objects.create(name="Protein")
-    fat = main.models.foods.Nutrient.objects.create(name="Total lipid (fat)")
-    carbs = main.models.foods.Nutrient.objects.create(
-        name="Carbohydrate, by difference"
-    )
+    protein = models.Nutrient.objects.create(name="Protein")
+    fat = models.Nutrient.objects.create(name="Total lipid (fat)")
+    carbs = models.Nutrient.objects.create(name="Carbohydrate, by difference")
 
-    main.models.foods.IngredientNutrient.objects.bulk_create(
+    models.IngredientNutrient.objects.bulk_create(
         [
-            main.models.foods.IngredientNutrient(
+            models.IngredientNutrient(
                 ingredient_id=ingredient_1.id, nutrient_id=protein.id, amount=1
             ),
-            main.models.foods.IngredientNutrient(
+            models.IngredientNutrient(
                 ingredient_id=ingredient_1.id, nutrient_id=fat.id, amount=2
             ),
-            main.models.foods.IngredientNutrient(
+            models.IngredientNutrient(
                 ingredient_id=ingredient_1.id, nutrient_id=carbs.id, amount=3
             ),
         ]
@@ -36,7 +31,7 @@ def ingredient_1_macronutrients(db, ingredient_1):
 # Ingredient model
 def test_ingredient_string_representation():
     """Ingredient model's string representation is its name"""
-    ingredient = main.models.foods.Ingredient(dataset="test_dataset", name="test_name")
+    ingredient = models.Ingredient(dataset="test_dataset", name="test_name")
     assert str(ingredient) == ingredient.name
 
 
@@ -99,10 +94,10 @@ def test_nutrient_string_representation():
     Nutrient model's string representation follows the format
     <name> (<pretty unit symbol>).
     """
-    nutrient = main.models.foods.Nutrient(name="test_name", unit="UG")
+    nutrient = models.Nutrient(name="test_name", unit="UG")
     assert (
         str(nutrient)
-        == f"{nutrient.name} ({main.models.foods.Nutrient.PRETTY_UNITS[nutrient.unit]})"
+        == f"{nutrient.name} ({models.Nutrient.PRETTY_UNITS[nutrient.unit]})"
     )
 
 
@@ -112,14 +107,12 @@ def test_save_updates_amounts_from_db(db, ingredient_1):
     IngredientNutrient records so that the actual amount remains
     unchanged. Test for when the instance was loaded from the database.
     """
-    nutrient = main.models.foods.Nutrient.objects.create(
-        name="save_test_nutrient", unit="G"
-    )
-    ing_nut = main.models.foods.IngredientNutrient.objects.create(
+    nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+    ing_nut = models.IngredientNutrient.objects.create(
         ingredient=ingredient_1, nutrient=nutrient, amount=1
     )
 
-    nutrient = main.models.foods.Nutrient.objects.get(pk=nutrient.id)
+    nutrient = models.Nutrient.objects.get(pk=nutrient.id)
     nutrient.unit = "MG"
     nutrient.save()
 
@@ -134,10 +127,8 @@ def test_save_updates_amounts_created(db, ingredient_1):
     IngredientNutrient records so that the actual amount remains
     unchanged. Test for when the instance was created and saved.
     """
-    nutrient = main.models.foods.Nutrient.objects.create(
-        name="save_test_nutrient", unit="G"
-    )
-    ing_nut = main.models.foods.IngredientNutrient.objects.create(
+    nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+    ing_nut = models.IngredientNutrient.objects.create(
         ingredient=ingredient_1, nutrient=nutrient, amount=1
     )
 
@@ -156,14 +147,12 @@ def test_save_updates_amounts_from_db_deferred(db, ingredient_1):
     unchanged. Test for when the instance was loaded from the database,
     but the unit field was deferred.
     """
-    nutrient = main.models.foods.Nutrient.objects.create(
-        name="save_test_nutrient", unit="G"
-    )
-    ing_nut = main.models.foods.IngredientNutrient.objects.create(
+    nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+    ing_nut = models.IngredientNutrient.objects.create(
         ingredient=ingredient_1, nutrient=nutrient, amount=1
     )
 
-    nutrient = main.models.foods.Nutrient.objects.defer("unit").get(id=nutrient.id)
+    nutrient = models.Nutrient.objects.defer("unit").get(id=nutrient.id)
     nutrient.unit = "MG"
     nutrient.save()
 
@@ -178,10 +167,8 @@ def test_save_update_amounts_false(db, ingredient_1):
     IngredientNutrient records if save was called with `update_amounts`
     set to False.
     """
-    nutrient = main.models.foods.Nutrient.objects.create(
-        name="save_test_nutrient", unit="G"
-    )
-    ing_nut = main.models.foods.IngredientNutrient.objects.create(
+    nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+    ing_nut = models.IngredientNutrient.objects.create(
         ingredient=ingredient_1, nutrient=nutrient, amount=1
     )
 
@@ -191,12 +178,39 @@ def test_save_update_amounts_false(db, ingredient_1):
     assert ing_nut.amount == 1
 
 
+def test_nutrient_energy_per_unit():
+    """
+    Nutrient.energy_per_unit() returns the amount value of the
+    nutrient's related NutrientEnergy record.
+    """
+    nutrient = models.Nutrient()
+    energy = models.NutrientEnergy(nutrient=nutrient, amount=5)
+    assert nutrient.energy_per_unit == 5
+
+
+def test_nutrient_energy_per_unit_no_energy():
+    """
+    Nutrient.energy_per_unit() returns 0 if the nutrient doesn't have
+    a related NutrientEnergy record.
+    """
+    assert models.Nutrient().energy_per_unit == 0
+
+
+@pytest.mark.parametrize(
+    "unit,expected", [("UG", "µg"), ("MG", "mg"), ("G", "g"), ("KCAL", "kcal")]
+)
+def test_nutrient_pretty_unit_property(unit, expected):
+    """
+    Nutrient.pretty_unit property returns the nutrient's unit's symbol.
+    """
+    assert models.Nutrient(unit=unit).pretty_unit == expected
+
+
 # Meal Component model
 def test_meal_component_string_representation():
     """MealComponent model's string representation is its name"""
     assert (
-        str(main.models.meals.MealComponent(name="test_meal_component"))
-        == "test_meal_component"
+        str(models.MealComponent(name="test_meal_component")) == "test_meal_component"
     )
 
 
@@ -236,9 +250,9 @@ def test_meal_component_ingredient_string_representation():
     MealComponentIngredient model's string representation is the name of
     the component and the ingredient.
     """
-    ingredient = main.models.foods.Ingredient(name="test_ingredient")
-    component = main.models.meals.MealComponent(name="test_component")
-    meal_component_ingredient = main.models.meals.MealComponentIngredient(
+    ingredient = models.Ingredient(name="test_ingredient")
+    component = models.MealComponent(name="test_component")
+    meal_component_ingredient = models.MealComponentIngredient(
         ingredient=ingredient, meal_component=component
     )
     assert str(meal_component_ingredient) == "test_component - test_ingredient"
@@ -249,7 +263,7 @@ def test_meal_string_representation():
     """
     Meal model's string representation is its name and formatted date.
     """
-    meal = main.models.meals.Meal(
+    meal = models.Meal(
         name="test_meal", date=datetime(day=1, month=1, year=2000, hour=12, minute=0)
     )
     assert str(meal) == "test_meal (12:00 - 01 Jan 2000)"
@@ -274,16 +288,16 @@ def test_meal_nutritional_value_calculates_nutrients(
     # 10g of nutrient_2 in 100g of meal_component
 
     # 20g of nutrient_1 in 100g of meal_component_2
-    meal_component_2 = main.models.meals.MealComponent.objects.create(
+    meal_component_2 = models.MealComponent.objects.create(
         name="test_component_2", final_weight=100
     )
-    ingredient_3 = main.models.foods.Ingredient(
+    ingredient_3 = models.Ingredient(
         name="test_ingredient_3", external_id=111, dataset="dataset"
     )
     ingredient_3.save()
     ingredient_3.ingredientnutrient_set.create(nutrient=nutrient_1, amount=20)
     meal_component_2.ingredients.create(ingredient=ingredient_3, amount=100)
-    meal = main.models.meals.Meal.objects.create(user=user, name="test_meal")
+    meal = models.Meal.objects.create(user=user, name="test_meal")
 
     # 100g each of meal_component and meal_component_2
     meal.components.create(component=meal_component, amount=100)
@@ -303,8 +317,8 @@ def test_profile_string_representation(db):
     Profile model's string representation follows the format of
     `<associated user's username>'s profile`.
     """
-    user = main.models.user.User.objects.create_user(username="profile_test_user")
-    profile = main.models.user.Profile(user=user)
+    user = models.User.objects.create_user(username="profile_test_user")
+    profile = models.Profile(user=user)
 
     assert str(profile) == "profile_test_user's profile"
 
@@ -314,7 +328,7 @@ def test_profile_energy_calculation_for_a_man():
     Profile's calculate energy method correctly calculates the EER of
     an adult male.
     """
-    profile = main.models.user.Profile(
+    profile = models.Profile(
         age=35, weight=80, height=180, sex="M", activity_level="LA"
     )
     assert profile.calculate_energy() == 2819
@@ -325,9 +339,7 @@ def test_profile_energy_calculation_for_a_woman():
     Profile's calculate energy method correctly calculates the EER of
     an adult female.
     """
-    profile = main.models.user.Profile(
-        age=35, weight=60, height=170, sex="F", activity_level="A"
-    )
+    profile = models.Profile(age=35, weight=60, height=170, sex="F", activity_level="A")
     assert profile.calculate_energy() == 2393
 
 
@@ -336,9 +348,7 @@ def test_profile_energy_calculation_for_a_boy():
     Profile's calculate energy method correctly calculates the EER of
     a non-adult male.
     """
-    profile = main.models.user.Profile(
-        age=15, weight=50, height=170, sex="M", activity_level="S"
-    )
+    profile = models.Profile(age=15, weight=50, height=170, sex="M", activity_level="S")
     assert profile.calculate_energy() == 2055
 
 
@@ -347,9 +357,7 @@ def test_profile_energy_calculation_for_a_girl():
     Profile's calculate energy method correctly calculates the EER of
     a non-adult female.
     """
-    profile = main.models.user.Profile(
-        age=6, weight=35, height=140, sex="F", activity_level="A"
-    )
+    profile = models.Profile(age=6, weight=35, height=140, sex="F", activity_level="A")
     assert profile.calculate_energy() == 2142
 
 
@@ -358,9 +366,7 @@ def test_profile_energy_calculation_for_a_2_yo():
     Profile's calculate energy method correctly calculates the EER of
     a 2-year-old child.
     """
-    profile = main.models.user.Profile(
-        age=2, weight=12, height=140, sex="F", activity_level="A"
-    )
+    profile = models.Profile(age=2, weight=12, height=140, sex="F", activity_level="A")
     assert profile.calculate_energy() == 988
 
 
@@ -369,15 +375,13 @@ def test_profile_energy_calculation_for_a_lt_1_yo():
     Profile's calculate energy method correctly calculates the EER of
     a 1-year-old child.
     """
-    profile = main.models.user.Profile(
-        age=0, weight=9, height=140, sex="F", activity_level="A"
-    )
+    profile = models.Profile(age=0, weight=9, height=140, sex="F", activity_level="A")
     assert profile.calculate_energy() == 723
 
 
 def test_profile_create_calculates_energy(db, user):
     """Saving a new profile record automatically calculates the EER."""
-    profile = main.models.user.Profile(
+    profile = models.Profile(
         age=35, weight=80, height=180, sex="M", activity_level="LA", user=user
     )
     profile.save()
@@ -387,7 +391,7 @@ def test_profile_create_calculates_energy(db, user):
 
 def test_profile_update_calculates_energy(db, user):
     """Updating a profile record automatically calculates the EER."""
-    profile = main.models.user.Profile(
+    profile = models.Profile(
         age=35, weight=80, height=180, sex="M", activity_level="LA", user=user
     )
     profile.save()
@@ -401,132 +405,324 @@ def test_food_data_source_string_representation():
     """
     The string representation of a FoodDataSource instance is its name.
     """
-    assert str(main.models.foods.FoodDataSource(name="test_name")) == "test_name"
+    assert str(models.FoodDataSource(name="test_name")) == "test_name"
 
 
 # Nutrient Recommendation tests
-def test_recommendation_manger_for_profile_by_sex(db, nutrient_1):
-    """
-    RecommendationManager.for_profile() correctly selects
-    IntakeRecommendations matching a profile based on sex.
-    """
-    profile = main.models.user.Profile(sex="F", age=50)
+class TestIntakeRecommendation:
+    """Tests of the IntakeRecommendation model."""
 
-    recommends = main.models.foods.IntakeRecommendation.objects.bulk_create(
+    def test_recommendation_manger_for_profile_by_sex(self, db, nutrient_1):
+        """
+        RecommendationQuerySet.for_profile() correctly selects
+        IntakeRecommendations matching a profile based on sex.
+        """
+        profile = models.Profile(sex="F", age=50)
+
+        recommends = models.IntakeRecommendation.objects.bulk_create(
+            [
+                models.IntakeRecommendation(
+                    nutrient=nutrient_1,
+                    dri_type="UL",
+                    sex="B",
+                    age_min=18,
+                    age_max=60,
+                    amount_min=0,
+                    amount_max=10,
+                ),
+                models.IntakeRecommendation(
+                    nutrient=nutrient_1,
+                    dri_type="RDA",
+                    sex="F",
+                    age_min=18,
+                    age_max=60,
+                    amount_min=3,
+                    amount_max=10,
+                ),
+                models.IntakeRecommendation(
+                    nutrient=nutrient_1,
+                    dri_type="UL",
+                    sex="M",
+                    age_min=18,
+                    age_max=60,
+                    amount_min=0,
+                    amount_max=10,
+                ),
+            ]
+        )
+
+        for_profile = models.IntakeRecommendation.objects.for_profile(profile)
+        assert for_profile.count() == 2
+        assert recommends[2] not in for_profile
+
+    def test_recommendation_manger_for_profile_by_age(self, db, nutrient_1):
+        """
+        RecommendationQuerySet.for_profile() correctly selects
+        IntakeRecommendations matching a profile based on age.
+        """
+        profile = models.Profile(sex="M", age=50)
+
+        recommends = models.IntakeRecommendation.objects.bulk_create(
+            [
+                models.IntakeRecommendation(
+                    nutrient=nutrient_1,
+                    dri_type="UL",
+                    sex="M",
+                    age_min=18,
+                    age_max=50,
+                    amount_min=0,
+                    amount_max=10,
+                ),
+                models.IntakeRecommendation(
+                    nutrient=nutrient_1,
+                    dri_type="RDA",
+                    sex="M",
+                    age_min=50,
+                    age_max=60,
+                    amount_min=3,
+                    amount_max=10,
+                ),
+                models.IntakeRecommendation(
+                    nutrient=nutrient_1,
+                    dri_type="RDA",
+                    sex="M",
+                    age_min=20,
+                    age_max=30,
+                    amount_min=3,
+                    amount_max=10,
+                ),
+            ]
+        )
+
+        for_profile = models.IntakeRecommendation.objects.for_profile(profile)
+        assert for_profile.count() == 2
+        assert recommends[2] not in for_profile
+
+    def test_recommendation_manger_for_profile_age_max_is_none(self, db, nutrient_1):
+        """
+        RecommendationQuerySet.for_profile() treats recommendations with
+        `age_max` set to None as a recommendation without an upper age
+        limit.
+        """
+        profile = models.Profile(sex="M", age=999)
+        rec = models.IntakeRecommendation(
+            nutrient=nutrient_1,
+            dri_type="UL",
+            sex="M",
+            age_min=18,
+            age_max=None,
+            amount_min=0,
+            amount_max=10,
+        )
+        rec.save()
+
+        for_profile = models.IntakeRecommendation.objects.for_profile(profile)
+        assert for_profile.first() == rec
+
+    def test_recommendation_str(self):
+        """
+        IntakeRecommendation's string representation follows the format
+        <nutrient_name> : <age_range> [<sex>] (<dri_type>).
+        """
+        nutrient = models.Nutrient(name="test_name")
+        recommendation = models.IntakeRecommendation(
+            nutrient=nutrient,
+            dri_type="UL",
+            sex="M",
+            age_min=18,
+            age_max=50,
+        )
+
+        assert str(recommendation) == "test_name : 18 - 50 [M] (UL)"
+
+    @pytest.mark.parametrize(
+        "dri_type,expected",
         [
-            main.models.foods.IntakeRecommendation(
-                nutrient=nutrient_1,
-                dri_type="UL",
-                sex="B",
-                age_min=18,
-                age_max=60,
-                amount_min=0,
-                amount_max=10,
-            ),
-            main.models.foods.IntakeRecommendation(
-                nutrient=nutrient_1,
-                dri_type="RDA",
-                sex="F",
-                age_min=18,
-                age_max=60,
-                amount_min=3,
-                amount_max=10,
-            ),
-            main.models.foods.IntakeRecommendation(
-                nutrient=nutrient_1,
-                dri_type="UL",
-                sex="M",
-                age_min=18,
-                age_max=60,
-                amount_min=0,
-                amount_max=10,
-            ),
-        ]
+            (models.IntakeRecommendation.AIK, 10.0),
+            (models.IntakeRecommendation.AIKG, 400.0),
+            (models.IntakeRecommendation.RDAKG, 400.0),
+        ],
     )
+    def test_recommendation_profile_amount_min(self, dri_type, expected):
+        """
+        IntakeRecommendation.profile_amount_min() returns the
+        recommendation's `amount_min` according to it's `dri_type` and
+        the set profile attributes.
+        """
+        recommendation = models.IntakeRecommendation(dri_type=dri_type, amount_min=5.0)
+        profile = models.Profile(weight=80, energy_requirement=2000)
 
-    for_profile = main.models.foods.IntakeRecommendation.objects.for_profile(profile)
-    assert for_profile.count() == 2
-    assert recommends[2] not in for_profile
+        assert recommendation.profile_amount_min(profile) == expected
 
-
-def test_recommendation_manger_for_profile_by_age(db, nutrient_1):
-    """
-    RecommendationManager.for_profile() correctly selects
-    IntakeRecommendations matching a profile based on age.
-    """
-    profile = main.models.user.Profile(sex="M", age=50)
-
-    recommends = main.models.foods.IntakeRecommendation.objects.bulk_create(
+    @pytest.mark.parametrize(
+        "dri_type,expected",
         [
-            main.models.foods.IntakeRecommendation(
-                nutrient=nutrient_1,
-                dri_type="UL",
-                sex="M",
-                age_min=18,
-                age_max=50,
-                amount_min=0,
-                amount_max=10,
-            ),
-            main.models.foods.IntakeRecommendation(
-                nutrient=nutrient_1,
-                dri_type="RDA",
-                sex="M",
-                age_min=50,
-                age_max=60,
-                amount_min=3,
-                amount_max=10,
-            ),
-            main.models.foods.IntakeRecommendation(
-                nutrient=nutrient_1,
-                dri_type="RDA",
-                sex="M",
-                age_min=20,
-                age_max=30,
-                amount_min=3,
-                amount_max=10,
-            ),
-        ]
+            (models.IntakeRecommendation.AIK, 10.0),
+            (models.IntakeRecommendation.AIKG, 400.0),
+            (models.IntakeRecommendation.RDAKG, 400.0),
+        ],
     )
+    def test_recommendation_profile_amount_max(self, dri_type, expected):
+        """
+        IntakeRecommendation.profile_amount_max() returns the
+        recommendation's `amount_max` according to it's `dri_type` and
+        the set profile attributes.
+        """
+        recommendation = models.IntakeRecommendation(dri_type=dri_type, amount_max=5.0)
+        profile = models.Profile(weight=80, energy_requirement=2000)
 
-    for_profile = main.models.foods.IntakeRecommendation.objects.for_profile(profile)
-    assert for_profile.count() == 2
-    assert recommends[2] not in for_profile
+        assert recommendation.profile_amount_max(profile) == expected
 
-
-def test_recommendation_manger_for_profile_age_max_is_none(db, nutrient_1):
-    """
-    RecommendationManager.for_profile() treats recommendations with
-    `age_max` set to None as a recommendation without an upper age
-    limit.
-    """
-    profile = main.models.user.Profile(sex="M", age=999)
-    rec = main.models.foods.IntakeRecommendation(
-        nutrient=nutrient_1,
-        dri_type="UL",
-        sex="M",
-        age_min=18,
-        age_max=None,
-        amount_min=0,
-        amount_max=10,
+    @pytest.mark.parametrize(
+        "dri_type",
+        [
+            models.IntakeRecommendation.AI,
+            models.IntakeRecommendation.ALAP,
+            models.IntakeRecommendation.RDA,
+            models.IntakeRecommendation.UL,
+        ],
     )
-    rec.save()
+    def test_recommendation_profile_amount_min_independent_type(self, dri_type):
+        """
+        IntakeRecommendation.profile_amount_min() returns the
+        recommendation's `amount_min` unchanged if it's `dri_type`
+        is independent of profile attributes.
+        """
+        recommendation = models.IntakeRecommendation(dri_type=dri_type, amount_min=5.0)
+        profile = models.Profile(weight=80, energy_requirement=2000)
 
-    for_profile = main.models.foods.IntakeRecommendation.objects.for_profile(profile)
-    assert for_profile.first() == rec
+        assert recommendation.profile_amount_min(profile) == 5.0
 
-
-def test_recommendation_str():
-    """
-    IntakeRecommendation's string representation follows the format
-    <nutrient_name> : <age_range> [<sex>] (<dri_type>).
-    """
-    nutrient = main.models.foods.Nutrient(name="test_name")
-    recommendation = main.models.foods.IntakeRecommendation(
-        nutrient=nutrient,
-        dri_type="UL",
-        sex="M",
-        age_min=18,
-        age_max=50,
+    @pytest.mark.parametrize(
+        "dri_type",
+        [
+            models.IntakeRecommendation.AI,
+            models.IntakeRecommendation.ALAP,
+            models.IntakeRecommendation.RDA,
+            models.IntakeRecommendation.UL,
+        ],
     )
+    def test_recommendation_profile_amount_max_independent_type(self, dri_type):
+        """
+        IntakeRecommendation.profile_amount_max() returns the
+        recommendation's `amount_max` unchanged if it's `dri_type`
+        is independent of profile attributes.
+        """
+        recommendation = models.IntakeRecommendation(dri_type=dri_type, amount_max=5.0)
+        profile = models.Profile(weight=80, energy_requirement=2000)
 
-    assert str(recommendation) == "test_name : 18 - 50 [M] (UL)"
+        assert recommendation.profile_amount_max(profile) == 5.0
+
+    def test_recommendation_profile_amount_min_amdr(self):
+        """
+        IntakeRecommendation.profile_amount_min() correctly calculates
+        the `amount_min` for recommendations with `dri_type` = 'AMDR'.
+        """
+        nutrient = models.Nutrient()
+        energy = models.NutrientEnergy(nutrient=nutrient, amount=4)
+        recommendation = models.IntakeRecommendation(
+            dri_type="AMDR", amount_min=5.0, nutrient=nutrient
+        )
+        profile = models.Profile(energy_requirement=2000)
+
+        assert recommendation.profile_amount_min(profile) == 25.0
+
+    def test_recommendation_profile_amount_max_amdr(self):
+        """
+        IntakeRecommendation.profile_amount_max() correctly calculates
+        the `amount_max` for recommendations with `dri_type` = 'AMDR'.
+        """
+        nutrient = models.Nutrient()
+        energy = models.NutrientEnergy(nutrient=nutrient, amount=4)
+        recommendation = models.IntakeRecommendation(
+            dri_type="AMDR", amount_max=5.0, nutrient=nutrient
+        )
+        profile = models.Profile(energy_requirement=2000)
+
+        assert recommendation.profile_amount_max(profile) == 25.0
+
+    @pytest.mark.filterwarnings("ignore::UserWarning")
+    def test_recommendation_profile_amount_min_amdr_no_energy(self):
+        """
+        IntakeRecommendation.profile_amount_min() returns 0 for
+        recommendations with `dri_type` = 'AMDR' when no NutrientEnergy
+        record for the related nutrient exists.
+        """
+        nutrient = models.Nutrient()
+        recommendation = models.IntakeRecommendation(
+            dri_type="AMDR", amount_min=5.0, nutrient=nutrient
+        )
+        profile = models.Profile(energy_requirement=2000)
+
+        assert recommendation.profile_amount_min(profile) == 0
+
+    @pytest.mark.filterwarnings("ignore::UserWarning")
+    def test_recommendation_profile_amount_max_amdr_no_energy(self):
+        """
+        IntakeRecommendation.profile_amount_max() returns 0 for
+        recommendations with `dri_type` = 'AMDR' when no NutrientEnergy
+        record for the related nutrient exists.
+        """
+        nutrient = models.Nutrient()
+        recommendation = models.IntakeRecommendation(
+            dri_type="AMDR", amount_max=5.0, nutrient=nutrient
+        )
+        profile = models.Profile(energy_requirement=2000)
+
+        assert recommendation.profile_amount_max(profile) == 0
+
+    def test_recommendation_profile_amount_min_amdr_no_energy_warns(self):
+        """
+        IntakeRecommendation.profile_amount_min() issues a warning for
+        recommendations with `dri_type` = 'AMDR' when no NutrientEnergy
+        record for the related nutrient exists.
+        """
+        nutrient = models.Nutrient()
+        recommendation = models.IntakeRecommendation(
+            dri_type="AMDR", amount_min=5.0, nutrient=nutrient
+        )
+        profile = models.Profile(energy_requirement=2000)
+
+        with pytest.warns(UserWarning):
+            recommendation.profile_amount_min(profile)
+
+    def test_recommendation_profile_amount_max_amdr_no_energy_warns(self):
+        """
+        IntakeRecommendation.profile_amount_max() issues a warning for
+        recommendations with `dri_type` = 'AMDR' when no NutrientEnergy
+        record for the related nutrient exists.
+        """
+        nutrient = models.Nutrient()
+        recommendation = models.IntakeRecommendation(
+            dri_type="AMDR", amount_max=5.0, nutrient=nutrient
+        )
+        profile = models.Profile(energy_requirement=2000)
+
+        with pytest.warns(UserWarning):
+            recommendation.profile_amount_max(profile)
+
+    def test_recommendation_profile_amount_min_none(self):
+        """
+        IntakeRecommendation.profile_amount_min() correctly calculates
+        the `amount_min` for recommendations with `dri_type` = 'AMDR'.
+        """
+        recommendation = models.IntakeRecommendation(
+            dri_type="AIK",
+            amount_min=None,
+        )
+        profile = models.Profile()
+
+        assert recommendation.profile_amount_min(profile) is None
+
+    def test_recommendation_profile_amount_max_none(self):
+        """
+        IntakeRecommendation.profile_amount_max() correctly calculates
+        the `amount_max` for recommendations with `dri_type` = 'AMDR'.
+        """
+        recommendation = models.IntakeRecommendation(
+            dri_type="AMDR",
+            amount_max=None,
+        )
+        profile = models.Profile()
+
+        assert recommendation.profile_amount_max(profile) is None

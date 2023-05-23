@@ -67,6 +67,7 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Macronutrient"],
+        "energy": 4,
     },
     {
         "name": "Lipid",
@@ -99,6 +100,7 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Macronutrient"],
+        "energy": 9,
     },
     {
         "name": "Carbohydrate",
@@ -123,6 +125,15 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Macronutrient"],
+        "energy": 4,
+    },
+    {
+        "name": "Alcohol",
+        "unit": "G",
+        "fdc_ids": [1018],
+        "recommendations": [],
+        "type": [],
+        "energy": 7,
     },
     {
         "name": "Ash",
@@ -2589,6 +2600,7 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Polyunsaturated fatty acid"],
+        "energy": 9,
     },
     {
         "name": "Linoleic acid",
@@ -2685,6 +2697,7 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Polyunsaturated fatty acid"],
+        "energy": 9,
     },
     {
         "name": "Choline",

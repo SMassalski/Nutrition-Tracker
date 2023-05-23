@@ -2,8 +2,11 @@
 Models related to food items, nutritional value and intake
 recommendations.
 """
-from typing import Dict
+from functools import cached_property
+from typing import Dict, List
+from warnings import warn
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models.lookups import LessThanOrEqual
 from main.models.user import Profile
@@ -69,9 +72,6 @@ class Nutrient(models.Model):
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
     types = models.ManyToManyField(NutrientType, related_name="nutrients")
 
-    def __str__(self):
-        return f"{self.name} ({self.PRETTY_UNITS.get(self.unit, self.unit)})"
-
     # NOTE: from_db and save method overrides to update amount values
     #   of related IngredientNutrient records so the actual amount
     #   remains unchanged (when changing unit from grams to milligrams
@@ -131,8 +131,27 @@ class Nutrient(models.Model):
 
         self._old_unit = self.unit
 
+    def __str__(self):
+        return f"{self.name} ({self.PRETTY_UNITS.get(self.unit, self.unit)})"
 
-class RecommendationManager(models.Manager):
+    @property
+    def pretty_unit(self) -> str:
+        """The unit's symbols (e.g. µg or kcal)."""
+        return self.PRETTY_UNITS[self.unit]
+
+    @cached_property
+    def energy_per_unit(self) -> float:
+        """The amount of energy per unit provided by the nutrient.
+
+        Requires an additional database query if not prefetched
+        """
+        try:
+            return self.energy.amount
+        except ObjectDoesNotExist:
+            return 0
+
+
+class RecommendationQuerySet(models.QuerySet):
     """Manager class for intake recommendations."""
 
     def for_profile(self, profile: Profile) -> models.QuerySet:
@@ -146,8 +165,31 @@ class RecommendationManager(models.Manager):
         return self.filter(
             models.Q(age_max__gte=profile.age) | models.Q(age_max__isnull=True),
             age_min__lte=profile.age,
-            sex__in=[profile.sex, "B"],
+            sex__in=(profile.sex, "B"),
         )
+
+    # def with_profile(
+    #     self, profile: Profile, filter_query: bool = True
+    # ) -> List["IntakeRecommendation"]:
+    #     """Set the profile of IntakeRecommendations in the QuerySet.
+    #
+    #     Parameters
+    #     ----------
+    #     profile
+    #     filter_query
+    #         Whether to filter the QuerySet to match the profile.
+    #
+    #     Returns
+    #     -------
+    #     List[IntakeRecommendations]
+    #     """
+    #     query = self
+    #     if filter_query:
+    #         query = self.for_profile(profile)
+    #
+    #     result = list(query)
+    #     for recommendation in result:
+    #         recommendation.profile = profile
 
 
 class IntakeRecommendation(models.Model):
@@ -157,18 +199,34 @@ class IntakeRecommendation(models.Model):
     """
 
     # NOTE: Different recommendation types will use the amount fields
-    #  in different ways
+    #  in different ways:
+    #  * AMDR - `amount_min` and amount_max are the lower and the upper
+    #   limits of the range respectively.
+    #  * AI/UL, RDA/UL, AIK, AI/KG, RDA/KG - `amount_min` is the RDA or
+    #   AI value. `amount_max` is the UL value (if available).
+    #  * UL and AIK - uses only `amount_min`
+    #  * ALAP - ignores both.
+
+    AI = "AI"
+    AIK = "AIK"
+    AIKG = "AI/KG"
+    ALAP = "ALAP"
+    AMDR = "AMDR"
+    RDA = "RDA"
+    RDAKG = "RDA/KG"
+    UL = "UL"
+
     type_choices = [
-        ("AI", "AI/UL"),  # amount_min=AI, amount_max=UL
+        (AI, "AI/UL"),
         # AI-KCAL is amount/1000kcal Adequate Intake; mainly for fiber
         # intake.
-        ("AIK", "AI-KCAL"),
-        ("AI/KG", "AI/KG"),
-        ("ALAP", "As Low As Possible"),  # As Low As Possible
-        ("AMDR", "AMDR"),
-        ("RDA", "RDA/UL"),  # amount_min=RDA, amount_max=UL
-        ("RDA/KG", "RDA/KG"),
-        ("UL", "UL"),
+        (AIK, "AI-KCAL"),
+        (AIKG, "AI/KG"),
+        (ALAP, "As Low As Possible"),  # As Low As Possible
+        (AMDR, "AMDR"),
+        (RDA, "RDA/UL"),
+        (RDAKG, "RDA/KG"),
+        (UL, "UL"),
     ]
     sex_choices = [
         ("B", "Both"),
@@ -198,7 +256,7 @@ class IntakeRecommendation(models.Model):
     amount_min = models.FloatField(help_text=amount_help_text, null=True)
     amount_max = models.FloatField(null=True)
 
-    objects = RecommendationManager()
+    objects = RecommendationQuerySet.as_manager()
 
     class Meta:
         constraints = [
@@ -221,6 +279,98 @@ class IntakeRecommendation(models.Model):
             f"{self.nutrient.name} : {self.age_min} - {self.age_max or ''}"
             f" [{self.sex}] ({self.dri_type})"
         )
+
+    def profile_amount_min(self, profile: Profile) -> float:
+        """The `amount_min` taking into account the `profile` attributes.
+
+        Recommendations with `dri_type` 'AMDR' and 'AIK' use the
+        profile's energy requirement, and 'AI/KG' and 'RDA/KG' use
+        the profile's weight.
+
+        Parameters
+        ----------
+        profile
+            The profile for which the amount will be calculated.
+
+        Returns
+        -------
+        float
+        """
+        return self._profile_amount(self.amount_min, profile)
+
+    def profile_amount_max(self, profile: Profile) -> float:
+        """The `amount_max` taking into account the `profile` attributes.
+
+        Recommendations with `dri_type` 'AMDR' and 'AIK' use the
+        profile's energy requirement, and 'AI/KG' and 'RDA/KG' use
+        the profile's weight.
+
+        Parameters
+        ----------
+        profile
+            The profile for which the amount will be calculated.
+
+        Returns
+        -------
+        float
+        """
+        return self._profile_amount(self.amount_max, profile)
+
+    # TODO: Decide whether the energy dependant recommendations use
+    #   the recommended or actual energy intake. (currently recommended
+    #   is used)
+    def _profile_amount(self, amount: float, profile: Profile) -> float:
+        """Get the amount for the recommendation type and given profile.
+
+        The amount is calculated for recommendations that depend on
+        the person's weight or recommended energy intake.
+        If the recommendation is not dependent on any other value the
+        recommendation amounts are left unchanged.
+
+        Parameters
+        ----------
+        amount
+        profile
+            The profile for which the amount will be calculated.
+        Returns
+        -------
+        float
+
+        Examples
+        --------
+        >>> r = IntakeRecommendation(dri_type="RDA/KG")
+        >>> r._profile_amount(5.0, Profile(weight=100))
+          500.0
+        """
+        if amount is None:
+            return None
+
+        if self.dri_type == IntakeRecommendation.AIK:
+            # AIK is Adequate Intake per 1000 kcal
+            return amount * profile.energy_requirement / 1000
+
+        elif self.dri_type in (IntakeRecommendation.AIKG, IntakeRecommendation.RDAKG):
+            return amount * profile.weight
+
+        elif self.dri_type == IntakeRecommendation.AMDR:
+            # AMDR values are in % of energy intake / requirement,
+            # so calculations have to take into account the amount of
+            # energy provided by the nutrient
+            try:
+                return (
+                    amount
+                    * profile.energy_requirement
+                    / (self.nutrient.energy_per_unit * 100.0)
+                )
+            except ZeroDivisionError:
+                warn(
+                    f"Couldn't find a NutrientEnergy record for a nutrient with an "
+                    f"AMDR recommendation: {self.nutrient}. Some of the displayed "
+                    f"information ma be inaccurate."
+                )
+                return 0.0
+
+        return amount
 
 
 class Ingredient(models.Model):
@@ -294,3 +444,20 @@ class IngredientNutrient(models.Model):
                 "ingredient", "nutrient", name="unique_ingredient_nutrient"
             )
         ]
+
+
+class NutrientEnergy(models.Model):
+    """
+    Represents the amount of energy provided by a nutrient in kcal/unit.
+    """
+
+    nutrient = models.OneToOneField(
+        Nutrient, on_delete=models.CASCADE, related_name="energy", primary_key=True
+    )
+    amount = models.FloatField()
+
+    def __str__(self):
+        return f"{self.nutrient.name}: {self.amount} kcal/{self.nutrient.pretty_unit}"
+
+    class Meta:
+        verbose_name_plural = "Nutrient energies"

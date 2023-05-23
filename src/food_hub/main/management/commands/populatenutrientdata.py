@@ -2,7 +2,7 @@
 from typing import Dict
 
 from django.core.management.base import BaseCommand
-from main.models import IntakeRecommendation, Nutrient, NutrientType
+from main.models import IntakeRecommendation, Nutrient, NutrientEnergy, NutrientType
 
 from ._data import FULL_NUTRIENT_DATA, NUTRIENT_TYPES
 
@@ -25,6 +25,7 @@ class Command(BaseCommand):
 
         create_recommendations(nutrient_instances)
         create_nutrient_types(nutrient_instances)
+        create_energy(nutrient_instances)
 
 
 def create_nutrients() -> None:
@@ -78,3 +79,22 @@ def create_nutrient_types(nutrient_dict: Dict[str, Nutrient]) -> None:
             nutrient_instance = nutrient_dict.get(nutrient["name"])
             if nutrient_instance is not None:
                 nutrient_instance.types.add(types[type_])
+
+
+def create_energy(nutrient_dict: Dict[str, Nutrient]) -> None:
+    """Create and save NutrientEnergy records.
+
+    Parameters
+    ----------
+    nutrient_dict
+        Mapping of nutrient names to their respective instances.
+    """
+    instances = []
+    for nutrient in FULL_NUTRIENT_DATA:
+        energy = nutrient.get("energy")
+        if energy is None:
+            continue
+        nutrient_instance = nutrient_dict.get(nutrient.get("name"))
+        instances.append(NutrientEnergy(nutrient=nutrient_instance, amount=energy))
+
+    NutrientEnergy.objects.bulk_create(instances, ignore_conflicts=True)
