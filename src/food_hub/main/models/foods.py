@@ -272,6 +272,11 @@ class IntakeRecommendation(models.Model):
                 fields=("sex", "age_min", "age_max", "dri_type", "nutrient"),
                 name="recommendation_unique_demographic_nutrient_and_type",
             ),
+            models.UniqueConstraint(
+                fields=("sex", "age_min", "dri_type", "nutrient"),
+                condition=models.Q(age_max__isnull=True),
+                name="recommendation_unique_demographic_nutrient_and_type_max_age_null",
+            ),
         ]
 
     def __str__(self):

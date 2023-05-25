@@ -2,6 +2,7 @@
 from datetime import datetime
 
 import pytest
+from django.db import IntegrityError
 from main import models
 
 
@@ -726,3 +727,18 @@ class TestIntakeRecommendation:
         profile = models.Profile()
 
         assert recommendation.profile_amount_max(profile) is None
+
+    def test_recommendation_unique_together_constraint_null_age_max(
+        self, db, nutrient_1
+    ):
+        """
+        IntakeRecommendation unique together constraints take into
+        account cases where age_max is None.
+        """
+        models.IntakeRecommendation.objects.create(
+            nutrient=nutrient_1, sex="B", dri_type="ALAP", age_min=0, age_max=None
+        )
+        with pytest.raises(IntegrityError):
+            models.IntakeRecommendation.objects.create(
+                nutrient=nutrient_1, sex="B", dri_type="ALAP", age_min=0, age_max=None
+            )
