@@ -68,7 +68,7 @@ def create_nutrient_types(nutrient_dict: Dict[str, Nutrient]) -> None:
         Mapping of nutrient names to their respective instances.
     """
     NutrientType.objects.bulk_create(
-        [NutrientType(name=type_) for type_ in NUTRIENT_TYPES]
+        [NutrientType(name=type_) for type_ in NUTRIENT_TYPES], ignore_conflicts=True
     )
     types = {
         type_.name: type_

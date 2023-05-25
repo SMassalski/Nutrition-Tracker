@@ -1,5 +1,7 @@
 """Tests of the populate_nutrient_data command."""
+import pytest
 from django.core.management import call_command
+from django.db import IntegrityError
 from main.management.commands._data import FULL_NUTRIENT_DATA, NUTRIENT_TYPES
 from main.management.commands.populatenutrientdata import (
     create_energy,
@@ -27,7 +29,10 @@ def test_create_nutrients_already_existing_nutrient(db):
     would be created by create_nutrients() already exists.
     """
     Nutrient.objects.create(name="Protein", unit="G")
-    create_nutrients()
+    try:
+        create_nutrients()
+    except IntegrityError as e:
+        pytest.fail(f"create_nutrients() violated a constraint - {e}")
 
 
 def test_create_nutrient_types_saves_all(db):
@@ -48,6 +53,20 @@ def test_create_nutrient_types_associates_with_nutrients(db):
     protein = Nutrient.objects.create(name="Protein", unit="G")
     create_nutrient_types({"Protein": protein})
     assert protein.types.first().name == "Macronutrient"
+
+
+def test_create_nutrients_already_existing_nutrient_type(db):
+    """
+    create_nutrient_types() does not raise an exception if a nutrient
+    type that would be created by create_nutrient_types() already
+    exists.
+    """
+    protein = Nutrient.objects.create(name="Protein", unit="G")
+    NutrientType.objects.create(name="Macronutrient")
+    try:
+        create_nutrient_types({"Protein": protein})
+    except IntegrityError as e:
+        pytest.fail(f"create_nutrient_types() violated a constraint - {e}")
 
 
 def test_create_recommendations(db):
