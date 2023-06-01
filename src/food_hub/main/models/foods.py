@@ -3,7 +3,7 @@ Models related to food items, nutritional value and intake
 recommendations.
 """
 from functools import cached_property
-from typing import Dict, List
+from typing import Dict
 from warnings import warn
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -29,6 +29,7 @@ class NutrientType(models.Model):
     """
 
     name = models.CharField(max_length=32, unique=True)
+    displayed_name = models.CharField(max_length=32, null=True)
 
     def __str__(self):
         return self.name
@@ -96,6 +97,8 @@ class Nutrient(models.Model):
 
         return instance
 
+    # TODO: Update IntakeRecommendations the same way as
+    #  IngredientNutrients
     def save(self, update_amounts: bool = True, *args, **kwargs) -> None:
         """Save the current instance.
 
@@ -168,29 +171,6 @@ class RecommendationQuerySet(models.QuerySet):
             sex__in=(profile.sex, "B"),
         )
 
-    # def with_profile(
-    #     self, profile: Profile, filter_query: bool = True
-    # ) -> List["IntakeRecommendation"]:
-    #     """Set the profile of IntakeRecommendations in the QuerySet.
-    #
-    #     Parameters
-    #     ----------
-    #     profile
-    #     filter_query
-    #         Whether to filter the QuerySet to match the profile.
-    #
-    #     Returns
-    #     -------
-    #     List[IntakeRecommendations]
-    #     """
-    #     query = self
-    #     if filter_query:
-    #         query = self.for_profile(profile)
-    #
-    #     result = list(query)
-    #     for recommendation in result:
-    #         recommendation.profile = profile
-
 
 class IntakeRecommendation(models.Model):
     """
@@ -198,6 +178,7 @@ class IntakeRecommendation(models.Model):
     demographic.
     """
 
+    # TODO: Is it better to store UL in amount_max?
     # NOTE: Different recommendation types will use the amount fields
     #  in different ways:
     #  * AMDR - `amount_min` and amount_max are the lower and the upper
@@ -408,6 +389,7 @@ class Ingredient(models.Model):
         """
         return {ig.nutrient: ig.amount for ig in self.ingredientnutrient_set.all()}
 
+    # TODO: This needs an update.
     @property
     def macronutrient_calories(self) -> Dict[Nutrient, float]:
         """

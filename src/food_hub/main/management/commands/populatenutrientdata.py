@@ -4,7 +4,7 @@ from typing import Dict
 from django.core.management.base import BaseCommand
 from main.models import IntakeRecommendation, Nutrient, NutrientEnergy, NutrientType
 
-from ._data import FULL_NUTRIENT_DATA, NUTRIENT_TYPES
+from ._data import FULL_NUTRIENT_DATA, NUTRIENT_TYPE_DISPLAY_NAME, NUTRIENT_TYPES
 
 
 class Command(BaseCommand):
@@ -67,9 +67,12 @@ def create_nutrient_types(nutrient_dict: Dict[str, Nutrient]) -> None:
     nutrient_dict
         Mapping of nutrient names to their respective instances.
     """
-    NutrientType.objects.bulk_create(
-        [NutrientType(name=type_) for type_ in NUTRIENT_TYPES], ignore_conflicts=True
-    )
+    types = [
+        NutrientType(name=type_, displayed_name=NUTRIENT_TYPE_DISPLAY_NAME.get(type_))
+        for type_ in NUTRIENT_TYPES
+    ]
+    NutrientType.objects.bulk_create(types, ignore_conflicts=True)
+
     types = {
         type_.name: type_
         for type_ in NutrientType.objects.filter(name__in=NUTRIENT_TYPES)

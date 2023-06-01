@@ -2906,3 +2906,5 @@ NUTRIENT_TYPES = set()
 for nutrient in FULL_NUTRIENT_DATA:
     for type_ in nutrient["type"]:
         NUTRIENT_TYPES.add(type_)
+
+NUTRIENT_TYPE_DISPLAY_NAME = {"Fatty acid type": "Lipid"}

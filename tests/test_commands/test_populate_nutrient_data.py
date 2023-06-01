@@ -2,7 +2,11 @@
 import pytest
 from django.core.management import call_command
 from django.db import IntegrityError
-from main.management.commands._data import FULL_NUTRIENT_DATA, NUTRIENT_TYPES
+from main.management.commands._data import (
+    FULL_NUTRIENT_DATA,
+    NUTRIENT_TYPE_DISPLAY_NAME,
+    NUTRIENT_TYPES,
+)
 from main.management.commands.populatenutrientdata import (
     create_energy,
     create_nutrient_types,
@@ -10,6 +14,8 @@ from main.management.commands.populatenutrientdata import (
     create_recommendations,
 )
 from main.models import IntakeRecommendation, Nutrient, NutrientEnergy, NutrientType
+
+# TODO: Option to set a different data dict.
 
 NAMES = [nut["name"] for nut in FULL_NUTRIENT_DATA]
 
@@ -53,6 +59,17 @@ def test_create_nutrient_types_associates_with_nutrients(db):
     protein = Nutrient.objects.create(name="Protein", unit="G")
     create_nutrient_types({"Protein": protein})
     assert protein.types.first().name == "Macronutrient"
+
+
+def test_create_nutrient_types_with_display_name(db):
+    """
+    create_nutrient_types() creates NutrientType records with their
+    displayed names.
+    """
+    create_nutrient_types({})
+    types = NutrientType.objects.filter(name__in=NUTRIENT_TYPE_DISPLAY_NAME).values()
+    for t in types:
+        assert NUTRIENT_TYPE_DISPLAY_NAME[t["name"]] == t["displayed_name"]
 
 
 def test_create_nutrients_already_existing_nutrient_type(db):
