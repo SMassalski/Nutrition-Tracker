@@ -27,21 +27,6 @@ class TestProfileRecommendationSerializer:
         serializer = ProfileRecommendationSerializer(recommendation, **self.init_kwargs)
         assert serializer.data.get("profile_amount_min") == 80
 
-    def test_profile_recommendation_serializer_profile_amount_min_rounds_value(
-        self, db
-    ):
-        """
-        The serializer's profile_amount_min field returns the value
-        rounded to the first decimal place.
-        """
-        recommendation = models.IntakeRecommendation(
-            nutrient=self.nutrient,
-            dri_type=models.IntakeRecommendation.RDA,
-            amount_min=1.79,
-        )
-        serializer = ProfileRecommendationSerializer(recommendation, **self.init_kwargs)
-        assert serializer.data.get("profile_amount_min") == 1.8
-
     def test_profile_recommendation_serializer_upper_limit(self, db):
         """
         The serializer's upper_limit field returns the amount_max value
@@ -111,6 +96,19 @@ class TestProfileRecommendationSerializer:
         )
         serializer = ProfileRecommendationSerializer(recommendation, **self.init_kwargs)
         assert serializer.data.get("displayed_amount") is None
+
+    def test_profile_recommendation_serializer_displayed_amount_rounds_value(self, db):
+        """
+        The serializer's displayed_amount field returns the value
+        rounded to the first decimal place.
+        """
+        recommendation = models.IntakeRecommendation(
+            nutrient=self.nutrient,
+            dri_type=models.IntakeRecommendation.RDA,
+            amount_min=1.79,
+        )
+        serializer = ProfileRecommendationSerializer(recommendation, **self.init_kwargs)
+        assert serializer.data.get("displayed_amount") == 1.8
 
     def test_profile_recommendation_serializer_types(self, db):
         """
