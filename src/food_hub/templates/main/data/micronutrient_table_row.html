@@ -1,0 +1,17 @@
+<tr{% if subrow %} class="subrow"{% endif %}>
+    <td>{{ nutrient.name }}</td>
+    <td>
+        {# No progress bar for ALAP recommendations #}
+        {% if nutrient.dri_type != "ALAP" %}
+        <div class="progress position-relative">
+            <div class="progress-bar {% if nutrient.over_limit %}pb-danger{% elif nutrient.progress == 100 %}pb-success{% endif %}"
+             role="progressbar" style="width: {{ nutrient.progress }}%"
+             aria-valuenow="{{ nutrient.progress }}" aria-valuemin="0"
+             aria-valuemax="100">
+            </div>
+        </div>
+        {% endif %}
+    </td>
+    <td>{{ nutrient.intake }}{% if nutrient.displayed_amount %} / {{ nutrient.displayed_amount }}{% endif %}</td>
+    <td>{{ nutrient.unit }}</td>
+</tr>

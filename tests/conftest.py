@@ -139,3 +139,10 @@ def meal_component(django_db_blocker, django_db_setup, ingredient_1, ingredient_
         instance.ingredients.create(ingredient=ingredient_1, amount=100)
         instance.ingredients.create(ingredient=ingredient_2, amount=100)
     return instance
+
+
+@pytest.fixture()
+def logged_in_client(client, user, db):
+    """Client with the user from the user fixture logged in."""
+    client.force_login(user)
+    return client

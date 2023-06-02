@@ -12,7 +12,7 @@ urlpatterns = [
     ),
     path(
         "new_meal/",
-        login_required(TemplateView.as_view(template_name="main/compose_meal.html")),
+        login_required(views.MealView.as_view()),
         name="create-meal",
     ),
     path(

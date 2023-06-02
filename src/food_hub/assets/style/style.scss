@@ -52,6 +52,8 @@ $chart_annotation: $danger;
 }
 
 $border_gray: #ced4da;
+$progress-success: #89da99;
+$progress-danger: #e4937b;
 
 .bordered {
     border: 1px solid $border_gray;
@@ -141,6 +143,14 @@ tr th.nutrient-label {
 
     .progress-bar {
         background-color: $info;
+
+        &.pb-danger {
+            background-color: $progress-danger;
+        }
+
+        &.pb-success {
+            background-color: $progress-success;
+        }
     }
 }
 
