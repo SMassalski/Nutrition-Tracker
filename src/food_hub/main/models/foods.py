@@ -3,7 +3,7 @@ Models related to food items, nutritional value and intake
 recommendations.
 """
 from functools import cached_property
-from typing import Dict
+from typing import Dict, List
 from warnings import warn
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -11,6 +11,17 @@ from django.db import models
 from django.db.models.lookups import LessThanOrEqual
 from main.models.user import Profile
 from util import get_conversion_factor
+
+__all__ = [
+    "FoodDataSource",
+    "Nutrient",
+    "NutrientType",
+    "NutrientComponent",
+    "NutrientEnergy",
+    "IntakeRecommendation",
+    "Ingredient",
+    "IngredientNutrient",
+]
 
 
 class FoodDataSource(models.Model):
@@ -24,7 +35,7 @@ class FoodDataSource(models.Model):
 
 class NutrientType(models.Model):
     """
-    Represents a type a nutrient might be classified by, e.g.
+    Represents a type a nutrient might be classified by e.g.,
     Amino acid or Macronutrient.
     """
 
@@ -72,6 +83,13 @@ class Nutrient(models.Model):
     name = models.CharField(max_length=32, unique=True)
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
     types = models.ManyToManyField(NutrientType, related_name="nutrients")
+    components = models.ManyToManyField(
+        "self",
+        symmetrical=False,
+        through="NutrientComponent",
+        through_fields=("target", "component"),
+        related_name="compounds",
+    )
 
     # NOTE: from_db and save method overrides to update amount values
     #   of related IngredientNutrient records so the actual amount
@@ -92,7 +110,7 @@ class Nutrient(models.Model):
         try:
             instance._old_unit = values[field_names.index("unit")]
         except ValueError:
-            # If deferred unit won't appear in 'field_names'
+            # If deferred unit doesn't appear in 'field_names'
             instance._old_unit = models.DEFERRED
 
         return instance
@@ -153,7 +171,48 @@ class Nutrient(models.Model):
         except ObjectDoesNotExist:
             return 0
 
+    @property
+    def is_compound(self) -> bool:
+        """
+        Whether the nutrient consists of one or more component
+        nutrients.
+        """
+        return self.components.exists()
 
+    @property
+    def is_component(self) -> bool:
+        """
+        Whether the nutrient is a component of a compound nutrient.
+        """
+        return self.compounds.exists()
+
+
+class NutrientComponent(models.Model):
+    """
+    Represents a compound - component relationship between nutrients.
+    """
+
+    target = models.ForeignKey(
+        Nutrient, on_delete=models.CASCADE, related_name="component_nutrient_components"
+    )
+    component = models.ForeignKey(Nutrient, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(component=models.F("target")),
+                name="%(app_label)s_%(class)s_compound_nutrient_cant_be_component",
+            ),
+            models.UniqueConstraint(
+                fields=("target", "component"), name="%(app_label)s_%(class)s_unique"
+            ),
+        ]
+
+    def __str__(self):
+        return f"[{self.target.name}]: {self.component.name}"
+
+
+# TODO: Update intake amounts by component
 class RecommendationQuerySet(models.QuerySet):
     """Manager class for intake recommendations."""
 
@@ -310,7 +369,7 @@ class IntakeRecommendation(models.Model):
 
         The amount is calculated for recommendations that depend on
         the person's weight or recommended energy intake.
-        If the recommendation is not dependent on any other value the
+        If the recommendation is not dependent on any other value, the
         recommendation amounts are left unchanged.
 
         Parameters
@@ -415,6 +474,7 @@ class Ingredient(models.Model):
         return result
 
 
+# TODO: Compound nutrient save
 class IngredientNutrient(models.Model):
     """
     Represents the amount of a nutrient in 100g of an ingredient.
@@ -448,3 +508,52 @@ class NutrientEnergy(models.Model):
 
     class Meta:
         verbose_name_plural = "Nutrient energies"
+
+
+# TODO: Handle component nutrients with different units
+def update_compound_nutrients(
+    nutrient: Nutrient, commit: bool = True
+) -> List[IngredientNutrient]:
+    """Update IngredientNutrient amounts for a compound nutrient.
+
+    The amounts are updated to reflect the amounts of the component
+    nutrients' amounts.
+
+    Parameters
+    ----------
+    nutrient
+        The compound nutrient to be updated.
+    commit
+        Whether to save the IngredientNutrient records.
+
+    Returns
+    -------
+    List[IngredientNutrient]
+        The `nutrient`'s IngredientNutrient instances.
+    """
+
+    ingredient_nutrient_kwargs = (
+        IngredientNutrient.objects.filter(nutrient__in=nutrient.components.all())
+        .values("ingredient_id")
+        .annotate(amount=models.Sum("amount"))
+    )
+    ing_nuts = [
+        IngredientNutrient(nutrient=nutrient, **kwargs)
+        for kwargs in ingredient_nutrient_kwargs
+    ]
+    if commit:
+        IngredientNutrient.objects.bulk_create(
+            ing_nuts,
+            update_conflicts=True,
+            update_fields=["amount"],
+            unique_fields=["ingredient", "nutrient"],
+        )
+
+    return ing_nuts
+
+
+class CompoundComponentError(ValueError):
+    """
+    Raised when a compound nutrient is a component of another compound
+    nutrient.
+    """

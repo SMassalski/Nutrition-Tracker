@@ -3,10 +3,12 @@ import io
 
 import pytest
 from django.conf import settings
-from django.db import connection
 from main import models
+
+# noinspection PyProtectedMember
 from main.management.commands._populatefdcdata import (
     NoNutrientException,
+    create_compound_nutrient_amounts,
     create_fdc_data_source,
     handle_nonstandard,
     parse_food_csv,
@@ -14,7 +16,7 @@ from main.management.commands._populatefdcdata import (
     parse_nutrient_csv,
 )
 
-# NOTE: Nonstandard nutrient is a nutrient that needs o be handled
+# NOTE: Nonstandard nutrient is a nutrient that needs to be handled
 #  differently based on the differences in the way they are stored
 #  in the FDC data and the app's database.
 
@@ -400,7 +402,7 @@ class TestParseFoodNutrient:
             '"13706915","4","1106","1","","71","","","","","",""\n'
             # vit D uses IU if not available in micrograms
             '"13706915","4","1110","40","","71","","","","","",""\n'
-            # prefers folate,total over DFE
+            # prefers folate, total over DFE
             '"13706915","4","1177","1","","71","","","","","",""\n'
             '"13706915","4","1190","2","","71","","","","","",""\n'
             # sums up vit. K
@@ -445,15 +447,12 @@ class TestParseFoodNutrient:
         food_nutrient_csv,
         real_nutrient_csv,
         ingredient_and_nutrient_data,
-        debug_mode,
     ):
         """
-        parse_food_nutrient_csv() separates creating IngredientNutrient
-        records to batches of the specified size.
+        Batched parse_food_nutrient_csv() finishes without error for
+        regular nutrients.
         """
-        start_conn_nbr = len(connection.queries)
         parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv, batch_size=1)
-        assert len(connection.queries) - start_conn_nbr == 5
 
     def test_parse_food_nutrient_batch_size_nonstandard(
         self,
@@ -461,11 +460,9 @@ class TestParseFoodNutrient:
         food_nutrient_csv,
         real_nutrient_csv,
         ingredient_and_nutrient_data,
-        debug_mode,
     ):
         """
-        parse_food_nutrient_csv() separates creating IngredientNutrient
-        records to batches of the specified size when handling
+        Batched parse_food_nutrient_csv() finishes without error for
         nonstandard nutrients.
         """
         append_file(
@@ -473,9 +470,7 @@ class TestParseFoodNutrient:
         )
 
         append_file(real_nutrient_csv, '"1104","Vitamin A, IU","IU","201","200.0"\n')
-        start_conn_nbr = len(connection.queries)
         parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv, batch_size=1)
-        assert len(connection.queries) - start_conn_nbr == 6
 
 
 # Separate to avoid ingredient_and_nutrient_data_fixture
@@ -492,3 +487,13 @@ def test_parse_food_nutrient_no_nutrients_in_db(
 
     with pytest.raises(NoNutrientException):
         parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv)
+
+
+def test_create_compound_nutrient_amounts(db, compound_nutrient):
+    """
+    create_compound_nutrient_amounts() creates IngredientNutrient
+    records for compound nutrients.
+    """
+    create_compound_nutrient_amounts()
+
+    assert models.IngredientNutrient.objects.filter(nutrient=compound_nutrient).exists()

@@ -5,6 +5,9 @@ import os
 from typing import Dict, List, Tuple, Union
 
 from main import models
+
+# noinspection PyProtectedMember
+from main.models.foods import update_compound_nutrients
 from util import get_conversion_factor, open_or_pass
 
 from ._data import FDC_TO_NUTRIENT
@@ -17,7 +20,7 @@ UNIT_CONVERSION = {
 }
 
 # Set of data sources in occurring in the FDC db.
-# NOTE: Excluded "experimental_food", "sample_food", "market_acquistion",
+# NOTE: Excluded "experimental_food", "sample_food", "market_acquisition",
 #  "sub_sample_food", "agricultural_acquisition" (multiple records for a
 #  single ingredient).
 #  "branded_food" and "foundation_food" to avoid more complexity
@@ -68,6 +71,8 @@ PREFERRED_NONSTANDARD = {
     1177,  # Folate, total
 }
 
+VITAMIN_K_IDS = {1183, 1184, 1185}
+
 
 def create_fdc_data_source() -> models.FoodDataSource:
     """Create a FoodDataSource record for USDA's Food Data Central."""
@@ -117,8 +122,9 @@ def parse_food_csv(
     file
         File or path to the file containing nutrient data.
     dataset_filter
-        List of data sources. If not None only records from listed
-        sources will be saved.
+        List of data sources.
+        If `dataset_filter` is not None only records from listed
+        sources are saved.
 
     Returns
     -------
@@ -132,7 +138,7 @@ def parse_food_csv(
     data_source = models.FoodDataSource.objects.get(name="FDC")
     ingredient_list = []
 
-    # If no dataset_filter was provided use FDC_DATA_SOURCES that
+    # If no dataset_filter was provided, use FDC_DATA_SOURCES that
     # contains all allowed FDC datasets
     dataset_filter = set(dataset_filter or FDC_DATA_SOURCES)
 
@@ -161,7 +167,7 @@ def parse_food_nutrient_csv(
     """Load per ingredient nutrient data from a food_nutrient.csv file.
 
     If either the ingredient or the nutrient of a record (row) is not
-    in the database the record will be skipped.
+    in the database, the record will be skipped.
 
     Parameters
     ----------
@@ -213,7 +219,7 @@ def parse_food_nutrient_csv(
             ing = ingredient_ids.get(int(record.get("fdc_id")))
             nutrient_id = record.get("nutrient_id")  # FDC nutrient id
 
-            # Check if record refers to nutrient_nbr or id.
+            # Check if the record refers to nutrient_nbr or id.
             # Some food_nutrient records refer to the nutrient number
             # instead of id (FDDNS specifically).
             nutrient_id = nutrient_nbr_id.get(nutrient_id, int(nutrient_id))
@@ -256,6 +262,9 @@ def parse_food_nutrient_csv(
 
     models.IngredientNutrient.objects.bulk_create(result)
 
+    # Compound nutrients
+    create_compound_nutrient_amounts()
+
 
 def handle_nonstandard(ingredient, nutrient, fdc_id, output_dict, amount) -> None:
     """Select the appropriate amount for a non-standard nutrient.
@@ -265,7 +274,7 @@ def handle_nonstandard(ingredient, nutrient, fdc_id, output_dict, amount) -> Non
     ingredient
     nutrient
     fdc_id
-        The id of the nutrient in th FDC database.
+        The id of the nutrient in the FDC database.
     output_dict
         The dictionary the information will be outputted to.
     amount
@@ -291,7 +300,7 @@ def handle_nonstandard(ingredient, nutrient, fdc_id, output_dict, amount) -> Non
 
     # Vitamin K
     # Summed up because vitamin K appears as 3 different molecules.
-    elif fdc_id in {1183, 1184, 1185}:
+    elif fdc_id in VITAMIN_K_IDS:
         output_dict[ingredient][nutrient] += amount
 
 
@@ -300,3 +309,18 @@ class NoNutrientException(Exception):
     Raised when the nutrients required for a process are not present
     in the database.
     """
+
+
+def create_compound_nutrient_amounts():
+    """Create IngredientNutrient instances for compound nutrients."""
+    nutrients = models.Nutrient.objects.filter(components__isnull=False)
+    ingredient_nutrients = []
+    for nut in nutrients:
+        ingredient_nutrients += update_compound_nutrients(nut, commit=False)
+
+    models.IngredientNutrient.objects.bulk_create(
+        ingredient_nutrients,
+        update_conflicts=True,
+        update_fields=["amount"],
+        unique_fields=["ingredient", "nutrient"],
+    )

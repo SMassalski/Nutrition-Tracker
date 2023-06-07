@@ -2,9 +2,18 @@
 from typing import Dict
 
 from django.core.management.base import BaseCommand
-from main.models import IntakeRecommendation, Nutrient, NutrientEnergy, NutrientType
+from main.models import (
+    IntakeRecommendation,
+    Nutrient,
+    NutrientComponent,
+    NutrientEnergy,
+    NutrientType,
+)
 
 from ._data import FULL_NUTRIENT_DATA, NUTRIENT_TYPE_DISPLAY_NAME, NUTRIENT_TYPES
+
+# TODO: Custom data options and a better explanation of the format in
+#  the documentation / better way to display it.
 
 
 class Command(BaseCommand):
@@ -26,6 +35,7 @@ class Command(BaseCommand):
         create_recommendations(nutrient_instances)
         create_nutrient_types(nutrient_instances)
         create_energy(nutrient_instances)
+        create_nutrient_components(nutrient_instances)
 
 
 def create_nutrients() -> None:
@@ -101,3 +111,41 @@ def create_energy(nutrient_dict: Dict[str, Nutrient]) -> None:
         instances.append(NutrientEnergy(nutrient=nutrient_instance, amount=energy))
 
     NutrientEnergy.objects.bulk_create(instances, ignore_conflicts=True)
+
+
+def create_nutrient_components(
+    nutrient_dict: Dict[str, Nutrient], data: list = None
+) -> None:
+    """Create and save NutrientComponent records.
+
+    Parameters
+    ----------
+    nutrient_dict
+        Mapping of nutrient names to their respective instances.
+    data
+        A list containing the nutrient information in the same
+        format as FULL_NUTRIENT_DATA.
+        If `data` is None, the built-in data will be used.
+    """
+    instances = []
+    data = data or FULL_NUTRIENT_DATA
+    for nutrient in data:
+
+        components = nutrient.get("components")
+        if components is None:
+            continue
+
+        target_instance = nutrient_dict.get(nutrient.get("name"))
+
+        for component in components:
+            component_instance = nutrient_dict.get(component)
+
+            if component_instance is not None:
+                instances.append(
+                    NutrientComponent(
+                        target=target_instance,
+                        component=component_instance,
+                    )
+                )
+
+    NutrientComponent.objects.bulk_create(instances, ignore_conflicts=True)

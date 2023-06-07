@@ -5,6 +5,9 @@ import pytest
 from django.db import IntegrityError
 from main import models
 
+# noinspection PyProtectedMember
+from main.models.foods import update_compound_nutrients
+
 
 @pytest.fixture()
 def ingredient_1_macronutrients(db, ingredient_1):
@@ -185,7 +188,7 @@ def test_nutrient_energy_per_unit():
     nutrient's related NutrientEnergy record.
     """
     nutrient = models.Nutrient()
-    energy = models.NutrientEnergy(nutrient=nutrient, amount=5)
+    models.NutrientEnergy(nutrient=nutrient, amount=5)
     assert nutrient.energy_per_unit == 5
 
 
@@ -205,6 +208,51 @@ def test_nutrient_pretty_unit_property(unit, expected):
     Nutrient.pretty_unit property returns the nutrient's unit's symbol.
     """
     assert models.Nutrient(unit=unit).pretty_unit == expected
+
+
+def test_nutrient_is_compound(db, nutrient_1, nutrient_2):
+    """
+    Nutrient's is_component property indicates whether the nutrient
+    consists of one or more component nutrients.
+    """
+    nutrient_1.components.add(nutrient_2)
+    assert nutrient_2.is_compound is False
+    assert nutrient_1.is_compound is True
+
+
+def test_nutrient_is_component(db, nutrient_1, nutrient_2):
+    """
+    Nutrient's is_component property indicates whether the nutrient
+    is a component of a compound nutrient.
+    """
+    nutrient_1.components.add(nutrient_2)
+    assert nutrient_1.is_component is False
+    assert nutrient_2.is_component is True
+
+
+class TestNutrientComponent:
+    """Tests of NutrientComponents."""
+
+    def test_nutrient_component_unique_constraint(self, db, nutrient_1, nutrient_2):
+        """
+        NutrientComponent has a unique together constraint for the
+        target and component fields.
+        """
+        models.NutrientComponent.objects.create(target=nutrient_1, component=nutrient_2)
+        with pytest.raises(IntegrityError):
+            models.NutrientComponent.objects.create(
+                target=nutrient_1, component=nutrient_2
+            )
+
+    def test_nutrient_component_self_relation_constraint(self, db, nutrient_1):
+        """
+        NutrientComponent cannot have the same nutrient as a target and
+        as a component.
+        """
+        with pytest.raises(IntegrityError):
+            models.NutrientComponent.objects.create(
+                target=nutrient_1, component=nutrient_1
+            )
 
 
 # Meal Component model
@@ -502,7 +550,7 @@ class TestIntakeRecommendation:
     def test_recommendation_manger_for_profile_age_max_is_none(self, db, nutrient_1):
         """
         RecommendationQuerySet.for_profile() treats recommendations with
-        `age_max` set to None as a recommendation without an upper age
+        `age_max=None` as a recommendation without an upper age
         limit.
         """
         profile = models.Profile(sex="M", age=999)
@@ -620,7 +668,7 @@ class TestIntakeRecommendation:
         the `amount_min` for recommendations with `dri_type` = 'AMDR'.
         """
         nutrient = models.Nutrient()
-        energy = models.NutrientEnergy(nutrient=nutrient, amount=4)
+        models.NutrientEnergy(nutrient=nutrient, amount=4)
         recommendation = models.IntakeRecommendation(
             dri_type="AMDR", amount_min=5.0, nutrient=nutrient
         )
@@ -634,7 +682,7 @@ class TestIntakeRecommendation:
         the `amount_max` for recommendations with `dri_type` = 'AMDR'.
         """
         nutrient = models.Nutrient()
-        energy = models.NutrientEnergy(nutrient=nutrient, amount=4)
+        models.NutrientEnergy(nutrient=nutrient, amount=4)
         recommendation = models.IntakeRecommendation(
             dri_type="AMDR", amount_max=5.0, nutrient=nutrient
         )
@@ -742,3 +790,28 @@ class TestIntakeRecommendation:
             models.IntakeRecommendation.objects.create(
                 nutrient=nutrient_1, sex="B", dri_type="ALAP", age_min=0, age_max=None
             )
+
+
+class TestUpdateCompoundNutrient:
+    """Tests of the update_compound_nutrients() function."""
+
+    def test_update_compound_nutrients(self, db, compound_nutrient):
+        """
+        update_compound_nutrients() updates the amounts of
+        IngredientNutrients related to a compound nutrient based on the
+        amounts of IngredientNutrients related to it's component nutrients.
+        """
+        expected = 3  # component amounts are 1 and 2
+
+        update_compound_nutrients(compound_nutrient)
+
+        assert compound_nutrient.ingredientnutrient_set.first().amount == expected
+
+    def test_update_compound_nutrients_commit_false(self, db, compound_nutrient):
+        """
+        update_compound_nutrients() call with `commits=False` doesn't
+        save updated IngredientNutrient records.
+        """
+        update_compound_nutrients(compound_nutrient, commit=False)
+
+        assert not compound_nutrient.ingredientnutrient_set.exists()
