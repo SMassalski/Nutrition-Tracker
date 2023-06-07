@@ -304,6 +304,21 @@ class TestNutrientComponent:
                 target=nutrient_1, component=nutrient_1
             )
 
+    def test_nutrient_component_save_updates_compound(
+        self, db, ingredient_1, nutrient_1, ingredient_nutrient_1_1
+    ):
+        """
+        NutrientComponent's save() method updates the `target`
+        ingredient nutrient amounts.
+        """
+        nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+
+        models.NutrientComponent.objects.create(target=nutrient, component=nutrient_1)
+
+        ing_nut = nutrient.ingredientnutrient_set.get(ingredient=ingredient_1)
+
+        assert ing_nut.amount == 1.5
+
 
 # Meal Component model
 def test_meal_component_string_representation():
@@ -865,3 +880,102 @@ class TestUpdateCompoundNutrient:
         update_compound_nutrients(compound_nutrient, commit=False)
 
         assert not compound_nutrient.ingredientnutrient_set.exists()
+
+
+class TestIngredientNutrient:
+    """Tests of the IngredientNutrient model."""
+
+    def test_save_updates_amounts_from_db(
+        self, db, ingredient_1, nutrient_1, ingredient_nutrient_1_1
+    ):
+        """
+        Updating an IngredientNutrient's amount changes the amount value
+        of IngredientNutrient records related to the `nutrient's`
+        compound nutrients.
+        Test for when the instance was loaded from the database.
+        """
+        nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+        ing_nut = models.IngredientNutrient.objects.create(
+            ingredient=ingredient_1, nutrient=nutrient, amount=1.5
+        )
+        models.NutrientComponent.objects.create(target=nutrient, component=nutrient_1)
+
+        ingredient_nutrient = models.IngredientNutrient.objects.get(
+            pk=ingredient_nutrient_1_1.pk
+        )
+        ingredient_nutrient.amount = 2
+        ingredient_nutrient.save(update_amounts=True)
+
+        ing_nut.refresh_from_db()
+
+        assert ing_nut.amount == 2
+
+    def test_save_updates_amounts_created(
+        self, db, ingredient_1, nutrient_1, ingredient_nutrient_1_1
+    ):
+        """
+        Updating an IngredientNutrient's amount changes the amount value
+        of IngredientNutrient records related to the `nutrient's`
+        compound nutrients.
+        Test for when the instance was created and saved.
+        """
+        nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+        ing_nut = models.IngredientNutrient.objects.create(
+            ingredient=ingredient_1, nutrient=nutrient, amount=1.5
+        )
+        models.NutrientComponent.objects.create(target=nutrient, component=nutrient_1)
+
+        ingredient_nutrient_1_1.amount = 2
+        ingredient_nutrient_1_1.save(update_amounts=True)
+
+        ing_nut.refresh_from_db()
+
+        assert ing_nut.amount == 2
+
+    def test_save_updates_amounts_from_db_deferred(
+        self, db, ingredient_1, nutrient_1, ingredient_nutrient_1_1
+    ):
+        """
+        Updating an IngredientNutrient's amount changes the amount value
+        of IngredientNutrient records related to the `nutrient's`
+        compound nutrients.
+        Test for when the instance was loaded from the database,
+        but the amount field was deferred.
+        """
+        nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+        ing_nut = models.IngredientNutrient.objects.create(
+            ingredient=ingredient_1, nutrient=nutrient, amount=1.5
+        )
+        models.NutrientComponent.objects.create(target=nutrient, component=nutrient_1)
+
+        ingredient_nutrient = models.IngredientNutrient.objects.defer("amount").get(
+            pk=ingredient_nutrient_1_1.pk
+        )
+        ingredient_nutrient.amount = 2
+        ingredient_nutrient.save(update_amounts=True)
+
+        ing_nut.refresh_from_db()
+
+        assert ing_nut.amount == 2
+
+    def test_save_update_amounts_false(
+        self, db, ingredient_1, nutrient_1, ingredient_nutrient_1_1
+    ):
+        """
+        Updating an IngredientNutrient's amount doesn't change the amount value
+        of IngredientNutrient records related to the `nutrient's`
+        compound nutrients if save() was called with
+        `update_amounts=False`.
+        """
+        nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+        ing_nut = models.IngredientNutrient.objects.create(
+            ingredient=ingredient_1, nutrient=nutrient, amount=1.5
+        )
+        models.NutrientComponent.objects.create(target=nutrient, component=nutrient_1)
+
+        ingredient_nutrient_1_1.amount = 2
+        ingredient_nutrient_1_1.save(update_amounts=False)
+
+        ing_nut.refresh_from_db()
+
+        assert ing_nut.amount == 1.5

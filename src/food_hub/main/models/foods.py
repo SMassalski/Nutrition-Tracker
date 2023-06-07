@@ -210,6 +210,10 @@ class NutrientComponent(models.Model):
             ),
         ]
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        update_compound_nutrients(self.target)
+
     def __str__(self):
         return f"[{self.target.name}]: {self.component.name}"
 
@@ -362,7 +366,7 @@ class IntakeRecommendation(models.Model):
         """
         return self._profile_amount(self.amount_max, profile)
 
-    # TODO: Decide whether the energy dependant recommendations use
+    # DEV_NOTE: Decide whether the energy dependant recommendations use
     #   the recommended or actual energy intake. (currently recommended
     #   is used)
     def _profile_amount(self, amount: float, profile: Profile) -> float:
@@ -475,7 +479,6 @@ class Ingredient(models.Model):
         return result
 
 
-# TODO: Compound nutrient save
 class IngredientNutrient(models.Model):
     """
     Represents the amount of a nutrient in 100g of an ingredient.
@@ -492,6 +495,65 @@ class IngredientNutrient(models.Model):
                 "ingredient", "nutrient", name="unique_ingredient_nutrient"
             )
         ]
+
+    def __init__(self, *args, **kwargs):
+        self._old_amount = None
+        super().__init__(*args, **kwargs)
+
+    # docstr-coverage: inherited
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+
+        # Remember the unit that is saved in the database
+        try:
+            instance._old_amount = values[field_names.index("amount")]
+        except ValueError:
+            # If deferred unit doesn't appear in 'field_names'
+            instance._old_amount = models.DEFERRED
+
+        return instance
+
+    def save(self, update_amounts: bool = False, *args, **kwargs) -> None:
+        """Save the current instance.
+
+        Overridden method to allow amount updates.
+
+        Parameters
+        ----------
+        update_amounts
+            Whether to update the amount values of IngredientNutrient
+            records related to the `nutrient`'s compounds when changing
+            the amount.
+        args
+            Arguments passed to the base save method.
+        kwargs
+            Keyword arguments passed to the base save method.
+        """
+        # If old_amount is None don't update the amounts.
+        old_amount = self._old_amount or self.amount
+
+        # Get the unit from the database if it was deferred
+        if old_amount is models.DEFERRED:
+            old_amount = IngredientNutrient.objects.get(id=self.id).amount
+
+        super().save(*args, **kwargs)
+
+        update_amounts = (
+            update_amounts and not self._state.adding and self.amount != old_amount
+        )
+
+        if update_amounts:
+            for compound in self.nutrient.compounds.all():
+                update_compound_nutrients(compound)
+
+        self._old_amount = self.amount
+
+    def __str__(self):
+        return (
+            f"{self.ingredient}: {self.nutrient.name} ({self.amount} "
+            f"{self.nutrient.pretty_unit})"
+        )
 
 
 class NutrientEnergy(models.Model):
