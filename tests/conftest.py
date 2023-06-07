@@ -46,11 +46,14 @@ def ingredient_2(django_db_blocker, django_db_setup):
 
 @pytest.fixture(scope="session")
 def nutrient_1(django_db_blocker, django_db_setup):
-    """Nutrient record and instance."""
+    """Nutrient record and instance.
+
+    name: test_nutrient
+    unit: G
+    """
     nutrient = models.Nutrient()
     nutrient.name = "test_nutrient"
     nutrient.unit = "G"
-    nutrient.external_id = 100  # Starting from 100 to avoid sharing ids with Ingredient
 
     with django_db_blocker.unblock():
         nutrient.save()
@@ -76,6 +79,8 @@ def ingredient_nutrient_1_1(
 ):
     """
     IngredientNutrient associating nutrient_1 with ingredient_1.
+
+    amount: 1.5
     """
     instance = models.IngredientNutrient()
     instance.nutrient = nutrient_1

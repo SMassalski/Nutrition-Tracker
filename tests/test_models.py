@@ -118,7 +118,7 @@ def test_save_updates_amounts_from_db(db, ingredient_1):
 
     nutrient = models.Nutrient.objects.get(pk=nutrient.id)
     nutrient.unit = "MG"
-    nutrient.save()
+    nutrient.save(update_amounts=True)
 
     ing_nut.refresh_from_db()
 
@@ -137,7 +137,7 @@ def test_save_updates_amounts_created(db, ingredient_1):
     )
 
     nutrient.unit = "MG"
-    nutrient.save()
+    nutrient.save(update_amounts=True)
 
     ing_nut.refresh_from_db()
 
@@ -158,7 +158,7 @@ def test_save_updates_amounts_from_db_deferred(db, ingredient_1):
 
     nutrient = models.Nutrient.objects.defer("unit").get(id=nutrient.id)
     nutrient.unit = "MG"
-    nutrient.save()
+    nutrient.save(update_amounts=True)
 
     ing_nut.refresh_from_db()
 
@@ -180,6 +180,56 @@ def test_save_update_amounts_false(db, ingredient_1):
     nutrient.save(update_amounts=False)
 
     assert ing_nut.amount == 1
+
+
+def test_save_updates_recommendation_amounts(db, nutrient_1):
+    """
+    Updating a nutrient's unit changes the amount values of related
+    IntakeRecommendations records so that the actual amounts remain
+    unchanged.
+    """
+    # nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+    recommendation = models.IntakeRecommendation.objects.create(
+        nutrient=nutrient_1,
+        amount_min=1,
+        amount_max=1,
+        dri_type=models.IntakeRecommendation.RDA,
+        sex="B",
+        age_min=0,
+    )
+
+    nutrient_1.unit = "MG"
+    nutrient_1.save(update_amounts=True)
+
+    recommendation.refresh_from_db()
+
+    assert recommendation.amount_min == 1000
+    assert recommendation.amount_max == 1000
+
+
+def test_save_update_amount_recommendation_none_amounts(db, nutrient_1):
+    """
+    Updating a nutrient's unit changes the amount values of related
+    IntakeRecommendations records so that the actual amounts remain
+    unchanged.
+    """
+    # nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
+    recommendation = models.IntakeRecommendation.objects.create(
+        nutrient=nutrient_1,
+        amount_min=None,
+        amount_max=None,
+        dri_type=models.IntakeRecommendation.RDA,
+        sex="B",
+        age_min=0,
+    )
+
+    nutrient_1.unit = "MG"
+    nutrient_1.save(update_amounts=True)
+
+    recommendation.refresh_from_db()
+
+    assert recommendation.amount_min is None
+    assert recommendation.amount_max is None
 
 
 def test_nutrient_energy_per_unit():

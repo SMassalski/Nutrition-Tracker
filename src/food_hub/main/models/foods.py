@@ -91,7 +91,7 @@ class Nutrient(models.Model):
         related_name="compounds",
     )
 
-    # NOTE: from_db and save method overrides to update amount values
+    # NOTE: `from_db()` and `save()` method overrides to update amount values
     #   of related IngredientNutrient records so the actual amount
     #   remains unchanged (when changing unit from grams to milligrams
     #   the amounts are multiplied x 1000)
@@ -115,9 +115,7 @@ class Nutrient(models.Model):
 
         return instance
 
-    # TODO: Update IntakeRecommendations the same way as
-    #  IngredientNutrients
-    def save(self, update_amounts: bool = True, *args, **kwargs) -> None:
+    def save(self, update_amounts: bool = False, *args, **kwargs) -> None:
         """Save the current instance.
 
         Overridden method to allow amount updates.
@@ -149,6 +147,10 @@ class Nutrient(models.Model):
         if update_amounts:
             factor = get_conversion_factor(old_unit, self.unit, self.name)
             self.ingredientnutrient_set.update(amount=models.F("amount") * factor)
+            self.recommendations.update(
+                amount_min=models.F("amount_min") * factor,
+                amount_max=models.F("amount_max") * factor,
+            )
 
         self._old_unit = self.unit
 
@@ -212,7 +214,6 @@ class NutrientComponent(models.Model):
         return f"[{self.target.name}]: {self.component.name}"
 
 
-# TODO: Update intake amounts by component
 class RecommendationQuerySet(models.QuerySet):
     """Manager class for intake recommendations."""
 
@@ -448,7 +449,7 @@ class Ingredient(models.Model):
         """
         return {ig.nutrient: ig.amount for ig in self.ingredientnutrient_set.all()}
 
-    # TODO: This needs an update.
+    # TODO: This needs an update. (Not in recommendation branch)
     @property
     def macronutrient_calories(self) -> Dict[Nutrient, float]:
         """
