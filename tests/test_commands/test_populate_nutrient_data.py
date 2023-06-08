@@ -16,6 +16,7 @@ from main.management.commands.populatenutrientdata import (
     create_nutrient_types,
     create_nutrients,
     create_recommendations,
+    get_nutrient_types,
 )
 
 # TODO: Option to set a different data dict.
@@ -48,10 +49,21 @@ def test_create_nutrient_types_saves_all(db):
     """
     create_nutrient_types() saves all the nutrient types in _data.
     """
+    data = [
+        {
+            "name": "nutrient 1",
+            "type": ["nutrient_type_1", "nutrient_type_2"],
+        },
+        {
+            "name": "nutrient 2",
+            "type": ["nutrient_type_1", "nutrient_type_3"],
+        },
+    ]
+    expected = {"nutrient_type_1", "nutrient_type_2", "nutrient_type_3"}
+    create_nutrient_types({}, data=data)
 
-    create_nutrient_types({})
     nutrient_types = models.NutrientType.objects.all()
-    assert {t.name for t in nutrient_types} == NUTRIENT_TYPES
+    assert {t.name for t in nutrient_types} == expected
 
 
 def test_create_nutrient_types_associates_with_nutrients(db):
@@ -59,8 +71,16 @@ def test_create_nutrient_types_associates_with_nutrients(db):
     create_nutrient_types() associates NutrientTypes with their
     respective Nutrients.
     """
+    data = [
+        {
+            "name": "Protein",
+            "type": ["Macronutrient"],
+        },
+    ]
     protein = models.Nutrient.objects.create(name="Protein", unit="G")
-    create_nutrient_types({"Protein": protein})
+
+    create_nutrient_types({"Protein": protein}, data=data)
+
     assert protein.types.first().name == "Macronutrient"
 
 
@@ -69,12 +89,18 @@ def test_create_nutrient_types_with_display_name(db):
     create_nutrient_types() creates NutrientType records with their
     displayed names.
     """
-    create_nutrient_types({})
-    types = models.NutrientType.objects.filter(
-        name__in=NUTRIENT_TYPE_DISPLAY_NAME
-    ).values()
-    for t in types:
-        assert NUTRIENT_TYPE_DISPLAY_NAME[t["name"]] == t["displayed_name"]
+    data = [
+        {
+            "name": "nutrient",
+            "type": ["Fatty acid type"],
+        },
+    ]
+    expected = NUTRIENT_TYPE_DISPLAY_NAME["Fatty acid type"]
+
+    create_nutrient_types({}, data=data)
+
+    displayed_name = models.NutrientType.objects.first().displayed_name
+    assert displayed_name == expected
 
 
 def test_create_nutrients_already_existing_nutrient_type(db):
@@ -96,11 +122,22 @@ def test_create_recommendations(db):
     create_recommendations() creates recommendations for nutrients
     in `nutrient_dict`, according to the information in _data.
     """
-    nutrient = FULL_NUTRIENT_DATA[0]
-    name = nutrient["name"]
-    instance = models.Nutrient.objects.create(name=name, unit=nutrient["unit"])
-    create_recommendations({name: instance})
-    assert instance.recommendations.count() == len(nutrient["recommendations"])
+    recommendation_data = {
+        "age_max": 3,
+        "age_min": 1,
+        "amount_max": 20.0,
+        "amount_min": 5.0,
+        "dri_type": "AMDR",
+        "sex": "B",
+    }
+    data = [{"name": "Protein", "recommendations": [recommendation_data]}]
+    instance = models.Nutrient.objects.create(name="Protein", unit="G")
+
+    create_recommendations({"Protein": instance})
+    recommendation = instance.recommendations.first()
+
+    for k, v in recommendation_data.items():
+        assert getattr(recommendation, k) == v
 
 
 def test_create_energy(db):
@@ -108,10 +145,18 @@ def test_create_energy(db):
     create_energy() creates NutrientEnergy records for nutrients in
     `nutrient_dict`, according to the information in _data.
     """
-    # Protein 4 kcal/g
+    expected_amount = 5
+    data = [
+        {
+            "name": "Protein",
+            "energy": expected_amount,
+        }
+    ]
     instance = models.Nutrient.objects.create(name="Protein", unit="G")
-    create_energy({instance.name: instance})
-    assert instance.energy.amount == 4
+
+    create_energy({instance.name: instance}, data=data)
+
+    assert instance.energy.amount == expected_amount
 
 
 def test_create_nutrient_combinations(db):
@@ -246,3 +291,25 @@ def test_populate_nutrient_data_command_saves_nutrient_components(db):
 
     call_command("populatenutrientdata")
     assert models.NutrientComponent.objects.count() == count
+
+
+def test_get_nutrient_types():
+    """
+    The get_nutrient_types() function retrieves nutrient type names
+    from data in the format of FULL_NUTRIENT_DATA.
+    """
+    data = [
+        {
+            "name": "nutrient 1",
+            "type": ["nutrient_type_1", "nutrient_type_2"],
+        },
+        {
+            "name": "nutrient 2",
+            "type": ["nutrient_type_1", "nutrient_type_3"],
+        },
+    ]
+    expected = {"nutrient_type_1", "nutrient_type_2", "nutrient_type_3"}
+
+    result = get_nutrient_types(data)
+
+    assert result == expected

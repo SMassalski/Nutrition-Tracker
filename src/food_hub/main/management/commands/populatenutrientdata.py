@@ -26,16 +26,19 @@ class Command(BaseCommand):
 
     # docstr-coverage: inherited
     def handle(self, *args, **options):
+
+        # TODO: Make it retrieve data from a kwarg
+        data = FULL_NUTRIENT_DATA
         create_nutrients()
 
-        names = [nut["name"] for nut in FULL_NUTRIENT_DATA]
+        names = [nut["name"] for nut in data]
         nutrients = Nutrient.objects.filter(name__in=names)
         nutrient_instances = {nut.name: nut for nut in nutrients}
 
-        create_recommendations(nutrient_instances)
-        create_nutrient_types(nutrient_instances)
-        create_energy(nutrient_instances)
-        create_nutrient_components(nutrient_instances)
+        create_recommendations(nutrient_instances, data=data)
+        create_nutrient_types(nutrient_instances, data=data)
+        create_energy(nutrient_instances, data=data)
+        create_nutrient_components(nutrient_instances, data=data)
 
 
 def create_nutrients() -> None:
@@ -47,16 +50,23 @@ def create_nutrients() -> None:
     Nutrient.objects.bulk_create(instances, ignore_conflicts=True)
 
 
-def create_recommendations(nutrient_dict: Dict[str, Nutrient]) -> None:
+def create_recommendations(
+    nutrient_dict: Dict[str, Nutrient], data: list = None
+) -> None:
     """Create and save recommendation entries reflecting DRI data.
 
     Parameters
     ----------
     nutrient_dict
         Mapping of nutrient names to their respective instances.
+    data
+        A list containing the nutrient information in the same
+        format as FULL_NUTRIENT_DATA.
+        If `data` is None, the built-in data will be used.
     """
+    data = data or FULL_NUTRIENT_DATA
     recommendation_instances = []
-    for nutrient in FULL_NUTRIENT_DATA:
+    for nutrient in data:
         for recommendation in nutrient["recommendations"]:
             instance = nutrient_dict.get(nutrient.get("name"))
             if instance is not None:
@@ -69,41 +79,56 @@ def create_recommendations(nutrient_dict: Dict[str, Nutrient]) -> None:
     )
 
 
-def create_nutrient_types(nutrient_dict: Dict[str, Nutrient]) -> None:
+def create_nutrient_types(
+    nutrient_dict: Dict[str, Nutrient], data: list = None
+) -> None:
     """Create and save nutrient type entries for important nutrients.
 
     Parameters
     ----------
     nutrient_dict
         Mapping of nutrient names to their respective instances.
+    data
+        A list containing the nutrient information in the same
+        format as FULL_NUTRIENT_DATA.
+        If `data` is None, the built-in data will be used.
     """
+    data = data or FULL_NUTRIENT_DATA
+    nutrient_type_data = (
+        NUTRIENT_TYPES if data is FULL_NUTRIENT_DATA else get_nutrient_types(data)
+    )
     types = [
         NutrientType(name=type_, displayed_name=NUTRIENT_TYPE_DISPLAY_NAME.get(type_))
-        for type_ in NUTRIENT_TYPES
+        for type_ in nutrient_type_data
     ]
     NutrientType.objects.bulk_create(types, ignore_conflicts=True)
 
     types = {
         type_.name: type_
-        for type_ in NutrientType.objects.filter(name__in=NUTRIENT_TYPES)
+        for type_ in NutrientType.objects.filter(name__in=nutrient_type_data)
     }
-    for nutrient in FULL_NUTRIENT_DATA:
+    for nutrient in data:
         for type_ in nutrient["type"]:
             nutrient_instance = nutrient_dict.get(nutrient["name"])
             if nutrient_instance is not None:
                 nutrient_instance.types.add(types[type_])
 
 
-def create_energy(nutrient_dict: Dict[str, Nutrient]) -> None:
+def create_energy(nutrient_dict: Dict[str, Nutrient], data: list = None) -> None:
     """Create and save NutrientEnergy records.
 
     Parameters
     ----------
     nutrient_dict
         Mapping of nutrient names to their respective instances.
+    data
+        A list containing the nutrient information in the same
+        format as FULL_NUTRIENT_DATA.
+        If `data` is None, the built-in data will be used.
     """
+    data = data or FULL_NUTRIENT_DATA
     instances = []
-    for nutrient in FULL_NUTRIENT_DATA:
+    for nutrient in data:
         energy = nutrient.get("energy")
         if energy is None:
             continue
@@ -149,3 +174,23 @@ def create_nutrient_components(
                 )
 
     NutrientComponent.objects.bulk_create(instances, ignore_conflicts=True)
+
+
+def get_nutrient_types(data: list) -> set:
+    """Create a set of nutrient type names in `data`.
+
+    Parameters
+    ----------
+    data
+        A list containing the nutrient information in the same format as
+        FULL_NUTRIENT_DATA.
+
+    Returns
+    -------
+    set
+    """
+    result = set()
+    for nutrient in data:
+        for type_ in nutrient["type"]:
+            result.add(type_)
+    return result
