@@ -573,7 +573,6 @@ class NutrientEnergy(models.Model):
         verbose_name_plural = "Nutrient energies"
 
 
-# TODO: Handle component nutrients with different units
 def update_compound_nutrients(
     nutrient: Nutrient, commit: bool = True
 ) -> List[IngredientNutrient]:
@@ -595,14 +594,37 @@ def update_compound_nutrients(
         The `nutrient`'s IngredientNutrient instances.
     """
 
-    ingredient_nutrient_kwargs = (
-        IngredientNutrient.objects.filter(nutrient__in=nutrient.components.all())
-        .values("ingredient_id")
-        .annotate(amount=models.Sum("amount"))
-    )
+    ingredient_nutrient_data = IngredientNutrient.objects.filter(
+        nutrient__in=nutrient.components.all()
+    ).values("ingredient_id", "nutrient__unit", "amount")
+
+    ingredient_amounts = {}
+    for values in ingredient_nutrient_data:
+        amount = ingredient_amounts.get(values["ingredient_id"], 0)
+        try:
+            amount += values["amount"] * get_conversion_factor(
+                values["nutrient__unit"], nutrient.unit
+            )
+        except ValueError as e:
+            if Nutrient.CALORIES in (values["nutrient__unit"], nutrient.unit):
+                warn(
+                    f"Attempted to convert units from {values['nutrient__unit']} "
+                    f"to {nutrient.unit} in update_compound_nutrients() call. "
+                    f"Nutrient {nutrient} might have an incompatible component "
+                    f"nutrient."
+                )
+                continue
+            else:
+                raise e
+        ingredient_amounts[values["ingredient_id"]] = amount
+
+    ing_nut_kwargs = [
+        {"ingredient_id": ing, "amount": amount}
+        for ing, amount in ingredient_amounts.items()
+    ]
+
     ing_nuts = [
-        IngredientNutrient(nutrient=nutrient, **kwargs)
-        for kwargs in ingredient_nutrient_kwargs
+        IngredientNutrient(nutrient=nutrient, **kwargs) for kwargs in ing_nut_kwargs
     ]
     if commit:
         IngredientNutrient.objects.bulk_create(

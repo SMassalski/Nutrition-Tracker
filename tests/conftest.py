@@ -155,7 +155,23 @@ def logged_in_client(client, user, db):
 
 @pytest.fixture
 def compound_nutrient(db, ingredient_1):
-    """A sample compound nutrient."""
+    """A sample compound nutrient.
+
+    name: compound
+    unit: G
+    components:
+        name: component_1
+        unit: G
+        IngredientNutrient:
+            ingredient: ingredient_1
+            amount: 1
+
+        name: component_2
+        unit: G
+        IngredientNutrient:
+            ingredient: ingredient_1
+            amount: 2
+    """
     nutrient = models.Nutrient.objects.create(name="compound", unit="G")
     component_1, component_2 = models.Nutrient.objects.bulk_create(
         [

@@ -864,7 +864,8 @@ class TestUpdateCompoundNutrient:
         """
         update_compound_nutrients() updates the amounts of
         IngredientNutrients related to a compound nutrient based on the
-        amounts of IngredientNutrients related to it's component nutrients.
+        amounts of IngredientNutrients related to it's component
+        nutrients.
         """
         expected = 3  # component amounts are 1 and 2
 
@@ -878,6 +879,77 @@ class TestUpdateCompoundNutrient:
         save updated IngredientNutrient records.
         """
         update_compound_nutrients(compound_nutrient, commit=False)
+
+        assert not compound_nutrient.ingredientnutrient_set.exists()
+
+    def test_update_compound_nutrients_returns_ingredient_nutrient_list(
+        self, db, compound_nutrient
+    ):
+        """
+        update_compound_nutrients() call with `commits=False` doesn't
+        save updated IngredientNutrient records.
+        """
+        result = update_compound_nutrients(compound_nutrient, commit=False)
+
+        assert len(result) == 1
+        assert isinstance(result[0], models.IngredientNutrient)
+
+    def test_update_compound_nutrients_different_compound_unit(
+        self, db, compound_nutrient
+    ):
+        """
+        update_compound_nutrients() uses unit conversion when
+        the components have a different unit than the compound nutrient.
+        """
+        compound_nutrient.unit = models.Nutrient.MILLIGRAMS
+        compound_nutrient.save()
+
+        update_compound_nutrients(compound_nutrient)
+
+        assert compound_nutrient.ingredientnutrient_set.first().amount == 3000
+
+    def test_update_compound_nutrients_different_component_unit(
+        self, db, compound_nutrient
+    ):
+        """
+        update_compound_nutrients() uses unit conversion when
+        the components have a different unit than the compound nutrient.
+        """
+        component = compound_nutrient.components.get(name="component_1")
+        component.unit = models.Nutrient.MILLIGRAMS
+        component.save()
+
+        update_compound_nutrients(compound_nutrient)
+
+        assert compound_nutrient.ingredientnutrient_set.first().amount == 2.001
+
+    def test_update_compound_nutrients_different_compound_unit_kcal_warning(
+        self, db, compound_nutrient
+    ):
+        """
+        update_compound_nutrients() issues a warning if it encounters
+        a component relationship where one nutrient has an energy unit
+        and the other has a weight unit
+        """
+        compound_nutrient.unit = models.Nutrient.CALORIES
+        compound_nutrient.save()
+
+        with pytest.warns(UserWarning):
+            update_compound_nutrients(compound_nutrient)
+
+    @pytest.mark.filterwarnings("ignore::UserWarning")
+    def test_update_compound_nutrients_different_compound_unit_kcal_warning(
+        self, db, compound_nutrient
+    ):
+        """
+        update_compound_nutrients() doesn't save IngredientNutrient if
+        it encounters a component relationship where one nutrient has an
+        energy unit and the other has a weight unit.
+        """
+        compound_nutrient.unit = models.Nutrient.CALORIES
+        compound_nutrient.save()
+
+        update_compound_nutrients(compound_nutrient)
 
         assert not compound_nutrient.ingredientnutrient_set.exists()
 
@@ -962,9 +1034,9 @@ class TestIngredientNutrient:
         self, db, ingredient_1, nutrient_1, ingredient_nutrient_1_1
     ):
         """
-        Updating an IngredientNutrient's amount doesn't change the amount value
-        of IngredientNutrient records related to the `nutrient's`
-        compound nutrients if save() was called with
+        Updating an IngredientNutrient's amount doesn't change the
+        amount value of IngredientNutrient records related to the
+        `nutrient's` compound nutrients if save() was called with
         `update_amounts=False`.
         """
         nutrient = models.Nutrient.objects.create(name="save_test_nutrient", unit="G")
