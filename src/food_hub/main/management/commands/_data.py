@@ -1,13 +1,10 @@
 """Hard-coded data used in commands."""
-# NOTE: Data in this module is hard coded because comes from
-#  unstructured sources that aren't easily parsable or because the
-#  nutrients are identified by name in the code.
 
 FULL_NUTRIENT_DATA = [
     {
-        "name": "Protein",
-        "unit": "G",
+        "energy": 4,
         "fdc_ids": [1003],
+        "name": "Protein",
         "recommendations": [
             {
                 "age_max": 3,
@@ -67,12 +64,12 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Macronutrient"],
-        "energy": 4,
+        "unit": "G",
     },
     {
-        "name": "Lipid",
-        "unit": "G",
+        "energy": 9,
         "fdc_ids": [1004],
+        "name": "Lipid",
         "recommendations": [
             {
                 "age_max": 3,
@@ -100,12 +97,12 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Macronutrient"],
-        "energy": 9,
+        "unit": "G",
     },
     {
-        "name": "Carbohydrate",
-        "unit": "G",
+        "energy": 4,
         "fdc_ids": [1005],
+        "name": "Carbohydrate",
         "recommendations": [
             {
                 "age_max": None,
@@ -125,27 +122,20 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Macronutrient"],
-        "energy": 4,
+        "unit": "G",
     },
     {
-        "name": "Alcohol",
-        "unit": "G",
-        "fdc_ids": [1018],
-        "recommendations": [],
-        "type": [],
         "energy": 7,
-    },
-    {
-        "name": "Ash",
-        "unit": "G",
-        "fdc_ids": [1007],
+        "fdc_ids": [1018],
+        "name": "Alcohol",
         "recommendations": [],
         "type": [],
-    },
-    {
-        "name": "Fiber",
         "unit": "G",
+    },
+    {"fdc_ids": [1007], "name": "Ash", "recommendations": [], "type": [], "unit": "G"},
+    {
         "fdc_ids": [1079],
+        "name": "Fiber",
         "recommendations": [
             {
                 "age_max": None,
@@ -154,21 +144,21 @@ FULL_NUTRIENT_DATA = [
                 "amount_min": 14.0,
                 "dri_type": "AIK",
                 "sex": "B",
-            },
+            }
         ],
         "type": [],
+        "unit": "G",
     },
     {
-        "name": "Energy",
-        "unit": "KCAL",
         "fdc_ids": [1008],
+        "name": "Energy",
         "recommendations": [],
         "type": [],
+        "unit": "KCAL",
     },
     {
-        "name": "Water",
-        "unit": "G",
         "fdc_ids": [1051],
+        "name": "Water",
         "recommendations": [
             {
                 "age_max": 3,
@@ -236,66 +226,66 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": [],
+        "unit": "G",
     },
     {
-        "name": "Arsenic",
-        "unit": "UG",
         "fdc_ids": [1134],
+        "name": "Arsenic",
         "recommendations": [],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "UG",
     },
     {
-        "name": "Boron",
-        "unit": "MG",
         "fdc_ids": [1137],
+        "name": "Boron",
         "recommendations": [
             {
                 "age_max": 3,
                 "age_min": 1,
-                "amount_max": None,
-                "amount_min": 3.0,
+                "amount_max": 3.0,
+                "amount_min": None,
                 "dri_type": "UL",
                 "sex": "B",
             },
             {
                 "age_max": 8,
                 "age_min": 4,
-                "amount_max": None,
-                "amount_min": 6.0,
+                "amount_max": 6.0,
+                "amount_min": None,
                 "dri_type": "UL",
                 "sex": "B",
             },
             {
                 "age_max": 13,
                 "age_min": 9,
-                "amount_max": None,
-                "amount_min": 11.0,
+                "amount_max": 11.0,
+                "amount_min": None,
                 "dri_type": "UL",
                 "sex": "B",
             },
             {
                 "age_max": 18,
                 "age_min": 14,
-                "amount_max": None,
-                "amount_min": 17.0,
+                "amount_max": 17.0,
+                "amount_min": None,
                 "dri_type": "UL",
                 "sex": "B",
             },
             {
                 "age_max": None,
                 "age_min": 19,
-                "amount_max": None,
-                "amount_min": 20.0,
+                "amount_max": 20.0,
+                "amount_min": None,
                 "dri_type": "UL",
                 "sex": "B",
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "MG",
     },
     {
-        "name": "Calcium",
-        "unit": "MG",
         "fdc_ids": [1087],
+        "name": "Calcium",
         "recommendations": [
             {
                 "age_max": 3,
@@ -339,11 +329,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "MG",
     },
     {
-        "name": "Chlorine",
-        "unit": "G",
         "fdc_ids": [1088],
+        "name": "Chlorine",
         "recommendations": [
             {
                 "age_max": 3,
@@ -395,11 +385,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "G",
     },
     {
-        "name": "Chromium",
-        "unit": "UG",
         "fdc_ids": [1096],
+        "name": "Chromium",
         "recommendations": [
             {
                 "age_max": 3,
@@ -475,11 +465,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "UG",
     },
     {
-        "name": "Copper",
-        "unit": "UG",
         "fdc_ids": [1098],
+        "name": "Copper",
         "recommendations": [
             {
                 "age_max": 3,
@@ -523,11 +513,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "UG",
     },
     {
-        "name": "Fluoride",
-        "unit": "MG",
         "fdc_ids": [1099],
+        "name": "Fluoride",
         "recommendations": [
             {
                 "age_max": 3,
@@ -579,11 +569,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "MG",
     },
     {
-        "name": "Iodine",
-        "unit": "UG",
         "fdc_ids": [1100],
+        "name": "Iodine",
         "recommendations": [
             {
                 "age_max": 3,
@@ -627,11 +617,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "UG",
     },
     {
-        "name": "Iron",
-        "unit": "MG",
         "fdc_ids": [1089],
+        "name": "Iron",
         "recommendations": [
             {
                 "age_max": 3,
@@ -699,11 +689,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "MG",
     },
     {
-        "name": "Magnesium",
-        "unit": "MG",
         "fdc_ids": [1090],
+        "name": "Magnesium",
         "recommendations": [
             {
                 "age_max": 3,
@@ -779,11 +769,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "MG",
     },
     {
-        "name": "Manganese",
-        "unit": "MG",
         "fdc_ids": [1101],
+        "name": "Manganese",
         "recommendations": [
             {
                 "age_max": 3,
@@ -851,11 +841,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "MG",
     },
     {
-        "name": "Molybdenum",
-        "unit": "UG",
         "fdc_ids": [1102],
+        "name": "Molybdenum",
         "recommendations": [
             {
                 "age_max": 3,
@@ -899,51 +889,51 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "UG",
     },
     {
-        "name": "Nickel",
-        "unit": "MG",
         "fdc_ids": [1146],
+        "name": "Nickel",
         "recommendations": [
             {
                 "age_max": 3,
                 "age_min": 1,
-                "amount_max": None,
-                "amount_min": 0.2,
+                "amount_max": 0.2,
+                "amount_min": None,
                 "dri_type": "UL",
                 "sex": "B",
             },
             {
                 "age_max": 8,
                 "age_min": 4,
-                "amount_max": None,
-                "amount_min": 0.3,
+                "amount_max": 0.3,
+                "amount_min": None,
                 "dri_type": "UL",
                 "sex": "B",
             },
             {
                 "age_max": 13,
                 "age_min": 9,
-                "amount_max": None,
-                "amount_min": 0.6,
+                "amount_max": 0.6,
+                "amount_min": None,
                 "dri_type": "UL",
                 "sex": "B",
             },
             {
                 "age_max": None,
                 "age_min": 14,
-                "amount_max": None,
-                "amount_min": 1.0,
+                "amount_max": 1.0,
+                "amount_min": None,
                 "dri_type": "UL",
                 "sex": "B",
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "MG",
     },
     {
-        "name": "Phosphorus",
-        "unit": "MG",
         "fdc_ids": [1091],
+        "name": "Phosphorus",
         "recommendations": [
             {
                 "age_max": 3,
@@ -987,11 +977,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "MG",
     },
     {
-        "name": "Potassium",
-        "unit": "G",
         "fdc_ids": [1092],
+        "name": "Potassium",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1027,11 +1017,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "G",
     },
     {
-        "name": "Selenium",
-        "unit": "UG",
         "fdc_ids": [1103],
+        "name": "Selenium",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1067,18 +1057,18 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "UG",
     },
     {
-        "name": "Silicon",
-        "unit": "UG",
         "fdc_ids": [1150],
+        "name": "Silicon",
         "recommendations": [],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "UG",
     },
     {
-        "name": "Sodium",
-        "unit": "G",
         "fdc_ids": [1093],
+        "name": "Sodium",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1130,27 +1120,27 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "G",
     },
     {
-        "name": "Vanadium",
-        "unit": "MG",
         "fdc_ids": [1155],
+        "name": "Vanadium",
         "recommendations": [
             {
                 "age_max": None,
                 "age_min": 19,
-                "amount_max": None,
-                "amount_min": 1.8,
+                "amount_max": 1.8,
+                "amount_min": None,
                 "dri_type": "UL",
                 "sex": "B",
-            },
+            }
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "MG",
     },
     {
-        "name": "Zinc",
-        "unit": "MG",
         "fdc_ids": [1095],
+        "name": "Zinc",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1210,11 +1200,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Mineral"],
+        "unit": "MG",
     },
     {
-        "name": "Vitamin B1",
-        "unit": "MG",
         "fdc_ids": [1165],
+        "name": "Vitamin B1",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1266,11 +1256,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Vitamin"],
+        "unit": "MG",
     },
     {
-        "name": "Vitamin B2",
-        "unit": "MG",
         "fdc_ids": [1166],
+        "name": "Vitamin B2",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1322,11 +1312,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Vitamin"],
+        "unit": "MG",
     },
     {
-        "name": "Vitamin B3",
-        "unit": "MG",
         "fdc_ids": [1167],
+        "name": "Vitamin B3",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1386,11 +1376,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Vitamin"],
+        "unit": "MG",
     },
     {
-        "name": "Vitamin B5",
-        "unit": "MG",
         "fdc_ids": [1170],
+        "name": "Vitamin B5",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1426,11 +1416,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Vitamin"],
+        "unit": "MG",
     },
     {
-        "name": "Vitamin B6",
-        "unit": "MG",
         "fdc_ids": [1175],
+        "name": "Vitamin B6",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1498,11 +1488,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Vitamin"],
+        "unit": "MG",
     },
     {
-        "name": "Vitamin B7",
-        "unit": "UG",
         "fdc_ids": [1176],
+        "name": "Vitamin B7",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1546,11 +1536,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Vitamin"],
+        "unit": "UG",
     },
     {
-        "name": "Vitamin B9",
-        "unit": "UG",
         "fdc_ids": [1177, 1190],
+        "name": "Vitamin B9",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1594,11 +1584,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Vitamin"],
+        "unit": "UG",
     },
     {
-        "name": "Vitamin B12",
-        "unit": "UG",
         "fdc_ids": [1178],
+        "name": "Vitamin B12",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1634,11 +1624,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Vitamin"],
+        "unit": "UG",
     },
     {
-        "name": "Vitamin A",
-        "unit": "UG",
         "fdc_ids": [1104, 1106],
+        "name": "Vitamin A",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1698,11 +1688,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Vitamin"],
+        "unit": "UG",
     },
     {
-        "name": "Vitamin C",
-        "unit": "MG",
         "fdc_ids": [1162],
+        "name": "Vitamin C",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1762,11 +1752,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Vitamin"],
+        "unit": "MG",
     },
     {
-        "name": "Vitamin D",
-        "unit": "UG",
         "fdc_ids": [1110, 1114],
+        "name": "Vitamin D",
         "recommendations": [
             {
                 "age_max": 50,
@@ -1794,25 +1784,25 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Vitamin"],
+        "unit": "UG",
     },
     {
-        "name": "Vitamin D2",
-        "unit": "UG",
         "fdc_ids": [1111],
+        "name": "Vitamin D2",
         "recommendations": [],
         "type": ["Micronutrient", "Vitamin"],
-    },
-    {
-        "name": "Vitamin D3",
         "unit": "UG",
-        "fdc_ids": [1112],
-        "recommendations": [],
-        "type": ["Micronutrient", "Vitamin"],
     },
     {
-        "name": "Vitamin E",
-        "unit": "MG",
+        "fdc_ids": [1112],
+        "name": "Vitamin D3",
+        "recommendations": [],
+        "type": ["Micronutrient", "Vitamin"],
+        "unit": "UG",
+    },
+    {
         "fdc_ids": [1109],
+        "name": "Vitamin E",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1856,11 +1846,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Vitamin"],
+        "unit": "MG",
     },
     {
-        "name": "Vitamin K",
-        "unit": "UG",
         "fdc_ids": [1183, 1184, 1185],
+        "name": "Vitamin K",
         "recommendations": [
             {
                 "age_max": 3,
@@ -1912,67 +1902,67 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Vitamin"],
+        "unit": "UG",
     },
     {
-        "name": "Alanine",
-        "unit": "MG",
         "fdc_ids": [1222],
+        "name": "Alanine",
         "recommendations": [],
         "type": ["Micronutrient", "Amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Arginine",
-        "unit": "MG",
         "fdc_ids": [1220],
+        "name": "Arginine",
         "recommendations": [],
         "type": ["Micronutrient", "Amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Aspartic acid",
-        "unit": "MG",
         "fdc_ids": [1223],
+        "name": "Aspartic acid",
         "recommendations": [],
         "type": ["Micronutrient", "Amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Asparagine",
-        "unit": "MG",
         "fdc_ids": [1231],
+        "name": "Asparagine",
         "recommendations": [],
         "type": ["Micronutrient", "Amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Cysteine",
-        "unit": "MG",
         "fdc_ids": [1216, 1232],
+        "name": "Cysteine",
         "recommendations": [],
         "type": ["Micronutrient", "Amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Glutamic acid",
-        "unit": "MG",
         "fdc_ids": [1224],
+        "name": "Glutamic acid",
         "recommendations": [],
         "type": ["Micronutrient", "Amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Glutamine",
-        "unit": "MG",
         "fdc_ids": [1233],
+        "name": "Glutamine",
         "recommendations": [],
         "type": ["Micronutrient", "Amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Glycine",
-        "unit": "MG",
         "fdc_ids": [1225],
+        "name": "Glycine",
         "recommendations": [],
         "type": ["Micronutrient", "Amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Histidine",
-        "unit": "MG",
         "fdc_ids": [1221],
+        "name": "Histidine",
         "recommendations": [
             {
                 "age_max": 3,
@@ -2032,11 +2022,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Amino acid", "Indispensable amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Isoleucine",
-        "unit": "MG",
         "fdc_ids": [1212],
+        "name": "Isoleucine",
         "recommendations": [
             {
                 "age_max": 3,
@@ -2096,11 +2086,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Amino acid", "Indispensable amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Leucine",
-        "unit": "MG",
         "fdc_ids": [1213],
+        "name": "Leucine",
         "recommendations": [
             {
                 "age_max": 3,
@@ -2160,11 +2150,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Amino acid", "Indispensable amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Lysine",
-        "unit": "MG",
         "fdc_ids": [1214],
+        "name": "Lysine",
         "recommendations": [
             {
                 "age_max": 3,
@@ -2224,39 +2214,39 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Amino acid", "Indispensable amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Methionine",
-        "unit": "MG",
         "fdc_ids": [1215],
+        "name": "Methionine",
         "recommendations": [],
         "type": ["Micronutrient", "Amino acid", "Indispensable amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Phenylalanine",
-        "unit": "MG",
         "fdc_ids": [1217],
+        "name": "Phenylalanine",
         "recommendations": [],
         "type": ["Micronutrient", "Amino acid", "Indispensable amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Proline",
-        "unit": "MG",
         "fdc_ids": [1226],
+        "name": "Proline",
         "recommendations": [],
         "type": ["Micronutrient", "Amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Serine",
-        "unit": "MG",
         "fdc_ids": [1227],
+        "name": "Serine",
         "recommendations": [],
         "type": ["Micronutrient", "Amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Threonine",
-        "unit": "MG",
         "fdc_ids": [1211],
+        "name": "Threonine",
         "recommendations": [
             {
                 "age_max": 3,
@@ -2316,11 +2306,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Amino acid", "Indispensable amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Tryptophan",
-        "unit": "MG",
         "fdc_ids": [1210],
+        "name": "Tryptophan",
         "recommendations": [
             {
                 "age_max": 3,
@@ -2380,18 +2370,18 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Amino acid", "Indispensable amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Tyrosine",
-        "unit": "MG",
         "fdc_ids": [1218],
+        "name": "Tyrosine",
         "recommendations": [],
         "type": ["Micronutrient", "Amino acid"],
+        "unit": "MG",
     },
     {
-        "name": "Valine",
-        "unit": "MG",
         "fdc_ids": [1219],
+        "name": "Valine",
         "recommendations": [
             {
                 "age_max": 3,
@@ -2451,57 +2441,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Amino acid", "Indispensable amino acid"],
-    },
-    {
-        "name": "Saturated fatty acids",
-        "unit": "G",
-        "fdc_ids": [1258],
-        "recommendations": [
-            {
-                "age_max": None,
-                "age_min": 0,
-                "amount_max": None,
-                "amount_min": None,
-                "dri_type": "ALAP",
-                "sex": "B",
-            },
-        ],
-        "type": ["Micronutrient", "Fatty acid type"],
-    },
-    {
-        "name": "Monounsaturated fatty acids",
-        "unit": "G",
-        "fdc_ids": [1292],
-        "recommendations": [],
-        "type": ["Micronutrient", "Fatty acid type"],
-    },
-    {
-        "name": "Polyunsaturated fatty acids",
-        "unit": "G",
-        "fdc_ids": [1293],
-        "recommendations": [],
-        "type": ["Micronutrient", "Fatty acid type"],
-    },
-    {
-        "name": "Trans fatty acids",
-        "unit": "G",
-        "fdc_ids": [1257],
-        "recommendations": [
-            {
-                "age_max": None,
-                "age_min": 0,
-                "amount_max": None,
-                "amount_min": None,
-                "dri_type": "ALAP",
-                "sex": "B",
-            },
-        ],
-        "type": ["Micronutrient", "Fatty acid type"],
-    },
-    {
-        "name": "Cholesterol",
         "unit": "MG",
-        "fdc_ids": [1253],
+    },
+    {
+        "fdc_ids": [1258],
+        "name": "Saturated fatty acids",
         "recommendations": [
             {
                 "age_max": None,
@@ -2510,37 +2454,84 @@ FULL_NUTRIENT_DATA = [
                 "amount_min": None,
                 "dri_type": "ALAP",
                 "sex": "B",
-            },
+            }
+        ],
+        "type": ["Micronutrient", "Fatty acid type"],
+        "unit": "G",
+    },
+    {
+        "fdc_ids": [1292],
+        "name": "Monounsaturated fatty acids",
+        "recommendations": [],
+        "type": ["Micronutrient", "Fatty acid type"],
+        "unit": "G",
+    },
+    {
+        "fdc_ids": [1293],
+        "name": "Polyunsaturated fatty acids",
+        "recommendations": [],
+        "type": ["Micronutrient", "Fatty acid type"],
+        "unit": "G",
+    },
+    {
+        "fdc_ids": [1257],
+        "name": "Trans fatty acids",
+        "recommendations": [
+            {
+                "age_max": None,
+                "age_min": 0,
+                "amount_max": None,
+                "amount_min": None,
+                "dri_type": "ALAP",
+                "sex": "B",
+            }
+        ],
+        "type": ["Micronutrient", "Fatty acid type"],
+        "unit": "G",
+    },
+    {
+        "fdc_ids": [1253],
+        "name": "Cholesterol",
+        "recommendations": [
+            {
+                "age_max": None,
+                "age_min": 0,
+                "amount_max": None,
+                "amount_min": None,
+                "dri_type": "ALAP",
+                "sex": "B",
+            }
         ],
         "type": ["Micronutrient"],
+        "unit": "MG",
     },
     {
-        "name": "Sugars",
-        "unit": "G",
         "fdc_ids": [2000],
+        "name": "Sugars",
         "recommendations": [],
         "type": ["Micronutrient", "Carbohydrate"],
+        "unit": "G",
     },
     {
-        "name": "Sugars (added)",
-        "unit": "G",
         "fdc_ids": [1235],
+        "name": "Sugars (added)",
         "recommendations": [
             {
                 "age_max": None,
                 "age_min": 0,
-                "amount_max": None,
-                "amount_min": 25.0,
+                "amount_max": 25.0,
+                "amount_min": None,
                 "dri_type": "UL",
                 "sex": "B",
-            },
+            }
         ],
         "type": ["Micronutrient", "Carbohydrate"],
+        "unit": "G",
     },
     {
-        "name": "alpha-Linolenic acid",
-        "unit": "G",
+        "energy": 9,
         "fdc_ids": [1404],
+        "name": "alpha-Linolenic acid",
         "recommendations": [
             {
                 "age_max": None,
@@ -2600,12 +2591,12 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Polyunsaturated fatty acid"],
-        "energy": 9,
+        "unit": "G",
     },
     {
-        "name": "Linoleic acid",
-        "unit": "G",
+        "energy": 9,
         "fdc_ids": [1316],
+        "name": "Linoleic acid",
         "recommendations": [
             {
                 "age_max": None,
@@ -2697,12 +2688,11 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient", "Polyunsaturated fatty acid"],
-        "energy": 9,
+        "unit": "G",
     },
     {
-        "name": "Choline",
-        "unit": "MG",
         "fdc_ids": [1180],
+        "name": "Choline",
         "recommendations": [
             {
                 "age_max": 3,
@@ -2762,11 +2752,12 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Micronutrient"],
+        "unit": "MG",
     },
     {
-        "name": "Methionine + Cysteine",
-        "unit": "MG",
+        "components": ["Methionine", "Cysteine"],
         "fdc_ids": [],
+        "name": "Methionine + Cysteine",
         "recommendations": [
             {
                 "age_max": 3,
@@ -2826,12 +2817,12 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Amino acid"],
-        "components": ["Methionine", "Cysteine"],
+        "unit": "MG",
     },
     {
-        "name": "Phenylalanine + Tyrosine",
-        "unit": "MG",
+        "components": ["Phenylalanine", "Tyrosine"],
         "fdc_ids": [],
+        "name": "Phenylalanine + Tyrosine",
         "recommendations": [
             {
                 "age_max": 3,
@@ -2891,10 +2882,9 @@ FULL_NUTRIENT_DATA = [
             },
         ],
         "type": ["Amino acid"],
-        "components": ["Phenylalanine", "Tyrosine"],
+        "unit": "MG",
     },
 ]
-
 
 # Mapping of nutrient's ID in the FDC database to the nutrient's name in
 # this application.

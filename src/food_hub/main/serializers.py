@@ -100,10 +100,7 @@ class ProfileRecommendationSerializer(serializers.ModelSerializer):
 
     def get_upper_limit(self, obj: models.IntakeRecommendation) -> float:
         """The UL or AMDR upper limit of the recommendation"""
-        if obj.dri_type == "UL":
-            amount = obj.profile_amount_min(self.context.get("profile"))
-        else:
-            amount = obj.profile_amount_max(self.context.get("profile"))
+        amount = obj.profile_amount_max(self.context.get("profile"))
 
         return amount or float("inf")
 
@@ -114,6 +111,9 @@ class ProfileRecommendationSerializer(serializers.ModelSerializer):
         """
         if obj.dri_type == "ALAP":
             return None
+        elif obj.dri_type == "UL":
+            amount = obj.profile_amount_max(self.context.get("profile"))
+        else:
+            amount = obj.profile_amount_min(self.context.get("profile"))
 
-        amount = obj.profile_amount_min(self.context.get("profile"))
         return None if amount is None else round(amount, 1)

@@ -242,14 +242,14 @@ class IntakeRecommendation(models.Model):
     demographic.
     """
 
-    # TODO: Is it better to store UL in amount_max?
     # NOTE: Different recommendation types will use the amount fields
     #  in different ways:
     #  * AMDR - `amount_min` and amount_max are the lower and the upper
     #   limits of the range respectively.
     #  * AI/UL, RDA/UL, AIK, AI/KG, RDA/KG - `amount_min` is the RDA or
     #   AI value. `amount_max` is the UL value (if available).
-    #  * UL and AIK - uses only `amount_min`
+    #  * AIK - uses only `amount_min`
+    #  * UL - uses only `amount_max`
     #  * ALAP - ignores both.
 
     AI = "AI"
@@ -267,7 +267,7 @@ class IntakeRecommendation(models.Model):
         # intake.
         (AIK, "AI-KCAL"),
         (AIKG, "AI/KG"),
-        (ALAP, "As Low As Possible"),  # As Low As Possible
+        (ALAP, "As Low As Possible"),
         (AMDR, "AMDR"),
         (RDA, "RDA/UL"),
         (RDAKG, "RDA/KG"),
@@ -287,7 +287,8 @@ class IntakeRecommendation(models.Model):
         "* AI/UL, RDA/UL, AIK, AI/KG, RDA/KG - <em>amount_min</em> is "
         "the RDA or AI value. <em>amount_max</em> is the UL value "
         "(if available).</br>"
-        "* UL and AIK - use only <em>amount_min</em>.</br>"
+        "* AIK - use only <em>amount_min</em>.</br>"
+        "* UL - uses only <em>amount_max</em>.</br>"
         "* ALAP - ignores both."
     )
 

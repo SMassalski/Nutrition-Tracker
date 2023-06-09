@@ -29,8 +29,7 @@ class TestProfileRecommendationSerializer:
 
     def test_profile_recommendation_serializer_upper_limit(self, db):
         """
-        The serializer's upper_limit field returns the amount_max value
-        for recommendations with dri_type other than 'UL'.
+        The serializer's upper_limit field returns the amount_max value.
         """
         recommendation = models.IntakeRecommendation(
             nutrient=self.nutrient,
@@ -40,20 +39,6 @@ class TestProfileRecommendationSerializer:
         )
         serializer = ProfileRecommendationSerializer(recommendation, **self.init_kwargs)
         assert serializer.data.get("upper_limit") == 1
-
-    def test_profile_recommendation_serializer_upper_limit_ul(self, db):
-        """
-        The serializer's upper_limit field returns the amount_min value
-        for recommendations with dri_type 'UL'.
-        """
-        recommendation = models.IntakeRecommendation(
-            nutrient=self.nutrient,
-            dri_type=models.IntakeRecommendation.UL,
-            amount_max=1,
-            amount_min=2,
-        )
-        serializer = ProfileRecommendationSerializer(recommendation, **self.init_kwargs)
-        assert serializer.data.get("upper_limit") == 2
 
     def test_profile_recommendation_serializer_upper_limit_none(self, db):
         """
@@ -72,7 +57,7 @@ class TestProfileRecommendationSerializer:
     def test_profile_recommendation_serializer_displayed_amount(self, db):
         """
         The serializer's displayed_amount field returns `amount_min` for
-        recommendations with dri_type other than ALAP.
+        recommendations with dri_type other than ALAP and UL.
         """
         recommendation = models.IntakeRecommendation(
             nutrient=self.nutrient,
@@ -96,6 +81,20 @@ class TestProfileRecommendationSerializer:
         )
         serializer = ProfileRecommendationSerializer(recommendation, **self.init_kwargs)
         assert serializer.data.get("displayed_amount") is None
+
+    def test_profile_recommendation_serializer_displayed_amount_ul(self, db):
+        """
+        The serializer's displayed_amount field returns None for
+        recommendations with dri_type UL.
+        """
+        recommendation = models.IntakeRecommendation(
+            nutrient=self.nutrient,
+            dri_type=models.IntakeRecommendation.UL,
+            amount_max=2,
+            amount_min=1,
+        )
+        serializer = ProfileRecommendationSerializer(recommendation, **self.init_kwargs)
+        assert serializer.data.get("displayed_amount") == 2
 
     def test_profile_recommendation_serializer_displayed_amount_rounds_value(self, db):
         """
