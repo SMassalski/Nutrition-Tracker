@@ -6,33 +6,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("main", "0003_intakerecommendation"),
-        ("main", "0004_alter_intakerecommendation_amount_min_and_more"),
-        ("main", "0005_alter_intakerecommendation_dri_type"),
-        ("main", "0006_alter_intakerecommendation_nutrient"),
-        (
-            "main",
-            "0007_intakerecommendation_recommendation_unique_demographic_and_type",
-        ),
-        (
-            "main",
-            "0008_remove_intakerecommendation_recommendation_unique_demographic_and_type_and_more",
-        ),
-        ("main", "0009_nutrienttype_nutrient_type"),
-        ("main", "0010_rename_type_nutrient_types"),
-        ("main", "0011_nutrientenergy"),
-        ("main", "0012_alter_nutrientenergy_options_and_more"),
-        (
-            "main",
-            "0013_intakerecommendation_recommendation_unique_demographic_nutrient_and_type_max_age_null",
-        ),
-        ("main", "0014_nutrienttype_displayed_name"),
-        ("main", "0015_nutrientcomponent_nutrient_components_and_more"),
-        ("main", "0016_alter_intakerecommendation_amount_min"),
-        ("main", "0017_alter_intakerecommendation_nutrient"),
-    ]
-
     dependencies = [
         ("main", "0002_remove_ingredientnutrient_unique_ingredient_nutrient_and_more"),
     ]
