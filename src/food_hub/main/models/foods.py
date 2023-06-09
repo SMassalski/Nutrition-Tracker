@@ -293,7 +293,7 @@ class IntakeRecommendation(models.Model):
     )
 
     nutrient = models.ForeignKey(
-        Nutrient, on_delete=models.DO_NOTHING, related_name="recommendations"
+        Nutrient, on_delete=models.CASCADE, related_name="recommendations"
     )
     dri_type = models.CharField(max_length=6, choices=type_choices)
     sex = models.CharField(max_length=1, choices=sex_choices)
