@@ -8,7 +8,7 @@ packages = [{include = "food_hub", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-django = "^4.1.3"
+django = "^4.2.2"
 django-environ = "^0.9.0"
 django-rest-framework = "^0.1.0"
 django-crispy-forms = "^2.0"
@@ -21,7 +21,7 @@ pytest = "^7.2.0"
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^2.20.0"
 black = "^22.10.0"
-coverage = {extras = ["toml"], version = "^6.5.0"}
+coverage = "^7.2.0"
 pytest-cov = "^4.0.0"
 docstr-coverage = "^2.2.0"
 django-debug-toolbar = "^3.8.1"
@@ -52,6 +52,7 @@ omit = ["*/manage.py", "*/migrations/*", "src/food_hub/food_hub/*"]
 [tool.coverage.report]
 skip_empty = true
 fail_under = 80
+exclude_also = ["def __str__"]
 
 [tool.coverage.html]
 directory = "coverage/html/"
