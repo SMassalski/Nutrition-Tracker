@@ -13,18 +13,12 @@ from util import get_conversion_factor, open_or_pass
 from ._data import FDC_TO_NUTRIENT
 
 # Nonstandard units and their standard counterparts.
-UNIT_CONVERSION = {
-    "MCG_RE": "UG",
-    "MG_GAE": "MG",
-    "MG_ATE": "MG",
-}
+UNIT_CONVERSION = {"MCG_RE": "UG", "MG_GAE": "MG", "MG_ATE": "MG"}
 
 # Set of data sources in occurring in the FDC db.
-# NOTE: Excluded "experimental_food", "sample_food", "market_acquisition",
-#  "sub_sample_food", "agricultural_acquisition" (multiple records for a
-#  single ingredient).
-#  "branded_food" and "foundation_food" to avoid more complexity
-#  (not clearly indicated historical records in food_nutrient.csv)
+# NOTE: Excluded "branded_food" and "foundation_food" to avoid more
+#  complexity (not clearly indicated historical records in
+#  food_nutrient.csv)
 FDC_DATA_SOURCES = {
     "sr_legacy_food",
     "survey_fndds_food",
@@ -73,10 +67,7 @@ PREFERRED_NONSTANDARD = {
 
 VITAMIN_K_IDS = {1183, 1184, 1185}
 
-
-def create_fdc_data_source() -> models.FoodDataSource:
-    """Create a FoodDataSource record for USDA's Food Data Central."""
-    return models.FoodDataSource.objects.get_or_create(name="FDC")
+# PARSERS
 
 
 def parse_nutrient_csv(
@@ -181,7 +172,6 @@ def parse_food_nutrient_csv(
         limitations.
     """
     nutrients = models.Nutrient.objects.filter(name__in=FDC_TO_NUTRIENT.values())
-    # Raise exception if nutrients in FDC_TO_NUTRIENT are not in the DB
     if not nutrients.exists():
         raise NoNutrientException("No nutrients found.")
 
@@ -193,22 +183,15 @@ def parse_food_nutrient_csv(
         if name in nutrients
     }
 
-    # Mapping of FDC id of nutrients to the conversion factor to be used
-    # when setting the nutrient's amount in ingredient.
     units, nutrient_nbr_id = parse_nutrient_csv(nutrient_file)
-    conversion_factors = {}
-    for id_, unit in units.items():
-        nut = nutrients.get(id_)
-        if nut is not None:
-            factor = get_conversion_factor(unit, nut.unit, nut.name)
-            conversion_factors[id_] = factor
+    conversion_factors = get_nutrient_conversion_factors(units, nutrients)
 
-    # Mappings used to convert FDC ids to ingredients.
+    # Mappings from FDC ids to ingredient instances.
     ingredient_ids = {}
     for ing in models.Ingredient.objects.filter(data_source__name="FDC"):
         ingredient_ids[ing.external_id] = ing
 
-    result = []  # List of created (not saved) IngredientNutrients
+    result = []  # List of created IngredientNutrients instances
     nonstandard = {}  # Data for nonstandard nutrients
 
     with open_or_pass(file, newline="") as f:
@@ -217,11 +200,10 @@ def parse_food_nutrient_csv(
 
             # Get instances and final amount.
             ing = ingredient_ids.get(int(record.get("fdc_id")))
-            nutrient_id = record.get("nutrient_id")  # FDC nutrient id
 
-            # Check if the record refers to nutrient_nbr or id.
             # Some food_nutrient records refer to the nutrient number
             # instead of id (FDDNS specifically).
+            nutrient_id = record.get("nutrient_id")
             nutrient_id = nutrient_nbr_id.get(nutrient_id, int(nutrient_id))
             nut = nutrients.get(nutrient_id)
 
@@ -229,7 +211,6 @@ def parse_food_nutrient_csv(
             if ing is None or nut is None:
                 continue
 
-            # Grab amount and convert units if necessary
             amount = float(record["amount"]) * conversion_factors[nutrient_id]
 
             if nutrient_id in FDC_EXCEPTION_IDS:
@@ -266,6 +247,9 @@ def parse_food_nutrient_csv(
     create_compound_nutrient_amounts()
 
 
+# HELPERS
+
+# TODO: Add feature to allow providing nutrient preferences
 def handle_nonstandard(ingredient, nutrient, fdc_id, output_dict, amount) -> None:
     """Select the appropriate amount for a non-standard nutrient.
 
@@ -290,11 +274,6 @@ def handle_nonstandard(ingredient, nutrient, fdc_id, output_dict, amount) -> Non
     if nutrient not in output_dict[ingredient]:
         output_dict[ingredient][nutrient] = amount
 
-    # Prefer Cysteine (FDC_ID: 1232) over Cystine (FDC_ID: 1216)
-    # Prefer Vitamin A, RAE (1106) over Vitamin A, IU (1104)
-    # Prefer Vitamin D (D2 + D3) (1114)
-    #   over Vitamin D (D2 + D3), International Units (1110)
-    # Prefer Folate, total (1177) over Folate, DFE (1190)
     elif fdc_id in PREFERRED_NONSTANDARD:
         output_dict[ingredient][nutrient] = amount
 
@@ -302,6 +281,36 @@ def handle_nonstandard(ingredient, nutrient, fdc_id, output_dict, amount) -> Non
     # Summed up because vitamin K appears as 3 different molecules.
     elif fdc_id in VITAMIN_K_IDS:
         output_dict[ingredient][nutrient] += amount
+
+
+def get_nutrient_conversion_factors(units: dict, nutrients: dict) -> dict:
+    """Get the conversion factors needed for adding nutrient amounts.
+
+    Nutrients in the FDC data may use different units than their
+    counterparts in the app's database.
+    Because of that, when adding IngredientNutrient records from FDC
+    data, the amounts need to be adjusted to match local units using
+    the dict from this function.
+
+    Parameters
+    ----------
+    units
+        A mapping from nutrient ids, in the FDC data, to its unit.
+    nutrients
+        A mapping from nutrient names to their instances.
+
+    Returns
+    -------
+    dict
+    """
+    conversion_factors = {}
+    for id_, unit in units.items():
+        nut = nutrients.get(id_)
+        if nut is not None:
+            factor = get_conversion_factor(unit, nut.unit, nut.name)
+            conversion_factors[id_] = factor
+
+    return conversion_factors
 
 
 class NoNutrientException(Exception):
@@ -324,3 +333,8 @@ def create_compound_nutrient_amounts():
         update_fields=["amount"],
         unique_fields=["ingredient", "nutrient"],
     )
+
+
+def create_fdc_data_source() -> models.FoodDataSource:
+    """Create a FoodDataSource record for USDA's Food Data Central."""
+    return models.FoodDataSource.objects.get_or_create(name="FDC")

@@ -1,6 +1,4 @@
 """main app admin panel configuration"""
-import main.models.foods
-import main.models.user
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from main import models
@@ -9,7 +7,7 @@ from main import models
 class ProfileInline(admin.TabularInline):
     """Admin inline for the profile model."""
 
-    model = main.models.user.Profile
+    model = models.Profile
 
 
 @admin.register(models.User)

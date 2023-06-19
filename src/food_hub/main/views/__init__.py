@@ -1,1 +1,1 @@
-"""main app views"""
+"""Main app views"""

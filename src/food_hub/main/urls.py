@@ -10,10 +10,12 @@ urlpatterns = [
         login_required(TemplateView.as_view(template_name="main/dashboard.html")),
         name="dashboard",
     ),
+    path("new_meal/", login_required(views.MealView.as_view()), name="create-meal"),
+    path("profile/", views.profile_view, name="profile"),
     path(
-        "new_meal/",
-        login_required(views.MealView.as_view()),
-        name="create-meal",
+        "profile/done",
+        login_required(TemplateView.as_view(template_name="main/profile_done.html")),
+        name="profile-done",
     ),
     path(
         "settings/account",
@@ -21,11 +23,5 @@ urlpatterns = [
             TemplateView.as_view(template_name="main/account_settings.html")
         ),
         name="account-settings",
-    ),
-    path("profile/", views.profile_view, name="profile"),
-    path(
-        "profile/done",
-        login_required(TemplateView.as_view(template_name="main/profile_done.html")),
-        name="profile-done",
     ),
 ]

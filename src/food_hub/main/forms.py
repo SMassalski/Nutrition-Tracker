@@ -44,21 +44,41 @@ class ProfileForm(forms.ModelForm):
         """ProfileForm constructor.
 
         Defines layout using crispy-forms and includes initial unit
-        conversion for height (Stored in database in cm, displayed in
-        both cm and ft/in).
+        conversion for height (Stored in the database in cm, displayed
+        in both cm and ft/in).
         See ModelForm documentation for additional information.
         """
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.layout = self._get_layout()
 
-        self.helper.layout = layout.Layout(
+        # Initial height unit conversion
+        feet, inches = centimeters_to_feet_and_inches(self.instance.height or 0)
+        self["feet"].initial, self["inches"].initial = feet, inches
+
+    def clean(self):
+        """Clean weight data by converting the value to kilograms."""
+        cleaned_data = super().clean()
+        weight = cleaned_data.get("weight")
+        # cleaned_data.get() returns '' if field was not provided.
+        weight_unit = cleaned_data.get("weight_unit") or ProfileForm.KILOGRAMS
+
+        if int(weight_unit) == ProfileForm.POUNDS:
+            cleaned_data["weight"] = pounds_to_kilograms(weight)
+
+        return cleaned_data
+
+    @staticmethod
+    def _get_layout():
+        _layout = layout.Layout(
             "age",
+            # Height fields
             layout.Div(
                 layout.HTML(
                     '<label class="requiredField" for="id_height">Height'
                     '<span class="asteriskField">*</span></label>'
                 ),
-                # DEV NOTE: Having two different fieldsets for different
+                # NOTE: Having two different fieldsets for different
                 #  units requires JS code for automatic conversions
                 #  for adequate user experience.
                 layout.Row(
@@ -76,6 +96,7 @@ class ProfileForm(forms.ModelForm):
                 ),
                 css_class="form-group mb-0",
             ),
+            # Weight fields
             layout.Div(
                 layout.HTML(
                     '<label class="requiredField" for="id_weight">Weight'
@@ -92,25 +113,7 @@ class ProfileForm(forms.ModelForm):
             layout.Submit("submit", "Save", style="width: 100%"),
         )
 
-        # Initial height unit conversion
-        feet, inches = centimeters_to_feet_and_inches(self.instance.height or 0)
-        self["feet"].initial, self["inches"].initial = feet, inches
-
-        # Initial weight unit because value is stored in kg and
-        # displayed without conversion.
-        # self["weight_unit"].initial = ProfileForm.KILOGRAMS
-
-    def clean(self):
-        """Clean weight data by converting the value to kilograms."""
-        cleaned_data = super().clean()
-        weight = cleaned_data.get("weight")
-        # cleaned_data.get() returns '' if field was not provided.
-        weight_unit = cleaned_data.get("weight_unit") or ProfileForm.KILOGRAMS
-
-        if int(weight_unit) == ProfileForm.POUNDS:
-            cleaned_data["weight"] = pounds_to_kilograms(weight)
-
-        return cleaned_data
+        return _layout
 
 
 def pounds_to_kilograms(weight: int) -> int:

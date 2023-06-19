@@ -7,19 +7,19 @@ from main.models.foods import Ingredient
 from main.models.user import User
 from util import weighted_dict_sum
 
+__all__ = ["Meal", "MealComponent", "MealComponentAmount", "MealComponentIngredient"]
+
 # Meals and Meal Components
 #
-# Meals are representations of a portion of eaten food composed of
+# Meals represent portions of eaten food composed of
 # one or more MealComponents and hold information on the time it was
 # eaten for keeping track of the diet.
 #
 # MealComponents represent prepared / cooked combinations of Ingredients.
-# Calculating the components nutritional values allows balancing a meal
+# Calculating the component's nutritional values allows balancing a meal
 # by adjusting relative amounts of components in a meal.
-#
-# There might be an issue with multiple nutrient records of the same
-# actual nutrient (probably should be okay as long as only one data
-# source is used).
+
+# TODO: This needs a redesign
 
 
 class Meal(models.Model):
@@ -43,7 +43,8 @@ class Meal(models.Model):
         components, amounts = zip(
             *[(i.component, i.amount) for i in self.components.all()]
         )
-        # Divide by 100 because its no longer per 100g so now its
+
+        # Divide by 100 because its no longer per 100 g, so now its
         # amount * nutrients per gram
         weights = [amount / 100 for amount in amounts]
         nutrients = [component.nutritional_value() for component in components]

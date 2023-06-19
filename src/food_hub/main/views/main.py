@@ -48,9 +48,9 @@ class MealView(TemplateView):
         "Fatty acid type",
         "Amino acid",
     )
-
     template_name = "main/compose_meal.html"
 
+    # docstr-coverage: inherited
     def get_context_data(self, **kwargs) -> HttpResponse:
 
         context = super().get_context_data(**kwargs)
@@ -65,6 +65,7 @@ class MealView(TemplateView):
             .prefetch_related("nutrient__types")
             .order_by("nutrient__name")
         )
+
         recommends = ProfileRecommendationSerializer(
             queryset, many=True, context={"profile": profile}
         )
@@ -74,10 +75,9 @@ class MealView(TemplateView):
             # Combine with intake data
             amount_min = rec.get("profile_amount_min")
 
-            # Later retrieve intake from meal model
+            # TODO: Later retrieve intake from meal model
             intake = round(random() * (amount_min or 5) * 1.5, 1)
             rec["intake"] = intake
-
             rec["over_limit"] = intake >= rec.get("upper_limit")
 
             try:

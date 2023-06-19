@@ -8,8 +8,6 @@ from warnings import warn
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models.lookups import LessThanOrEqual
-from main.models.user import Profile
 from util import get_conversion_factor
 
 __all__ = [
@@ -18,7 +16,6 @@ __all__ = [
     "NutrientType",
     "NutrientComponent",
     "NutrientEnergy",
-    "IntakeRecommendation",
     "Ingredient",
     "IngredientNutrient",
 ]
@@ -189,6 +186,15 @@ class Nutrient(models.Model):
         return self.compounds.exists()
 
 
+# TODO:
+#  IngredientNutrient amounts of compound nutrients change in two
+#  save methods:
+#   - IngredientNutrient (optional, not by default)
+#   - NutrientComponent (always)
+#  This can cause surprising behaviors depending on the order of
+#  operations.
+
+
 class NutrientComponent(models.Model):
     """
     Represents a compound - component relationship between nutrients.
@@ -216,212 +222,6 @@ class NutrientComponent(models.Model):
 
     def __str__(self):
         return f"[{self.target.name}]: {self.component.name}"
-
-
-class RecommendationQuerySet(models.QuerySet):
-    """Manager class for intake recommendations."""
-
-    def for_profile(self, profile: Profile) -> models.QuerySet:
-        """Retrieve a queryset of recommendations matching a profile.
-
-        Returns
-        -------
-        models.Queryset
-            Recommendations that match the profile's age and sex.
-        """
-        return self.filter(
-            models.Q(age_max__gte=profile.age) | models.Q(age_max__isnull=True),
-            age_min__lte=profile.age,
-            sex__in=(profile.sex, "B"),
-        )
-
-
-class IntakeRecommendation(models.Model):
-    """
-    Represents dietary intake recommendations for a selected
-    demographic.
-    """
-
-    # NOTE: Different recommendation types will use the amount fields
-    #  in different ways:
-    #  * AMDR - `amount_min` and amount_max are the lower and the upper
-    #   limits of the range respectively.
-    #  * AI/UL, RDA/UL, AIK, AI/KG, RDA/KG - `amount_min` is the RDA or
-    #   AI value. `amount_max` is the UL value (if available).
-    #  * AIK - uses only `amount_min`
-    #  * UL - uses only `amount_max`
-    #  * ALAP - ignores both.
-
-    AI = "AI"
-    AIK = "AIK"
-    AIKG = "AI/KG"
-    ALAP = "ALAP"
-    AMDR = "AMDR"
-    RDA = "RDA"
-    RDAKG = "RDA/KG"
-    UL = "UL"
-
-    type_choices = [
-        (AI, "AI/UL"),
-        # AI-KCAL is amount/1000kcal Adequate Intake; mainly for fiber
-        # intake.
-        (AIK, "AI-KCAL"),
-        (AIKG, "AI/KG"),
-        (ALAP, "As Low As Possible"),
-        (AMDR, "AMDR"),
-        (RDA, "RDA/UL"),
-        (RDAKG, "RDA/KG"),
-        (UL, "UL"),
-    ]
-    sex_choices = [
-        ("B", "Both"),
-        ("F", "Female"),
-        ("M", "Male"),
-    ]
-
-    amount_help_text = (
-        "Use of the amount fields differs depending on the selected"
-        " <em>dri_type</em>.</br>"
-        "* AMDR - <em>amount_min</em> and <em>amount_max</em> are the"
-        " lower and the upper limits of the range respectively.</br>"
-        "* AI/UL, RDA/UL, AIK, AI/KG, RDA/KG - <em>amount_min</em> is "
-        "the RDA or AI value. <em>amount_max</em> is the UL value "
-        "(if available).</br>"
-        "* AIK - use only <em>amount_min</em>.</br>"
-        "* UL - uses only <em>amount_max</em>.</br>"
-        "* ALAP - ignores both."
-    )
-
-    nutrient = models.ForeignKey(
-        Nutrient, on_delete=models.CASCADE, related_name="recommendations"
-    )
-    dri_type = models.CharField(max_length=6, choices=type_choices)
-    sex = models.CharField(max_length=1, choices=sex_choices)
-    age_min = models.PositiveIntegerField()
-    age_max = models.PositiveIntegerField(null=True)
-    amount_min = models.FloatField(help_text=amount_help_text, null=True)
-    amount_max = models.FloatField(null=True)
-
-    objects = RecommendationQuerySet.as_manager()
-
-    class Meta:
-        constraints = [
-            models.CheckConstraint(
-                check=LessThanOrEqual(models.F("age_min"), models.F("age_max")),
-                name="recommendation_age_min_max",
-            ),
-            models.CheckConstraint(
-                check=LessThanOrEqual(models.F("amount_min"), models.F("amount_max")),
-                name="recommendation_amount_min_max",
-            ),
-            models.UniqueConstraint(
-                fields=("sex", "age_min", "age_max", "dri_type", "nutrient"),
-                name="recommendation_unique_demographic_nutrient_and_type",
-            ),
-            models.UniqueConstraint(
-                fields=("sex", "age_min", "dri_type", "nutrient"),
-                condition=models.Q(age_max__isnull=True),
-                name="recommendation_unique_demographic_nutrient_and_type_max_age_null",
-            ),
-        ]
-
-    def __str__(self):
-        return (
-            f"{self.nutrient.name} : {self.age_min} - {self.age_max or ''}"
-            f" [{self.sex}] ({self.dri_type})"
-        )
-
-    def profile_amount_min(self, profile: Profile) -> float:
-        """The `amount_min` taking into account the `profile` attributes.
-
-        Recommendations with `dri_type` 'AMDR' and 'AIK' use the
-        profile's energy requirement, and 'AI/KG' and 'RDA/KG' use
-        the profile's weight.
-
-        Parameters
-        ----------
-        profile
-            The profile for which the amount will be calculated.
-
-        Returns
-        -------
-        float
-        """
-        return self._profile_amount(self.amount_min, profile)
-
-    def profile_amount_max(self, profile: Profile) -> float:
-        """The `amount_max` taking into account the `profile` attributes.
-
-        Recommendations with `dri_type` 'AMDR' and 'AIK' use the
-        profile's energy requirement, and 'AI/KG' and 'RDA/KG' use
-        the profile's weight.
-
-        Parameters
-        ----------
-        profile
-            The profile for which the amount will be calculated.
-
-        Returns
-        -------
-        float
-        """
-        return self._profile_amount(self.amount_max, profile)
-
-    # DEV_NOTE: Decide whether the energy dependant recommendations use
-    #   the recommended or actual energy intake. (currently recommended
-    #   is used)
-    def _profile_amount(self, amount: float, profile: Profile) -> float:
-        """Get the amount for the recommendation type and given profile.
-
-        The amount is calculated for recommendations that depend on
-        the person's weight or recommended energy intake.
-        If the recommendation is not dependent on any other value, the
-        recommendation amounts are left unchanged.
-
-        Parameters
-        ----------
-        amount
-        profile
-            The profile for which the amount will be calculated.
-        Returns
-        -------
-        float
-
-        Examples
-        --------
-        >>> r = IntakeRecommendation(dri_type="RDA/KG")
-        >>> r._profile_amount(5.0, Profile(weight=100))
-          500.0
-        """
-        if amount is None:
-            return None
-
-        if self.dri_type == IntakeRecommendation.AIK:
-            # AIK is Adequate Intake per 1000 kcal
-            return amount * profile.energy_requirement / 1000
-
-        elif self.dri_type in (IntakeRecommendation.AIKG, IntakeRecommendation.RDAKG):
-            return amount * profile.weight
-
-        elif self.dri_type == IntakeRecommendation.AMDR:
-            # AMDR values are in % of energy intake / requirement,
-            # so calculations have to take into account the amount of
-            # energy provided by the nutrient
-            try:
-                return (
-                    amount
-                    * profile.energy_requirement
-                    / (self.nutrient.energy_per_unit * 100.0)
-                )
-            except ZeroDivisionError:
-                warn(
-                    f"Couldn't find a NutrientEnergy record for a nutrient with an "
-                    f"AMDR recommendation: {self.nutrient}. Some of the displayed "
-                    f"information ma be inaccurate."
-                )
-                return 0.0
-
-        return amount
 
 
 class Ingredient(models.Model):
@@ -454,7 +254,7 @@ class Ingredient(models.Model):
         """
         return {ig.nutrient: ig.amount for ig in self.ingredientnutrient_set.all()}
 
-    # TODO: This needs an update. (Not in recommendation branch)
+    # TODO: This needs an update.
     @property
     def macronutrient_calories(self) -> Dict[Nutrient, float]:
         """

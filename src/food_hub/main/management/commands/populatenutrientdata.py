@@ -14,6 +14,7 @@ from ._data import FULL_NUTRIENT_DATA, NUTRIENT_TYPE_DISPLAY_NAME, NUTRIENT_TYPE
 
 # TODO: Custom data options and a better explanation of the format in
 #  the documentation / better way to display it.
+#  (Override the constructor)
 
 
 class Command(BaseCommand):
@@ -27,7 +28,6 @@ class Command(BaseCommand):
     # docstr-coverage: inherited
     def handle(self, *args, **options):
 
-        # TODO: Make it retrieve data from a kwarg
         data = FULL_NUTRIENT_DATA
         create_nutrients()
 
@@ -97,12 +97,15 @@ def create_nutrient_types(
     nutrient_type_data = (
         NUTRIENT_TYPES if data is FULL_NUTRIENT_DATA else get_nutrient_types(data)
     )
-    types = [
+
+    # Create NutrientType instances
+    type_instances = [
         NutrientType(name=type_, displayed_name=NUTRIENT_TYPE_DISPLAY_NAME.get(type_))
         for type_ in nutrient_type_data
     ]
-    NutrientType.objects.bulk_create(types, ignore_conflicts=True)
+    NutrientType.objects.bulk_create(type_instances, ignore_conflicts=True)
 
+    # Associate NutrientTypes with Nutrients
     types = {
         type_.name: type_
         for type_ in NutrientType.objects.filter(name__in=nutrient_type_data)
@@ -133,6 +136,7 @@ def create_energy(nutrient_dict: Dict[str, Nutrient], data: list = None) -> None
         if energy is None:
             continue
         nutrient_instance = nutrient_dict.get(nutrient.get("name"))
+
         instances.append(NutrientEnergy(nutrient=nutrient_instance, amount=energy))
 
     NutrientEnergy.objects.bulk_create(instances, ignore_conflicts=True)

@@ -6,7 +6,6 @@ from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 
 
-# User authentication views
 def register_user(request):
     """User registration view."""
     # Redirect to dashboard if logged-in

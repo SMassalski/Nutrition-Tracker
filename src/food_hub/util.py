@@ -7,7 +7,7 @@ from typing import List, Union
 def weighted_dict_sum(dicts: List[dict], weights: List[float]) -> dict:
     """Calculate the per key weighted sum of dictionary values.
 
-    In case of key mismatch the missing value is considered equal to 0.
+    In case of key mismatch, the missing value is considered equal to 0.
 
     Parameters
     ----------
@@ -23,7 +23,7 @@ def weighted_dict_sum(dicts: List[dict], weights: List[float]) -> dict:
     """
     assert len(dicts) == len(weights)
     keys = [d.keys() for d in dicts]
-    keys = {k for key_list in keys for k in key_list}  # Flatten and turn into set
+    keys = {k for key_list in keys for k in key_list}  # Flatten and turn into a set
 
     result = {
         key: sum(value.get(key, 0) * weights[idx] for idx, value in enumerate(dicts))
@@ -37,7 +37,7 @@ def open_or_pass(
 ):  # pragma: no cover
     """Open a file if `file` is a path.
 
-    If `file` is an instance of a subclass of io.IOBase the function
+    If `file` is an instance subclassing `io.IOBase` the function
     returns the `file` unchanged.
 
     Parameters

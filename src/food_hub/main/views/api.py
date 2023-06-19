@@ -1,8 +1,8 @@
-"""main app's api views"""
+"""Main app's api views"""
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
+from rest_framework.mixins import ListModelMixin
 from rest_framework.renderers import (
     BrowsableAPIRenderer,
     JSONRenderer,
@@ -28,7 +28,7 @@ def api_root(request, format=None):
 
 
 class IngredientView(GenericAPIView, ListModelMixin):
-    """List of ingredients
+    """List of ingredients.
 
     Include a query in the `search` query parameter to only
     list the ingredients with matching names.
@@ -58,14 +58,14 @@ class IngredientView(GenericAPIView, ListModelMixin):
 
 
 class IngredientDetailView(RetrieveAPIView):
-    """Ingredient details"""
+    """Ingredient details."""
 
     queryset = Ingredient.objects.all()
     serializer_class = serializers.IngredientDetailSerializer
     renderer_classes = [BrowsableAPIRenderer, JSONRenderer, TemplateHTMLRenderer]
 
 
-class IngredientPreview(GenericAPIView, RetrieveModelMixin):
+class IngredientPreview(GenericAPIView):
     """Ingredient preview (selected ingredient information)."""
 
     queryset = Ingredient.objects.all()
@@ -86,14 +86,14 @@ class IngredientPreview(GenericAPIView, RetrieveModelMixin):
 
 
 class NutrientView(ListAPIView):
-    """List of nutrients"""
+    """List of nutrients."""
 
     queryset = Nutrient.objects.all()
     serializer_class = serializers.NutrientSerializer
 
 
 class NutrientDetailView(RetrieveAPIView):
-    """Nutrient detail"""
+    """Nutrient details."""
 
     queryset = Nutrient.objects.all()
     serializer_class = serializers.NutrientDetailSerializer

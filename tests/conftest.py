@@ -1,152 +1,134 @@
-from pathlib import Path
-from shutil import rmtree
-from tempfile import gettempdir
-
+"""Global test fixtures."""
 import pytest
-from django.conf import settings
 from main import models
 
 
-@pytest.fixture(scope="session", autouse=True)
-def remove_temporary_media_dir():
+@pytest.fixture
+def ingredient_1(db):
+    """Ingredient record and instance.
+
+    name: test_ingredient
+    external_id: 1
+    dataset: test_dataset
     """
-    Removes the test media directory if it is a temporary directory.
+    name = "test_ingredient"
+    external_id = 1
+    dataset = "test_dataset"
+
+    return models.Ingredient.objects.create(
+        name=name, external_id=external_id, dataset=dataset
+    )
+
+
+@pytest.fixture
+def ingredient_2(db):
+    """Ingredient record and instance.
+
+    name: test_ingredient_2
+    external_id: 2
+    dataset: test_dataset
     """
-    yield
-    media_dir = Path(settings.MEDIA_ROOT)
-    if Path(gettempdir()) in media_dir.parents and media_dir.exists():
-        rmtree(media_dir)
+    name = "test_ingredient_2"
+    external_id = 2
+    dataset = "test_dataset"
+
+    return models.Ingredient.objects.create(
+        name=name, external_id=external_id, dataset=dataset
+    )
 
 
-@pytest.fixture(scope="session")
-def ingredient_1(django_db_blocker, django_db_setup):
-    """Ingredient record and instance."""
-    ingredient = models.Ingredient()
-    ingredient.name = "test_ingredient"
-    ingredient.external_id = 1
-    ingredient.dataset = "test_dataset"
-
-    with django_db_blocker.unblock():
-        ingredient.save()
-    return ingredient
-
-
-@pytest.fixture(scope="session")
-def ingredient_2(django_db_blocker, django_db_setup):
-    """Ingredient record and instance."""
-    ingredient = models.Ingredient()
-    ingredient.name = "test_ingredient_2"
-    ingredient.external_id = 2
-    ingredient.dataset = "test_dataset"
-
-    with django_db_blocker.unblock():
-        ingredient.save()
-    return ingredient
-
-
-@pytest.fixture(scope="session")
-def nutrient_1(django_db_blocker, django_db_setup):
+@pytest.fixture
+def nutrient_1(db):
     """Nutrient record and instance.
 
     name: test_nutrient
     unit: G
     """
-    nutrient = models.Nutrient()
-    nutrient.name = "test_nutrient"
-    nutrient.unit = "G"
+    name = "test_nutrient"
+    unit = models.Nutrient.GRAMS
 
-    with django_db_blocker.unblock():
-        nutrient.save()
-    return nutrient
+    return models.Nutrient.objects.create(name=name, unit=unit)
 
 
-@pytest.fixture(scope="session")
-def nutrient_2(django_db_blocker, django_db_setup):
-    """Nutrient record and instance."""
-    nutrient = models.Nutrient()
-    nutrient.name = "test_nutrient_2"
-    nutrient.unit = "UG"
-    nutrient.external_id = 101
+@pytest.fixture
+def nutrient_2(db):
+    """Nutrient record and instance.
 
-    with django_db_blocker.unblock():
-        nutrient.save()
-    return nutrient
+    name: test_nutrient_2
+    unit: UG
+    """
+    name = "test_nutrient_2"
+    unit = models.Nutrient.MICROGRAMS
+
+    return models.Nutrient.objects.create(name=name, unit=unit)
 
 
-@pytest.fixture(scope="session")
-def ingredient_nutrient_1_1(
-    django_db_blocker, django_db_setup, ingredient_1, nutrient_1
-):
+@pytest.fixture
+def ingredient_nutrient_1_1(db, ingredient_1, nutrient_1):
     """
     IngredientNutrient associating nutrient_1 with ingredient_1.
 
     amount: 1.5
     """
-    instance = models.IngredientNutrient()
-    instance.nutrient = nutrient_1
-    instance.ingredient = ingredient_1
-    instance.amount = 1.5
-    with django_db_blocker.unblock():
-        instance.save()
-    return instance
+    amount = 1.5
+    return models.IngredientNutrient.objects.create(
+        nutrient=nutrient_1, ingredient=ingredient_1, amount=amount
+    )
 
 
-@pytest.fixture(scope="session")
-def ingredient_nutrient_1_2(
-    django_db_blocker, django_db_setup, ingredient_1, nutrient_2
-):
+@pytest.fixture
+def user(db):
     """
-    IngredientNutrient associating nutrient_2 with ingredient_1.
+    A sample user record and instance.
+
+    username: test_user
+    email: test@example.com
+    password: pass
     """
-    instance = models.IngredientNutrient()
-    instance.nutrient = nutrient_2
-    instance.ingredient = ingredient_1
-    instance.amount = 10
-    with django_db_blocker.unblock():
-        instance.save()
-    return instance
+    return models.User.objects.create_user(
+        username="test_user", email="test@example.com", password="pass"
+    )
 
 
-@pytest.fixture(scope="session")
-def ingredient_nutrient_2_2(
-    django_db_blocker, django_db_setup, ingredient_2, nutrient_2
-):
+@pytest.fixture
+def profile():
+    """An unsaved Profile instance.
+
+    sex: F
+    age: 50
+    weight: 80
+    height: 180
+    activity_level: LA
+    energy_requirement: 2000
     """
-    IngredientNutrient associating nutrient_2 with ingredient_1.
+    return models.Profile(
+        sex="F",
+        age=50,
+        weight=80,
+        height=180,
+        activity_level="LA",
+        energy_requirement=2000,
+    )
+
+
+@pytest.fixture
+def saved_profile(profile, user):
+    """A saved Profile instance.
+
+    sex: F
+    age: 50
+    weight: 80
+    height: 180
+    activity_level: LA
+    user: user (fixture)
+    energy_requirement: 2311 (calculated)
     """
-    instance = models.IngredientNutrient()
-    instance.nutrient = nutrient_2
-    instance.ingredient = ingredient_2
-    instance.amount = 10
-    with django_db_blocker.unblock():
-        instance.save()
-    return instance
+    profile.user = user
+    profile.save()
+    return profile
 
 
-@pytest.fixture(scope="session")
-def user(django_db_blocker, django_db_setup):
-    """
-    User associating nutrient_2 with ingredient_1.
-    """
-    with django_db_blocker.unblock():
-        instance = models.User.objects.create_user(
-            "test_user", "test@example.com", "pass"
-        )
-    return instance
-
-
-@pytest.fixture(scope="session")
-def meal_component(django_db_blocker, django_db_setup, ingredient_1, ingredient_2):
-    """Meal component record and instance."""
-    instance = models.MealComponent(name="test_component", final_weight=200)
-    with django_db_blocker.unblock():
-        instance.save()
-        instance.ingredients.create(ingredient=ingredient_1, amount=100)
-        instance.ingredients.create(ingredient=ingredient_2, amount=100)
-    return instance
-
-
-@pytest.fixture()
+@pytest.fixture
 def logged_in_client(client, user, db):
     """Client with the user from the user fixture logged in."""
     client.force_login(user)
@@ -160,17 +142,18 @@ def compound_nutrient(db, ingredient_1):
     name: compound
     unit: G
     components:
-        name: component_1
-        unit: G
-        IngredientNutrient:
-            ingredient: ingredient_1
-            amount: 1
 
-        name: component_2
-        unit: G
-        IngredientNutrient:
-            ingredient: ingredient_1
-            amount: 2
+        - name: component_1
+        - unit: G
+        - IngredientNutrient:
+            * ingredient: ingredient_1
+            * amount: 1
+
+        - name: component_2
+        - unit: G
+        - IngredientNutrient:
+            * ingredient: ingredient_1
+            * amount: 2
     """
     nutrient = models.Nutrient.objects.create(name="compound", unit="G")
     component_1, component_2 = models.Nutrient.objects.bulk_create(
@@ -198,3 +181,24 @@ def compound_nutrient(db, ingredient_1):
         ]
     )
     return nutrient
+
+
+@pytest.fixture
+def recommendation(nutrient_1):
+    """An unsaved IntakeRecommendation instance.
+
+    dri_type: "RDA"
+    amount_min: 5.0
+    amount_max: 5.0
+    age_min: 0
+    sex: B
+    nutrient: nutrient_1
+    """
+    return models.IntakeRecommendation(
+        dri_type=models.IntakeRecommendation.RDA,
+        amount_min=5.0,
+        amount_max=5.0,
+        nutrient=nutrient_1,
+        age_min=0,
+        sex="B",
+    )
