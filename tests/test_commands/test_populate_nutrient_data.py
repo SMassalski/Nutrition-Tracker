@@ -8,9 +8,9 @@ from main import models
 from main.management.commands._data import (
     FULL_NUTRIENT_DATA,
     NUTRIENT_TYPE_DISPLAY_NAME,
-    NUTRIENT_TYPES,
 )
 from main.management.commands.populatenutrientdata import (
+    Command,
     create_energy,
     create_nutrient_components,
     create_nutrient_types,
@@ -19,14 +19,12 @@ from main.management.commands.populatenutrientdata import (
     get_nutrient_types,
 )
 
-# TODO: Option to set a different data dict.
-
 NAMES = [nut["name"] for nut in FULL_NUTRIENT_DATA]
 
 
 @pytest.fixture
-def nutrient_1_data(nutrient_1):
-    """Sample data list and nutrient dict.
+def nutrient_data(nutrient_1):
+    """Sample data list.
 
     first value: data
     second value: nutrient dict
@@ -44,7 +42,8 @@ def nutrient_1_data(nutrient_1):
     """
     data = [
         {
-            "name": nutrient_1.name,
+            "name": "test_nutrient",
+            "unit": models.Nutrient.GRAMS,
             "type": ["nutrient_type"],
             "recommendations": [
                 {
@@ -59,8 +58,30 @@ def nutrient_1_data(nutrient_1):
             "energy": 5,
         },
     ]
+    return data
+
+
+@pytest.fixture
+def nutrient_1_data(nutrient_1, nutrient_data):
+    """Sample data list and nutrient dict.
+
+    first value: data
+    second value: nutrient dict
+
+    name: test_nutrient
+    types: nutrient_type
+    energy: 5
+    recommendations:
+        age_max: 3
+        age_min: 1
+        amount_max: 20.0
+        amount_min: 5.0
+        dri_type: AMDR
+        sex: B
+    """
+    nutrient_data[0]["name"] = nutrient_1.name
     nutrient_dict = {nutrient_1.name: nutrient_1}
-    return data, nutrient_dict
+    return nutrient_data, nutrient_dict
 
 
 @pytest.fixture
@@ -86,26 +107,26 @@ def type_data():
     return data
 
 
-# TODO: Data dict
 class TestCreateNutrient:
     """Tests of the create_nutrients() function."""
 
-    def test_create_nutrients(self, db):
+    def test_save_nutrients(self, db, nutrient_data):
         """
         create_nutrients() saves to the database all specified nutrients.
         """
-        create_nutrients()
-        assert models.Nutrient.objects.filter(name__in=NAMES).count() == len(NAMES)
+        create_nutrients(nutrient_data)
 
-    def test_create_nutrients_already_existing_nutrient(self, db):
+        nutrient = models.Nutrient.objects.first()
+        assert nutrient.name == "test_nutrient"
+        assert nutrient.unit == models.Nutrient.GRAMS
+
+    def test_already_existing_nutrient(self, db, nutrient_1, nutrient_data):
         """
         create_nutrients() does not raise an exception if a nutrient that
         would be created by create_nutrients() already exists.
         """
-        models.Nutrient.objects.create(name="Protein", unit="G")
-
         try:
-            create_nutrients()
+            create_nutrients(nutrient_data)
         except IntegrityError as e:
             pytest.fail(f"create_nutrients() violated a constraint - {e}")
 
@@ -170,22 +191,23 @@ class TestCreateNutrientTypes:
 def test_create_recommendations(db, nutrient_1_data, nutrient_1):
     """
     create_recommendations() creates recommendations for nutrients
-    in `nutrient_dict`, according to the information in _data.
+    in `nutrient_dict`, according to the information in the provided
+    data.
     """
     data, nutrient_dict = nutrient_1_data
 
     create_recommendations(nutrient_dict, data=data)
 
     recommendation = nutrient_1.recommendations.first()
-    expected = data[0]["recommendations"][0]
-    result = {k: vars(recommendation)[k] for k in expected.keys()}
-    assert result == expected
+    data_dict = data[0]["recommendations"][0]
+    assert is_from_data(data_dict, recommendation)
 
 
 def test_create_energy(db, nutrient_1_data, nutrient_1):
     """
     create_energy() creates NutrientEnergy records for nutrients in
-    `nutrient_dict`, according to the information in _data.
+    `nutrient_dict`, according to the information in the provided
+    data.
     """
     data, nutrient_dict = nutrient_1_data
 
@@ -231,7 +253,7 @@ class TestCreateNutrientCombinations:
         """
         create_nutrient_components() creates NutrientComponent records for
         nutrients in `nutrient_dict`, according to the information in
-        _data.
+        the provided data.
         """
 
         nutrients = models.Nutrient.objects.bulk_create(
@@ -270,68 +292,85 @@ class TestCreateNutrientCombinations:
             pytest.fail(f"create_nutrient_components() violated a constraint - {e}")
 
 
-# TODO: Data dict (You can call call_command with an command instance).
 class TestCommand:
     """Tests of the populate_nutrient_data command."""
 
-    def test_saves_nutrients(self, db):
+    @pytest.fixture
+    def cmd(self, nutrient_data):
         """
-        The populate_nutrient_data command saves to the database all
-        specified nutrients.
+        An instance of the `populatenutrientdata` command with
+        `nutrient_1_data`.
         """
-        call_command("populatenutrientdata")
+        return Command(data=nutrient_data)
 
-        assert models.Nutrient.objects.filter(name__in=NAMES).count() == len(NAMES)
-
-    def test_saves_nutrient_types(self, db):
+    def test_saves_nutrients(self, db, cmd):
         """
-        The populate_nutrient_data command saves to the database all
-        specified nutrient types.
+        The populate_nutrient_data command saves to the database
+        nutrients specified in the data.
         """
-        call_command("populatenutrientdata")
+        call_command(cmd)
 
-        nutrient_types = models.NutrientType.objects.all()
-        assert {t.name for t in nutrient_types} == NUTRIENT_TYPES
+        assert models.Nutrient.objects.filter(name="test_nutrient").exists()
 
-    def test_saves_intake_recommendations(self, db):
+    def test_saves_nutrient_types(self, db, cmd):
         """
-        The populate_nutrient_data command saves to the database all
-        specified intake recommendations.
+        The populate_nutrient_data command saves to the database
+        nutrient types specified in the data.
         """
-        call_command("populatenutrientdata")
 
-        count = 0
-        for nutrient in FULL_NUTRIENT_DATA:
-            count += len(nutrient["recommendations"])
-        assert models.IntakeRecommendation.objects.count() == count
+        call_command(cmd)
 
-    def test_saves_nutrient_energy(self, db):
+        assert models.NutrientType.objects.first().name == "nutrient_type"
+
+    def test_saves_intake_recommendations(self, db, cmd, nutrient_data):
         """
-        The populate_nutrient_data command saves to the database all
-        specified nutrient energies.
+        The populate_nutrient_data command saves to the database
+        intake recommendations specified in the data.
         """
-        call_command("populatenutrientdata")
+        call_command(cmd)
 
-        count = 0
-        for nutrient in FULL_NUTRIENT_DATA:
-            if nutrient.get("energy", False):
-                count += 1
-        assert models.NutrientEnergy.objects.count() == count
+        recommendation = models.IntakeRecommendation.objects.first()
+        data_dict = nutrient_data[0]["recommendations"][0]
+        assert is_from_data(data_dict, recommendation)
+
+    def test_saves_nutrient_energy(self, db, cmd):
+        """
+        The populate_nutrient_data command saves to the database
+        nutrient energies specified in the data.
+        """
+        call_command(cmd)
+
+        assert models.NutrientEnergy.objects.first().amount == 5
 
     def test_saves_nutrient_components(self, db):
         """
-        The populate_nutrient_data command saves to the database all
-        specified nutrient energies.
+        The populate_nutrient_data command saves to the database
+        nutrient components specified in the data.
         """
-        call_command("populatenutrientdata")
 
-        count = 0
-        for nutrient in FULL_NUTRIENT_DATA:
-            components = nutrient.get("components", None)
-            if components is None:
-                continue
-            count += len(components)
-        assert models.NutrientComponent.objects.count() == count
+        data = [
+            {
+                "name": "compound",
+                "unit": models.Nutrient.GRAMS,
+                "components": ["component"],
+                "recommendations": [],
+                "type": [],
+            },
+            {
+                "name": "component",
+                "unit": models.Nutrient.GRAMS,
+                "recommendations": [],
+                "type": [],
+            },
+        ]
+        cmd = Command(data)
+
+        call_command(cmd)
+
+        instance = models.NutrientComponent.objects.first()
+
+        assert instance.target.name == "compound"
+        assert instance.component.name == "component"
 
 
 def test_get_nutrient_types(type_data):
@@ -343,3 +382,12 @@ def test_get_nutrient_types(type_data):
 
     expected = {"nutrient_type_1", "nutrient_type_2", "nutrient_type_3"}
     assert result == expected
+
+
+def is_from_data(data_dict: dict, instance: object) -> bool:
+    """Check if the `instance` holds the same data as the `data_dict`.
+
+    The `instance` attribute names must match the `data_dict` keys.
+    """
+    instance_data = {k: vars(instance)[k] for k in data_dict.keys()}
+    return instance_data == data_dict

@@ -10,11 +10,10 @@ from main.models import (
     NutrientType,
 )
 
-from ._data import FULL_NUTRIENT_DATA, NUTRIENT_TYPE_DISPLAY_NAME, NUTRIENT_TYPES
+from ._data import FULL_NUTRIENT_DATA, NUTRIENT_TYPE_DISPLAY_NAME
 
-# TODO: Custom data options and a better explanation of the format in
-#  the documentation / better way to display it.
-#  (Override the constructor)
+# TODO: A better explanation of the format in the documentation /
+#  better way to display it.
 
 
 class Command(BaseCommand):
@@ -25,34 +24,42 @@ class Command(BaseCommand):
 
     help = "Populates the database with nutrient data."
 
+    def __init__(self, data=None, **kwargs):
+        """"""
+        super().__init__(**kwargs)
+        self.data = data or FULL_NUTRIENT_DATA
+
     # docstr-coverage: inherited
     def handle(self, *args, **options):
 
-        data = FULL_NUTRIENT_DATA
-        create_nutrients()
+        create_nutrients(self.data)
 
-        names = [nut["name"] for nut in data]
+        names = [nut["name"] for nut in self.data]
         nutrients = Nutrient.objects.filter(name__in=names)
         nutrient_instances = {nut.name: nut for nut in nutrients}
 
-        create_recommendations(nutrient_instances, data=data)
-        create_nutrient_types(nutrient_instances, data=data)
-        create_energy(nutrient_instances, data=data)
-        create_nutrient_components(nutrient_instances, data=data)
+        create_recommendations(nutrient_instances, self.data)
+        create_nutrient_types(nutrient_instances, self.data)
+        create_energy(nutrient_instances, self.data)
+        create_nutrient_components(nutrient_instances, self.data)
 
 
-def create_nutrients() -> None:
-    """Create and save nutrient entries for important nutrients."""
-    nutrient_data = [
-        {"name": nut["name"], "unit": nut["unit"]} for nut in FULL_NUTRIENT_DATA
-    ]
+def create_nutrients(data: list) -> None:
+    """Create and save nutrient entries for important nutrients.
+
+    Parameters
+    ----------
+    data
+        A list containing the nutrient information in the same
+        format as FULL_NUTRIENT_DATA.
+        If `data` is None, the built-in data will be used.
+    """
+    nutrient_data = [{"name": nut["name"], "unit": nut["unit"]} for nut in data]
     instances = [Nutrient(**data) for data in nutrient_data]
     Nutrient.objects.bulk_create(instances, ignore_conflicts=True)
 
 
-def create_recommendations(
-    nutrient_dict: Dict[str, Nutrient], data: list = None
-) -> None:
+def create_recommendations(nutrient_dict: Dict[str, Nutrient], data: list) -> None:
     """Create and save recommendation entries reflecting DRI data.
 
     Parameters
@@ -64,7 +71,6 @@ def create_recommendations(
         format as FULL_NUTRIENT_DATA.
         If `data` is None, the built-in data will be used.
     """
-    data = data or FULL_NUTRIENT_DATA
     recommendation_instances = []
     for nutrient in data:
         for recommendation in nutrient["recommendations"]:
@@ -79,9 +85,7 @@ def create_recommendations(
     )
 
 
-def create_nutrient_types(
-    nutrient_dict: Dict[str, Nutrient], data: list = None
-) -> None:
+def create_nutrient_types(nutrient_dict: Dict[str, Nutrient], data: list) -> None:
     """Create and save nutrient type entries for important nutrients.
 
     Parameters
@@ -93,11 +97,9 @@ def create_nutrient_types(
         format as FULL_NUTRIENT_DATA.
         If `data` is None, the built-in data will be used.
     """
-    data = data or FULL_NUTRIENT_DATA
-    nutrient_type_data = (
-        NUTRIENT_TYPES if data is FULL_NUTRIENT_DATA else get_nutrient_types(data)
-    )
+    nutrient_type_data = get_nutrient_types(data)
 
+    # TODO: NUTRIENT_TYPE_DISPLAY_NAME as parameter
     # Create NutrientType instances
     type_instances = [
         NutrientType(name=type_, displayed_name=NUTRIENT_TYPE_DISPLAY_NAME.get(type_))
@@ -117,7 +119,7 @@ def create_nutrient_types(
                 nutrient_instance.types.add(types[type_])
 
 
-def create_energy(nutrient_dict: Dict[str, Nutrient], data: list = None) -> None:
+def create_energy(nutrient_dict: Dict[str, Nutrient], data: list) -> None:
     """Create and save NutrientEnergy records.
 
     Parameters
@@ -129,22 +131,20 @@ def create_energy(nutrient_dict: Dict[str, Nutrient], data: list = None) -> None
         format as FULL_NUTRIENT_DATA.
         If `data` is None, the built-in data will be used.
     """
-    data = data or FULL_NUTRIENT_DATA
     instances = []
     for nutrient in data:
+
         energy = nutrient.get("energy")
         if energy is None:
             continue
-        nutrient_instance = nutrient_dict.get(nutrient.get("name"))
 
+        nutrient_instance = nutrient_dict.get(nutrient.get("name"))
         instances.append(NutrientEnergy(nutrient=nutrient_instance, amount=energy))
 
     NutrientEnergy.objects.bulk_create(instances, ignore_conflicts=True)
 
 
-def create_nutrient_components(
-    nutrient_dict: Dict[str, Nutrient], data: list = None
-) -> None:
+def create_nutrient_components(nutrient_dict: Dict[str, Nutrient], data: list) -> None:
     """Create and save NutrientComponent records.
 
     Parameters
@@ -157,7 +157,6 @@ def create_nutrient_components(
         If `data` is None, the built-in data will be used.
     """
     instances = []
-    data = data or FULL_NUTRIENT_DATA
     for nutrient in data:
 
         components = nutrient.get("components")
