@@ -1,11 +1,10 @@
 """Test settings"""
-# from tempfile import mkdtemp
-
-# noinspection PyUnresolvedReferences
 from .base import *
 
-# Uncomment if there are any media file tests
-# MEDIA_ROOT = mkdtemp(prefix="django_test_media_")
-
-# For populate_fdc_data command tests
+# For populate_fdc_data command tests: prevents automatic discovery.
 del DATA_DIR
+
+# Faster hasher for a speedup of tests using authentication.
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.MD5PasswordHasher",
+]
