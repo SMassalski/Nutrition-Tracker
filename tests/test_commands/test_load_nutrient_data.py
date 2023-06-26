@@ -1,9 +1,9 @@
-"""Tests of the populate_nutrient_data command."""
+"""Tests of the load_nutrient_data command."""
 import pytest
 from django.core.management import call_command
 from django.db import IntegrityError
 from main import models
-from main.management.commands.populatenutrientdata import (
+from main.management.commands.loadnutrientdata import (
     Command,
     create_energy,
     create_nutrient_components,
@@ -278,19 +278,19 @@ class TestCreateNutrientCombinations:
 
 
 class TestCommand:
-    """Tests of the populate_nutrient_data command."""
+    """Tests of the load_nutrient_data command."""
 
     @pytest.fixture
     def cmd(self, nutrient_data):
         """
-        An instance of the `populatenutrientdata` command with
+        An instance of the `loadnutrientdata` command with
         `nutrient_1_data`.
         """
         return Command(data=nutrient_data)
 
     def test_saves_nutrients(self, db, cmd):
         """
-        The populate_nutrient_data command saves to the database
+        The load_nutrient_data command saves to the database
         nutrients specified in the data.
         """
         call_command(cmd)
@@ -299,7 +299,7 @@ class TestCommand:
 
     def test_saves_nutrient_types(self, db, cmd):
         """
-        The populate_nutrient_data command saves to the database
+        The load_nutrient_data command saves to the database
         nutrient types specified in the data.
         """
 
@@ -309,7 +309,7 @@ class TestCommand:
 
     def test_saves_intake_recommendations(self, db, cmd, nutrient_data):
         """
-        The populate_nutrient_data command saves to the database
+        The load_nutrient_data command saves to the database
         intake recommendations specified in the data.
         """
         call_command(cmd)
@@ -320,7 +320,7 @@ class TestCommand:
 
     def test_saves_nutrient_energy(self, db, cmd):
         """
-        The populate_nutrient_data command saves to the database
+        The load_nutrient_data command saves to the database
         nutrient energies specified in the data.
         """
         call_command(cmd)
@@ -329,7 +329,7 @@ class TestCommand:
 
     def test_saves_nutrient_components(self, db):
         """
-        The populate_nutrient_data command saves to the database
+        The load_nutrient_data command saves to the database
         nutrient components specified in the data.
         """
 

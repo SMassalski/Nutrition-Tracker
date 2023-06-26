@@ -1,11 +1,11 @@
-"""Tests of parsing functions used by the populate_fdc_data command."""
+"""Tests of parsing functions used by the load_fdc_data command."""
 import io
 
 import pytest
 from main import models
 
 # noinspection PyProtectedMember
-from main.management.commands._populatefdcdata import (
+from main.management.commands._loadfdcdata import (
     NoNutrientException,
     parse_food_csv,
     parse_food_nutrient_csv,

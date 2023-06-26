@@ -1,4 +1,4 @@
-"""Tests of the populatefdcdata command."""
+"""Tests of the loadfdcdata command."""
 import os
 from tempfile import mkstemp
 
@@ -7,8 +7,8 @@ from django.core.management import CommandError, call_command
 from main.models import Ingredient, Nutrient
 
 
-class TestPopulateFdcDataCommand:
-    """Tests of the populatefdcdata command."""
+class TestLoadFdcDataCommand:
+    """Tests of the loadfdcdata command."""
 
     @pytest.fixture(scope="class")
     def fdc_data_file_paths(self):
@@ -68,13 +68,13 @@ class TestPopulateFdcDataCommand:
 
     def test_command_error_when_no_file_path_were_provided(self):
         """
-        The populatefdcdata command raises an exception if no file paths
+        The loadfdcdata command raises an exception if no file paths
         are available.
 
         (The DATA_DIR setting is disabled for the tests).
         """
         with pytest.raises(CommandError):
-            call_command("populatefdcdata")
+            call_command("loadfdcdata")
 
     @pytest.mark.parametrize(
         "files",
@@ -86,19 +86,19 @@ class TestPopulateFdcDataCommand:
     )
     def test_command_error_when_a_path_is_missing(self, files):
         """
-        The populatefdcdata command raises an exception if a file path
+        The loadfdcdata command raises an exception if a file path
         is missing and `data_dir` was not provided.
         """
         with pytest.raises(CommandError):
-            call_command("populatefdcdata", **{file: "tst.csv" for file in files})
+            call_command("loadfdcdata", **{file: "tst.csv" for file in files})
 
     def test_command_path_overrides(self):
         """
-        The populatefdcdata command file path arguments override file
+        The loadfdcdata command file path arguments override file
         discovery when a `data_dir` was provided.
         """
         try:
-            call_command("populatefdcdata", food_file="tst.csv", data_dir="tst/")
+            call_command("loadfdcdata", food_file="tst.csv", data_dir="tst/")
 
         except CommandError as e:
             # The error message when checking if the file exists
@@ -113,39 +113,39 @@ class TestPopulateFdcDataCommand:
     )
     def test_command_files_dont_exist(self, fdc_data_file_paths, file):
         """
-        The populatefdcdata command raises an exception if a file does
+        The loadfdcdata command raises an exception if a file does
         not exist.
         """
         files = fdc_data_file_paths.copy()
         files[file] = "tst.csv"
 
         with pytest.raises(CommandError):
-            call_command("populatefdcdata", **files)
+            call_command("loadfdcdata", **files)
 
     def test_command_error_when_no_nutrients(self, db, fdc_data_file_paths):
         """
-        The populatefdcdata command raises an exception if none of the
+        The loadfdcdata command raises an exception if none of the
         required nutrients are in the database.
         """
         with pytest.raises(CommandError):
-            call_command("populatefdcdata", **fdc_data_file_paths)
+            call_command("loadfdcdata", **fdc_data_file_paths)
 
     def test_command_saves_data(self, db, fdc_data_file_paths, nutrients):
         """
-        The populatefdcdata command saves data from files.
+        The loadfdcdata command saves data from files.
         """
-        call_command("populatefdcdata", **fdc_data_file_paths)
+        call_command("loadfdcdata", **fdc_data_file_paths)
 
         names = ["test_ingredient_3", "test_ingredient_4"]
         assert Ingredient.objects.filter(name__in=names).count() == 2
 
     def test_command_dataset_filter(self, db, fdc_data_file_paths, nutrients):
         """
-        The populatefdcdata command with a dataset_filter saves data
+        The loadfdcdata command with a dataset_filter saves data
         only for ingredients that pass the filter.
         """
         call_command(
-            "populatefdcdata", dataset_filter=["sr_legacy_food"], **fdc_data_file_paths
+            "loadfdcdata", dataset_filter=["sr_legacy_food"], **fdc_data_file_paths
         )
 
         assert not Ingredient.objects.filter(name="test_ingredient_3").exists()

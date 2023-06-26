@@ -1,10 +1,10 @@
-"""Tests of the populate_fdc_data command helper functions."""
+"""Tests of the load_fdc_data command helper functions."""
 import pytest
 from django.db import IntegrityError
 from main import models
 
 # noinspection PyProtectedMember
-from main.management.commands._populatefdcdata import (
+from main.management.commands._loadfdcdata import (
     create_compound_nutrient_amounts,
     create_fdc_data_source,
     handle_nonstandard,

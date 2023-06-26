@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from main import models
 
-from ._populatefdcdata import (
+from ._loadfdcdata import (
     NoNutrientException,
     create_fdc_data_source,
     parse_food_csv,
@@ -134,7 +134,7 @@ class Command(BaseCommand):
         except NoNutrientException:
             raise CommandError(
                 "Required nutrients not found in the database. You can add these "
-                "nutrients by calling the 'populatenutrientdata' command."
+                "nutrients by calling the 'loadnutrientdata' command."
             )
 
         self.stdout.write(

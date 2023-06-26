@@ -1,4 +1,4 @@
-"""Helper functions for the 'populatefdcdata' command."""
+"""Helper functions for the 'loadfdcdata' command."""
 import csv
 import io
 import os
@@ -27,7 +27,7 @@ FDC_DATA_SOURCES = {
 # NOTE:
 #     Some nutrients (referred to as nonstandard nutrients) have
 #     multiple records in the fdc database. If there is a record that is
-#     preferred over others the application should use the amount for
+#     preferred over others, the application should use the amount for
 #     that record if possible.
 #     These nutrients need to be treated differently:
 #       - Cysteine is probably conflated with cystine in the fdc data.
