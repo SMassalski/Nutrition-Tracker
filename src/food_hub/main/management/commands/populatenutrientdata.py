@@ -39,7 +39,7 @@ class Command(BaseCommand):
         nutrient_instances = {nut.name: nut for nut in nutrients}
 
         create_recommendations(nutrient_instances, self.data)
-        create_nutrient_types(nutrient_instances, self.data)
+        create_nutrient_types(nutrient_instances, self.data, NUTRIENT_TYPE_DISPLAY_NAME)
         create_energy(nutrient_instances, self.data)
         create_nutrient_components(nutrient_instances, self.data)
 
@@ -85,8 +85,13 @@ def create_recommendations(nutrient_dict: Dict[str, Nutrient], data: list) -> No
     )
 
 
-def create_nutrient_types(nutrient_dict: Dict[str, Nutrient], data: list) -> None:
+def create_nutrient_types(
+    nutrient_dict: Dict[str, Nutrient], data: list, display_names: dict = None
+) -> None:
     """Create and save nutrient type entries for important nutrients.
+
+    Display names are included in the NutrientType records if the
+    NutrientTypes have an entry in `display_names`.
 
     Parameters
     ----------
@@ -96,13 +101,15 @@ def create_nutrient_types(nutrient_dict: Dict[str, Nutrient], data: list) -> Non
         A list containing the nutrient information in the same
         format as FULL_NUTRIENT_DATA.
         If `data` is None, the built-in data will be used.
+    display_names
+        Mapping of NutrientType names to their display names.
     """
     nutrient_type_data = get_nutrient_types(data)
+    display_names = display_names or {}
 
-    # TODO: NUTRIENT_TYPE_DISPLAY_NAME as parameter
     # Create NutrientType instances
     type_instances = [
-        NutrientType(name=type_, displayed_name=NUTRIENT_TYPE_DISPLAY_NAME.get(type_))
+        NutrientType(name=type_, displayed_name=display_names.get(type_))
         for type_ in nutrient_type_data
     ]
     NutrientType.objects.bulk_create(type_instances, ignore_conflicts=True)

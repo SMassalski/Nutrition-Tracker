@@ -3,12 +3,6 @@ import pytest
 from django.core.management import call_command
 from django.db import IntegrityError
 from main import models
-
-# noinspection PyProtectedMember
-from main.management.commands._data import (
-    FULL_NUTRIENT_DATA,
-    NUTRIENT_TYPE_DISPLAY_NAME,
-)
 from main.management.commands.populatenutrientdata import (
     Command,
     create_energy,
@@ -18,8 +12,6 @@ from main.management.commands.populatenutrientdata import (
     create_recommendations,
     get_nutrient_types,
 )
-
-NAMES = [nut["name"] for nut in FULL_NUTRIENT_DATA]
 
 
 @pytest.fixture
@@ -154,24 +146,17 @@ class TestCreateNutrientTypes:
 
         assert nutrient_1.types.first().name == "nutrient_type"
 
-    # TODO: The way the display names are handled needs to change
-    def test_with_display_name(self, db):
+    def test_with_display_name(self, db, nutrient_data):
         """
         create_nutrient_types() creates NutrientType records with their
         displayed names.
         """
-        data = [
-            {
-                "name": "nutrient",
-                "type": ["Fatty acid type"],
-            },
-        ]
+        display_names = {"nutrient_type": "display_name"}
 
-        create_nutrient_types({}, data=data)
+        create_nutrient_types({}, data=nutrient_data, display_names=display_names)
 
         displayed_name = models.NutrientType.objects.first().displayed_name
-        expected = NUTRIENT_TYPE_DISPLAY_NAME["Fatty acid type"]
-        assert displayed_name == expected
+        assert displayed_name == "display_name"
 
     def test_already_existing_nutrient_type(self, db, nutrient_1, nutrient_1_data):
         """
