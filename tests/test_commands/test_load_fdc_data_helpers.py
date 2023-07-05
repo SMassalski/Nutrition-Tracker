@@ -4,9 +4,9 @@ from django.db import IntegrityError
 from main import models
 
 # noinspection PyProtectedMember
-from main.management.commands._loadfdcdata import (
+from main.management.commands._fdc_helpers import (
     create_compound_nutrient_amounts,
-    create_fdc_data_source,
+    get_fdc_data_source,
     handle_nonstandard,
 )
 
@@ -36,9 +36,9 @@ class TestHandleNonstandard:
         """handle_nonstandard() sums the amounts for vitamin K."""
         result = {}
 
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_K_M, result, 1.0)
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_K_DHP, result, 2.0)
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_K_P, result, 3.0)
+        handle_nonstandard(ingredient_1, nutrient_1, VIT_K_M, result, 1.0, [])
+        handle_nonstandard(ingredient_1, nutrient_1, VIT_K_DHP, result, 2.0, [])
+        handle_nonstandard(ingredient_1, nutrient_1, VIT_K_P, result, 3.0, [])
 
         assert result[ingredient_1][nutrient_1] == 6.0
 
@@ -49,7 +49,7 @@ class TestHandleNonstandard:
         """
         result = {}
 
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_K_M, result, 2.0)
+        handle_nonstandard(ingredient_1, nutrient_1, VIT_K_M, result, 2.0, [])
 
         assert ingredient_1 in result
         assert nutrient_1 in result[ingredient_1]
@@ -61,7 +61,7 @@ class TestHandleNonstandard:
         """
         result = {}
 
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_A_RAE, result, 2.0)
+        handle_nonstandard(ingredient_1, nutrient_1, VIT_A_RAE, result, 2.0, [])
 
         assert result[ingredient_1][nutrient_1] == 2.0
 
@@ -73,8 +73,10 @@ class TestHandleNonstandard:
         result = {}
 
         # Vitamin A, RAE is preferred over Vitamin A, IU
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_A_IU, result, 1.0)
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_A_RAE, result, 2.0)
+        handle_nonstandard(ingredient_1, nutrient_1, VIT_A_IU, result, 1.0, [VIT_A_RAE])
+        handle_nonstandard(
+            ingredient_1, nutrient_1, VIT_A_RAE, result, 2.0, [VIT_A_RAE]
+        )
 
         assert result[ingredient_1][nutrient_1] == 2.0
 
@@ -85,32 +87,43 @@ class TestHandleNonstandard:
         """
         result = {}
         # Vitamin A, RAE is preferred over Vitamin A, IU
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_A_RAE, result, 2.0)
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_A_IU, result, 1.0)
+        handle_nonstandard(
+            ingredient_1, nutrient_1, VIT_A_RAE, result, 2.0, [VIT_A_RAE]
+        )
+        handle_nonstandard(ingredient_1, nutrient_1, VIT_A_IU, result, 1.0, [VIT_A_RAE])
 
         assert result[ingredient_1][nutrient_1] == 2.0
 
 
-class TestCreateFdcDataSource:
-    """Tests of the create_fdc_data_source() function."""
+class TestGetFdcDataSource:
+    """Tests of the get_fdc_data_source() function."""
 
     def test_creates_record(self, db):
-        """create_fdc_data_source saves an FDC FoodDataSource record."""
-        create_fdc_data_source()
+        """get_fdc_data_source saves an FDC FoodDataSource record."""
+        get_fdc_data_source()
 
         assert models.FoodDataSource.objects.filter(name="FDC").exists()
 
     def test_source_already_exists(self, db):
         """
-        create_fdc_data_source doesn't raise an exception if an FDC record
+        get_fdc_data_source doesn't raise an exception if an FDC record
         already exists.
         """
         models.FoodDataSource.objects.create(name="FDC")
 
         try:
-            create_fdc_data_source()
+            get_fdc_data_source()
         except IntegrityError as e:
             pytest.fail(f"create_fdc_data_source() violated a constraint - {e}")
+
+    def test_returns_food_data_source_instance(self, db):
+        """
+        get_fdc_data_source only returns the FDC FoodDataSource
+        instance.
+        """
+        result = get_fdc_data_source()
+
+        assert isinstance(result, models.FoodDataSource)
 
 
 def test_create_compound_nutrient_amounts(db, compound_nutrient):

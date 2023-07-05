@@ -1,16 +1,19 @@
-"""Helper functions for the 'loadfdcdata' command."""
+"""Parsing functions used by the `loadfdcdata` command."""
 import csv
 import io
 import os
 from typing import Dict, List, Tuple, Union
 
 from main import models
-
-# noinspection PyProtectedMember
-from main.models.foods import update_compound_nutrients
-from util import get_conversion_factor, open_or_pass
+from util import open_or_pass
 
 from ._data import FDC_TO_NUTRIENT
+from ._fdc_helpers import (
+    NoNutrientException,
+    create_compound_nutrient_amounts,
+    get_nutrient_conversion_factors,
+    handle_nonstandard,
+)
 
 # Nonstandard units and their standard counterparts.
 UNIT_CONVERSION = {"MCG_RE": "UG", "MG_GAE": "MG", "MG_ATE": "MG"}
@@ -19,7 +22,7 @@ UNIT_CONVERSION = {"MCG_RE": "UG", "MG_GAE": "MG", "MG_ATE": "MG"}
 # NOTE: Excluded "branded_food" and "foundation_food" to avoid more
 #  complexity (not clearly indicated historical records in
 #  food_nutrient.csv)
-FDC_DATA_SOURCES = {
+FDC_DATASETS = {
     "sr_legacy_food",
     "survey_fndds_food",
 }
@@ -57,18 +60,6 @@ FDC_EXCEPTION_IDS = {
     1185,
 }
 
-# FDC IDs of the preferred FDC nutrient counterparts (if one exists)
-PREFERRED_NONSTANDARD = {
-    1232,  # Cysteine
-    1106,  # Vitamin A, RAE
-    1114,  # Vitamin D (D2 + D3)
-    1177,  # Folate, total
-}
-
-VITAMIN_K_IDS = {1183, 1184, 1185}
-
-# PARSERS
-
 
 def parse_nutrient_csv(
     file: Union[str, os.PathLike, io.IOBase]
@@ -104,7 +95,8 @@ def parse_nutrient_csv(
 
 def parse_food_csv(
     file: Union[str, os.PathLike, io.IOBase],
-    dataset_filter: List[str] = None,
+    dataset_filter: List[str],
+    data_source: models.FoodDataSource,
 ) -> List[models.Ingredient]:
     """Load ingredient data from the Foods csv file.
 
@@ -116,22 +108,29 @@ def parse_food_csv(
         List of data sources.
         If `dataset_filter` is not None only records from listed
         sources are saved.
+    data_source
+        The FDC data source.
 
     Returns
     -------
     List[models.Ingredient]
 
+    Raises
+    ------
+    ValueError
+        Raised if `dataset_filter` includes an unrecognized dataset
+        name.
+
     Notes
     -----
-    FDC datasets include:
+    Allowed FDC datasets include:
         'sr_legacy_food', 'survey_fndds_food'
     """
-    data_source = models.FoodDataSource.objects.get(name="FDC")
-    ingredient_list = []
+    for dataset in dataset_filter:
+        if dataset not in FDC_DATASETS:
+            raise ValueError(f"Unrecognized dataset: {dataset}")
 
-    # If no dataset_filter was provided, use FDC_DATA_SOURCES that
-    # contains all allowed FDC datasets
-    dataset_filter = set(dataset_filter or FDC_DATA_SOURCES)
+    ingredient_list = []
 
     with open_or_pass(file, newline="") as f:
         reader = csv.DictReader(f)
@@ -145,6 +144,7 @@ def parse_food_csv(
             ingredient.name = record["description"]
             ingredient.dataset = record["data_type"]
             ingredient.data_source = data_source
+
             ingredient_list.append(ingredient)
 
     return ingredient_list
@@ -154,6 +154,7 @@ def parse_food_nutrient_csv(
     file: Union[str, os.PathLike, io.IOBase],
     nutrient_file: Union[str, os.PathLike, io.IOBase],
     batch_size: int = None,
+    preferred_nutrients: "collections.abc.Container" = None,
 ) -> None:
     """Load per ingredient nutrient data from a food_nutrient.csv file.
 
@@ -170,7 +171,14 @@ def parse_food_nutrient_csv(
         The max number of IngredientNutrient records to save per batch.
         If `None` saves all records in a single batch. Helps with memory
         limitations.
+    preferred_nutrients
+        The FDC ids of nutrient records to be used over other records
+        of the same nutrient.
+        This is used to deal with situations where one ingredient has
+        amount values for multiple nutrient records.
     """
+    preferred_nutrients = preferred_nutrients or set()
+
     nutrients = models.Nutrient.objects.filter(name__in=FDC_TO_NUTRIENT.values())
     if not nutrients.exists():
         raise NoNutrientException("No nutrients found.")
@@ -214,7 +222,14 @@ def parse_food_nutrient_csv(
             amount = float(record["amount"]) * conversion_factors[nutrient_id]
 
             if nutrient_id in FDC_EXCEPTION_IDS:
-                handle_nonstandard(ing, nut, nutrient_id, nonstandard, amount)
+                handle_nonstandard(
+                    ing,
+                    nut,
+                    nutrient_id,
+                    nonstandard,
+                    amount,
+                    preferred_nutrients=preferred_nutrients,
+                )
                 continue
 
             ingredient_nutrient = models.IngredientNutrient(
@@ -227,11 +242,51 @@ def parse_food_nutrient_csv(
                 models.IngredientNutrient.objects.bulk_create(result)
                 result = []
 
-    # Create IngredientNutrients from data in nonstandard.
-    for ing, nutrients in nonstandard.items():
+    models.IngredientNutrient.objects.bulk_create(result)
+
+    create_ingredient_nutrients_from_dict(nonstandard, batch_size)
+
+    # Compound nutrients
+    create_compound_nutrient_amounts()
+
+
+def create_ingredient_nutrients_from_dict(
+    data: dict, batch_size: int = None
+) -> List[models.IngredientNutrient]:
+    """Create and save IngredientNutrients from `data`.
+
+    Parameters
+    ----------
+    data
+        The data from which to create IngredientNutrient instances.
+        `data` has the format {ingredient: {nutrient: amount}}
+        where ingredient and nutrient are instances of the Ingredient
+        and Nutrient model respectively, and amount is the amount of the
+        nutrient in the ingredient
+
+    batch_size
+        The min size of batches in which the created IngredientNutrients
+        are saved to the database.
+        If `batch_size` is not None, the instances will be saved to the
+        database in batches of size at least `batch_size`.
+
+    Returns
+    -------
+    List[models.IngredientNutrient]
+
+    Raises
+    ------
+    ValueError
+        Raised when batch_size is less than 1.
+    """
+    if batch_size is not None and batch_size < 1:
+        raise ValueError("batch size must be a positive integer greater than 0")
+
+    result = []
+    for ing, nutrients in data.items():
         ing_nuts = [
-            models.IngredientNutrient(ingredient=ing, nutrient=nutrient, amount=amount)
-            for nutrient, amount in nutrients.items()
+            models.IngredientNutrient(ingredient=ing, nutrient=nut, amount=amount)
+            for nut, amount in nutrients.items()
         ]
         # Batch separation
         size = len(result) + len(ing_nuts)
@@ -240,101 +295,4 @@ def parse_food_nutrient_csv(
             result = []
 
         result.extend(ing_nuts)
-
     models.IngredientNutrient.objects.bulk_create(result)
-
-    # Compound nutrients
-    create_compound_nutrient_amounts()
-
-
-# HELPERS
-
-# TODO: Add feature to allow providing nutrient preferences
-def handle_nonstandard(ingredient, nutrient, fdc_id, output_dict, amount) -> None:
-    """Select the appropriate amount for a non-standard nutrient.
-
-    Parameters
-    ----------
-    ingredient
-    nutrient
-    fdc_id
-        The id of the nutrient in the FDC database.
-    output_dict
-        The dictionary the information will be outputted to.
-    amount
-        The amount of the `nutrient` in `ingredient`. The value must be
-        after unit conversion.
-    Returns
-    -------
-    None
-    """
-    if ingredient not in output_dict:
-        output_dict[ingredient] = {}
-
-    if nutrient not in output_dict[ingredient]:
-        output_dict[ingredient][nutrient] = amount
-
-    elif fdc_id in PREFERRED_NONSTANDARD:
-        output_dict[ingredient][nutrient] = amount
-
-    # Vitamin K
-    # Summed up because vitamin K appears as 3 different molecules.
-    elif fdc_id in VITAMIN_K_IDS:
-        output_dict[ingredient][nutrient] += amount
-
-
-def get_nutrient_conversion_factors(units: dict, nutrients: dict) -> dict:
-    """Get the conversion factors needed for adding nutrient amounts.
-
-    Nutrients in the FDC data may use different units than their
-    counterparts in the app's database.
-    Because of that, when adding IngredientNutrient records from FDC
-    data, the amounts need to be adjusted to match local units using
-    the dict from this function.
-
-    Parameters
-    ----------
-    units
-        A mapping from nutrient ids, in the FDC data, to its unit.
-    nutrients
-        A mapping from nutrient names to their instances.
-
-    Returns
-    -------
-    dict
-    """
-    conversion_factors = {}
-    for id_, unit in units.items():
-        nut = nutrients.get(id_)
-        if nut is not None:
-            factor = get_conversion_factor(unit, nut.unit, nut.name)
-            conversion_factors[id_] = factor
-
-    return conversion_factors
-
-
-class NoNutrientException(Exception):
-    """
-    Raised when the nutrients required for a process are not present
-    in the database.
-    """
-
-
-def create_compound_nutrient_amounts():
-    """Create IngredientNutrient instances for compound nutrients."""
-    nutrients = models.Nutrient.objects.filter(components__isnull=False)
-    ingredient_nutrients = []
-    for nut in nutrients:
-        ingredient_nutrients += update_compound_nutrients(nut, commit=False)
-
-    models.IngredientNutrient.objects.bulk_create(
-        ingredient_nutrients,
-        update_conflicts=True,
-        update_fields=["amount"],
-        unique_fields=["ingredient", "nutrient"],
-    )
-
-
-def create_fdc_data_source() -> models.FoodDataSource:
-    """Create a FoodDataSource record for USDA's Food Data Central."""
-    return models.FoodDataSource.objects.get_or_create(name="FDC")

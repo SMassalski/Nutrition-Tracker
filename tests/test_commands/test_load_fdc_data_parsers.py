@@ -5,8 +5,11 @@ import pytest
 from main import models
 
 # noinspection PyProtectedMember
-from main.management.commands._loadfdcdata import (
-    NoNutrientException,
+from main.management.commands._fdc_helpers import NoNutrientException
+
+# noinspection PyProtectedMember
+from main.management.commands._fdc_parsers import (
+    FDC_DATASETS,
     parse_food_csv,
     parse_food_nutrient_csv,
     parse_nutrient_csv,
@@ -86,7 +89,9 @@ class TestParseFoodCsv:
         parse_food_csv() correctly creates Ingredient instances
         according to the data.
         """
-        instances = parse_food_csv(food_csv)
+        instances = parse_food_csv(
+            food_csv, dataset_filter=FDC_DATASETS, data_source=fdc_data_source
+        )
 
         expected = {
             "name": "test_ingredient_1",
@@ -104,9 +109,23 @@ class TestParseFoodCsv:
         parse_food_csv() creates Ingredient instances only from datasets
         specified in `dataset_filter`.
         """
-        result = parse_food_csv(food_csv, dataset_filter=["sr_legacy_food"])
+        result = parse_food_csv(
+            food_csv, dataset_filter=["sr_legacy_food"], data_source=fdc_data_source
+        )
 
         assert result[0].dataset == "sr_legacy_food"
+
+    def test_invalid_source_filter(self, fdc_data_source, food_csv):
+        """
+        parse_food_csv() raises a ValueError if `dataset_filter`
+        includes an invalid dataset name.
+        """
+        datasets = ["sr_legacy_food", "invalid_dataset"]
+
+        with pytest.raises(ValueError):
+            parse_food_csv(
+                food_csv, dataset_filter=datasets, data_source=fdc_data_source
+            )
 
 
 class TestParseNutrient:
@@ -292,7 +311,15 @@ class TestParseFoodNutrient:
             '"1232","Cysteine","G","204","200.0"\n'
             '"1216","Cystine","G","205","200.0"\n',
         )
-        parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv)
+        preferred = {
+            1232,  # Cysteine
+            1106,  # Vitamin A, RAE
+            1114,  # Vitamin D (D2 + D3)
+            1177,  # Folate, total
+        }
+        parse_food_nutrient_csv(
+            food_nutrient_csv, real_nutrient_csv, preferred_nutrients=preferred
+        )
 
         ing = models.Ingredient.objects.get(external_id=4)
 
