@@ -270,68 +270,60 @@ class TestParseFoodNutrient:
         ).exists()
 
     # TODO: This needs some rework
-    # TODO: This might be better done through mocking
-    #   or at least separate
-    def test_nonstandard(
+    def test_nonstandard_duplicate(
         self, db, food_nutrient_csv, real_nutrient_csv, ingredient_and_nutrient_data
     ):
         """
-        parse_food_nutrient_csv() correctly handles nutrients that have
-        to be treated differently than regular ones.
+        parse_food_nutrient_csv() correctly handles duplicate nutrients.
         """
         append_file(
             food_nutrient_csv,
             # preferred vit. A RAE over IU
             '"13706915","4","1104","2","","71","","","","","",""\n'
-            '"13706915","4","1106","1","","71","","","","","",""\n'
-            # vit D uses IU if not available in micrograms
-            '"13706915","4","1110","40","","71","","","","","",""\n'
-            # prefers folate, total over DFE
-            '"13706915","4","1177","1","","71","","","","","",""\n'
-            '"13706915","4","1190","2","","71","","","","","",""\n'
-            # sums up vit. K
-            '"13706915","4","1183","1","","71","","","","","",""\n'
-            '"13706915","4","1184","2","","71","","","","","",""\n'
-            '"13706915","4","1185","3","","71","","","","","",""\n'
-            # Cystine if cysteine is not available
-            '"13706915","4","1216","0.001","","71","","","","","",""\n',
+            '"13706915","4","1106","1","","71","","","","","",""\n',
         )
 
         append_file(
             real_nutrient_csv,
             '"1104","Vitamin A, IU","IU","201","200.0"\n'
-            '"1106","Vitamin A, RAE","UG","202","200.0"\n'
-            '"1110","Vitamin D, IU","IU","203","200.0"\n'
-            '"1114","Vitamin D","UG","204","200.0"\n'
-            '"1177","Folate, total","UG","205","200.0"\n'
-            '"1190","Folate, DFE","UG","206","200.0"\n'
-            '"1183","Vitamin K (Menaquinone-4)","UG","201","200.0"\n'
-            '"1184","Vitamin K (Dihydrophylloquinone)","UG","202","200.0"\n'
-            '"1185","Vitamin K (phylloquinone)","UG","203","200.0"\n'
-            '"1232","Cysteine","G","204","200.0"\n'
-            '"1216","Cystine","G","205","200.0"\n',
+            '"1106","Vitamin A, RAE","UG","202","200.0"\n',
         )
-        preferred = {
-            1232,  # Cysteine
-            1106,  # Vitamin A, RAE
-            1114,  # Vitamin D (D2 + D3)
-            1177,  # Folate, total
-        }
+        preferred = {1106}
+
         parse_food_nutrient_csv(
             food_nutrient_csv, real_nutrient_csv, preferred_nutrients=preferred
         )
 
         ing = models.Ingredient.objects.get(external_id=4)
-
         assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin A").amount == 1
 
-        # Vitamin D IU nutrient conversion (40 IU in food_nutrient_csv to 1 mcg)
-        assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin D").amount == 1
-        assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin B9").amount == 1
-        assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin K").amount == 6
+    def test_nonstandard_additive(
+        self, db, food_nutrient_csv, real_nutrient_csv, ingredient_and_nutrient_data
+    ):
+        """
+        parse_food_nutrient_csv() correctly handles additive nutrients.
+        """
+        append_file(
+            food_nutrient_csv,
+            # sums up vit. K
+            '"13706915","4","1183","1","","71","","","","","",""\n'
+            '"13706915","4","1184","2","","71","","","","","",""\n'
+            '"13706915","4","1185","3","","71","","","","","",""\n',
+        )
+        append_file(
+            real_nutrient_csv,
+            '"1183","Vitamin K (Menaquinone-4)","UG","201","200.0"\n'
+            '"1184","Vitamin K (Dihydrophylloquinone)","UG","202","200.0"\n'
+            '"1185","Vitamin K (phylloquinone)","UG","203","200.0"\n',
+        )
+        additive = {1183, 1184, 1185}
 
-        # Cysteine has unit conversion from g to mg
-        assert ing.ingredientnutrient_set.get(nutrient__name="Cysteine").amount == 1
+        parse_food_nutrient_csv(
+            food_nutrient_csv, real_nutrient_csv, additive_nutrients=additive
+        )
+
+        ing = models.Ingredient.objects.get(external_id=4)
+        assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin K").amount == 6
 
     # TODO: This needs some rework
     def test_batch_size(

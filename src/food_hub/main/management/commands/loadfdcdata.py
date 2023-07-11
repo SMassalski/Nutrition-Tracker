@@ -21,6 +21,7 @@ PREFERRED_NONSTANDARD = {
     1114,  # Vitamin D (D2 + D3)
     1177,  # Folate, total
 }
+VITAMIN_K_IDS = {1183, 1184, 1185}
 
 
 class Command(BaseCommand):
@@ -32,9 +33,10 @@ class Command(BaseCommand):
         "the DATA_DIR setting."
     )
 
-    def __init__(self, preferred_nutrients=None, **kwargs):
+    def __init__(self, preferred_nutrients=None, additive_nutrients=None, **kwargs):
         super().__init__(**kwargs)
         self.preferred_nutrients = preferred_nutrients or PREFERRED_NONSTANDARD
+        self.additive_nutrients = additive_nutrients or VITAMIN_K_IDS
 
     # docstr-coverage: inherited
     def add_arguments(self, parser):
@@ -100,6 +102,7 @@ class Command(BaseCommand):
                 nutrient_file,
                 options["batch_size"],
                 preferred_nutrients=self.preferred_nutrients,
+                additive_nutrients=self.additive_nutrients,
             )
         except NoNutrientException:
             raise CommandError(

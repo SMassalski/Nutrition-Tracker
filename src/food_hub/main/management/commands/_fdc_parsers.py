@@ -155,6 +155,7 @@ def parse_food_nutrient_csv(
     nutrient_file: Union[str, os.PathLike, io.IOBase],
     batch_size: int = None,
     preferred_nutrients: "collections.abc.Container" = None,
+    additive_nutrients: "collections.abc.Container" = None,
 ) -> None:
     """Load per ingredient nutrient data from a food_nutrient.csv file.
 
@@ -176,8 +177,12 @@ def parse_food_nutrient_csv(
         of the same nutrient.
         This is used to deal with situations where one ingredient has
         amount values for multiple nutrient records.
+    additive_nutrients
+        The FDC ids of additive nutrients.
+        See `_fdc_helpers.handle_nonstandard` for a definition.
     """
-    preferred_nutrients = preferred_nutrients or set()
+    preferred_nutrients = preferred_nutrients or tuple()
+    additive_nutrients = additive_nutrients or tuple()
 
     nutrients = models.Nutrient.objects.filter(name__in=FDC_TO_NUTRIENT.values())
     if not nutrients.exists():
@@ -229,6 +234,7 @@ def parse_food_nutrient_csv(
                     nonstandard,
                     amount,
                     preferred_nutrients=preferred_nutrients,
+                    additive_nutrients=additive_nutrients,
                 )
                 continue
 

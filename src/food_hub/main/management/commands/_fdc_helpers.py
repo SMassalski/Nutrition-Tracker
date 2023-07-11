@@ -25,9 +25,26 @@ def handle_nonstandard(
     output_dict: dict,
     amount: float,
     preferred_nutrients: "collections.abc.Container",
+    additive_nutrients: "collections.abc.Container",
 ) -> None:
     """Select the appropriate amount for a non-standard nutrient.
 
+    This function only updates the `output_dict`.
+
+    Non-standard nutrients are handled differently depending on whether
+    the nutrients are duplicates or additive.
+
+    Duplicate nutrients have a single nutrient in the app but can
+    have multiple records in the FDC database. In such case, the amount
+    value is used from either the first encountered record or the record
+    indicated in `preferred_nutrients`.
+
+    An additive nutrient here means a single nutrient in the app that is
+    composed of multiple nutrients in the FDC database,
+    e.g., Vitamin K in the FDC database is stored as
+    three different compounds: 'Vitamin K (Menaquinone-4)',
+    'Vitamin K (Dihydrophylloquinone)' and 'Vitamin K (phylloquinone)
+
     Parameters
     ----------
     ingredient
@@ -46,6 +63,8 @@ def handle_nonstandard(
         of the same nutrient.
         This is used to deal with situations where one ingredient has
         amount values for multiple nutrient records.
+    additive_nutrients
+        The FDC ids of additive nutrients.
 
     Returns
     -------
@@ -54,54 +73,16 @@ def handle_nonstandard(
     if ingredient not in output_dict:
         output_dict[ingredient] = {}
 
+    # Duplicate
     if nutrient not in output_dict[ingredient]:
         output_dict[ingredient][nutrient] = amount
 
     elif fdc_id in preferred_nutrients:
         output_dict[ingredient][nutrient] = amount
 
-    # Vitamin K
-    # Summed up because vitamin K appears as 3 different molecules.
-    elif fdc_id in VITAMIN_K_IDS:
+    # Additive
+    elif fdc_id in additive_nutrients:
         output_dict[ingredient][nutrient] += amount
-
-
-def handle_fdc_duplicates(
-    ingredient, nutrient, fdc_id, output_dict, amount, preferred_nutrients
-):
-    """Select the appropriate amount for a non-standard nutrient.
-
-    Parameters
-    ----------
-    ingredient
-        An instance of the Ingredient for which the amount is being set.
-    nutrient
-        An instance of the Nutrient of which the amount is being set.
-    fdc_id
-        The id of the nutrient in the FDC database.
-    output_dict
-        The dictionary the information will be outputted to.
-    amount
-        The amount of the `nutrient` in `ingredient`. The value must be
-        after unit conversion.
-    preferred_nutrients
-        The FDC ids of nutrient records to be used over other records
-        of the same nutrient.
-        This is used to deal with situations where one ingredient has
-        amount values for multiple nutrient records.
-
-    Returns
-    -------
-    None
-    """
-    if ingredient not in output_dict:
-        output_dict[ingredient] = {}
-
-    if nutrient not in output_dict[ingredient]:
-        output_dict[ingredient][nutrient] = amount
-
-    elif fdc_id in preferred_nutrients:
-        output_dict[ingredient][nutrient] = amount
 
 
 def get_nutrient_conversion_factors(units: dict, nutrients: dict) -> dict:

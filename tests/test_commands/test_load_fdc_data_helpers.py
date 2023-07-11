@@ -35,10 +35,17 @@ class TestHandleNonstandard:
     def test_sums_vitamin_k(self, ingredient_1, nutrient_1):
         """handle_nonstandard() sums the amounts for vitamin K."""
         result = {}
+        additive = {1, 2, 3}
 
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_K_M, result, 1.0, [])
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_K_DHP, result, 2.0, [])
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_K_P, result, 3.0, [])
+        handle_nonstandard(
+            ingredient_1, nutrient_1, 1, result, 1.0, [], additive_nutrients=additive
+        )
+        handle_nonstandard(
+            ingredient_1, nutrient_1, 2, result, 2.0, [], additive_nutrients=additive
+        )
+        handle_nonstandard(
+            ingredient_1, nutrient_1, 3, result, 3.0, [], additive_nutrients=additive
+        )
 
         assert result[ingredient_1][nutrient_1] == 6.0
 
@@ -49,7 +56,7 @@ class TestHandleNonstandard:
         """
         result = {}
 
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_K_M, result, 2.0, [])
+        handle_nonstandard(ingredient_1, nutrient_1, VIT_K_M, result, 2.0, [], [])
 
         assert ingredient_1 in result
         assert nutrient_1 in result[ingredient_1]
@@ -61,7 +68,7 @@ class TestHandleNonstandard:
         """
         result = {}
 
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_A_RAE, result, 2.0, [])
+        handle_nonstandard(ingredient_1, nutrient_1, VIT_A_RAE, result, 2.0, [], [])
 
         assert result[ingredient_1][nutrient_1] == 2.0
 
@@ -73,9 +80,11 @@ class TestHandleNonstandard:
         result = {}
 
         # Vitamin A, RAE is preferred over Vitamin A, IU
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_A_IU, result, 1.0, [VIT_A_RAE])
         handle_nonstandard(
-            ingredient_1, nutrient_1, VIT_A_RAE, result, 2.0, [VIT_A_RAE]
+            ingredient_1, nutrient_1, VIT_A_IU, result, 1.0, [VIT_A_RAE], []
+        )
+        handle_nonstandard(
+            ingredient_1, nutrient_1, VIT_A_RAE, result, 2.0, [VIT_A_RAE], []
         )
 
         assert result[ingredient_1][nutrient_1] == 2.0
@@ -88,9 +97,11 @@ class TestHandleNonstandard:
         result = {}
         # Vitamin A, RAE is preferred over Vitamin A, IU
         handle_nonstandard(
-            ingredient_1, nutrient_1, VIT_A_RAE, result, 2.0, [VIT_A_RAE]
+            ingredient_1, nutrient_1, VIT_A_RAE, result, 2.0, [VIT_A_RAE], []
         )
-        handle_nonstandard(ingredient_1, nutrient_1, VIT_A_IU, result, 1.0, [VIT_A_RAE])
+        handle_nonstandard(
+            ingredient_1, nutrient_1, VIT_A_IU, result, 1.0, [VIT_A_RAE], []
+        )
 
         assert result[ingredient_1][nutrient_1] == 2.0
 
