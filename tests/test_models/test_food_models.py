@@ -7,7 +7,7 @@ from django.db import IntegrityError
 from main import models
 
 # noinspection PyProtectedMember
-from main.models.foods import update_compound_nutrients
+from main.models.foods import NutrientTypeHierarchyError, update_compound_nutrients
 
 
 @pytest.fixture
@@ -26,7 +26,7 @@ class TestIngredient:
     """Tests of the Ingredient model."""
 
     @pytest.fixture()
-    def ingredient_1_macronutrients(self, db, ingredient_1):
+    def ingredient_1_macronutrients(self, ingredient_1):
         protein = models.Nutrient.objects.create(name="Protein")
         fat = models.Nutrient.objects.create(name="Total lipid (fat)")
         carbs = models.Nutrient.objects.create(name="Carbohydrate, by difference")
@@ -48,7 +48,7 @@ class TestIngredient:
         return ingredient_1.macronutrient_calories
 
     def test_ingredient_nutritional_value_returns_nutrient_amounts(
-        self, db, ingredient_1, ingredient_nutrient_1_1, ingredient_nutrient_1_2
+        self, ingredient_1, ingredient_nutrient_1_1, ingredient_nutrient_1_2
     ):
         """
         Ingredient.nutritional_value() returns a mapping of nutrients in the ingredient
@@ -107,9 +107,7 @@ class TestIngredient:
 class TestNutrient:
     """Tests of the nutrient model."""
 
-    def test_save_updates_amounts_from_db(
-        self, db, nutrient_1, ingredient_nutrient_1_1
-    ):
+    def test_save_updates_amounts_from_db(self, nutrient_1, ingredient_nutrient_1_1):
         """
         Updating a nutrient's unit changes the amount value of related
         IngredientNutrient records so that the actual amount remains
@@ -124,9 +122,7 @@ class TestNutrient:
         ingredient_nutrient_1_1.refresh_from_db()
         assert ingredient_nutrient_1_1.amount == 1500
 
-    def test_save_updates_amounts_created(
-        self, db, nutrient_1, ingredient_nutrient_1_1
-    ):
+    def test_save_updates_amounts_created(self, nutrient_1, ingredient_nutrient_1_1):
         """
         Updating a nutrient's unit changes the amount value of related
         IngredientNutrient records so that the actual amount remains
@@ -140,7 +136,7 @@ class TestNutrient:
         assert ingredient_nutrient_1_1.amount == 1500
 
     def test_save_updates_amounts_from_db_deferred(
-        self, db, nutrient_1, ingredient_nutrient_1_1
+        self, nutrient_1, ingredient_nutrient_1_1
     ):
         """
         Updating a nutrient's unit changes the amount value of related
@@ -157,7 +153,7 @@ class TestNutrient:
         ingredient_nutrient_1_1.refresh_from_db()
         assert ingredient_nutrient_1_1.amount == 1500
 
-    def test_save_update_amounts_false(self, db, nutrient_1, ingredient_nutrient_1_1):
+    def test_save_update_amounts_false(self, nutrient_1, ingredient_nutrient_1_1):
         """
         Updating a nutrient's unit doesn't change the amount value of related
         IngredientNutrient records if save was called with `update_amounts`
@@ -169,7 +165,7 @@ class TestNutrient:
         ingredient_nutrient_1_1.refresh_from_db()
         assert ingredient_nutrient_1_1.amount == 1.5
 
-    def test_save_updates_recommendation_amounts(self, db, nutrient_1):
+    def test_save_updates_recommendation_amounts(self, nutrient_1):
         """
         Updating a nutrient's unit changes the amount values of related
         IntakeRecommendations records so that the actual amounts remain
@@ -191,7 +187,7 @@ class TestNutrient:
         assert recommendation.amount_min == 1000
         assert recommendation.amount_max == 1000
 
-    def test_save_update_amount_recommendation_none_amounts(self, db, nutrient_1):
+    def test_save_update_amount_recommendation_none_amounts(self, nutrient_1):
         """
         Updating a nutrient's unit changes the amount values of related
         IntakeRecommendations records so that the actual amounts remain
@@ -238,7 +234,7 @@ class TestNutrient:
         """
         assert models.Nutrient(unit=unit).pretty_unit == expected
 
-    def test_nutrient_is_compound(self, db, nutrient_1, nutrient_2):
+    def test_nutrient_is_compound(self, nutrient_1, nutrient_2):
         """
         Nutrient's is_component property indicates whether the nutrient
         consists of one or more component nutrients.
@@ -248,7 +244,7 @@ class TestNutrient:
         assert nutrient_2.is_compound is False
         assert nutrient_1.is_compound is True
 
-    def test_nutrient_is_component(self, db, nutrient_1, nutrient_2):
+    def test_nutrient_is_component(self, nutrient_1, nutrient_2):
         """
         Nutrient's is_component property indicates whether the nutrient
         is a component of a compound nutrient.
@@ -262,7 +258,7 @@ class TestNutrient:
 class TestNutrientComponent:
     """Tests of NutrientComponents."""
 
-    def test_nutrient_component_unique_constraint(self, db, component):
+    def test_nutrient_component_unique_constraint(self, component):
         """
         NutrientComponent has a unique together constraint for the
         target and component fields.
@@ -272,7 +268,7 @@ class TestNutrientComponent:
                 target=component.target, component=component.component
             )
 
-    def test_nutrient_component_self_relation_constraint(self, db, nutrient_1):
+    def test_nutrient_component_self_relation_constraint(self, nutrient_1):
         """
         NutrientComponent cannot have the same nutrient as a target and
         as a component.
@@ -283,7 +279,7 @@ class TestNutrientComponent:
             )
 
     def test_nutrient_component_save_updates_compound(
-        self, db, ingredient_1, nutrient_1, ingredient_nutrient_1_1
+        self, ingredient_1, nutrient_1, ingredient_nutrient_1_1
     ):
         """
         NutrientComponent's save() method updates the `target`
@@ -295,6 +291,62 @@ class TestNutrientComponent:
 
         ing_nut = nutrient.ingredientnutrient_set.get(ingredient=ingredient_1)
         assert ing_nut.amount == 1.5
+
+
+class TestNutrientType:
+    """Tests of the NutrientType model class."""
+
+    def test_save_parent_nutrient_none(self, nutrient_1):
+        """
+        NutrientTypes save without error if a `parent_nutrient` is None.
+        """
+        models.NutrientType.objects.create(name="nt", parent_nutrient=nutrient_1)
+        # The NutrientType above is created because it might trip up the
+        # method by detecting NutrientTypes that are not associated with
+        # any nutrients.
+        nutrient_type = models.NutrientType(name="test_type")
+
+        try:
+            nutrient_type.save()
+        except NutrientTypeHierarchyError as e:
+            pytest.fail(str(e))
+
+    def test_save_parent_nutrient_hierarchy(self, nutrient_1, nutrient_2):
+        """
+        The save method raises an exception if the set `parent_nutrient`
+        has a type that also has non-null `parent_nutrient`.
+        """
+        nutrient_type = models.NutrientType.objects.create(
+            name="nt", parent_nutrient=nutrient_1
+        )
+        nutrient_2.types.add(nutrient_type)
+        nutrient_2.save()
+
+        new_nutrient_type = models.NutrientType(
+            name="test_type", parent_nutrient=nutrient_2
+        )
+
+        with pytest.raises(NutrientTypeHierarchyError):
+            new_nutrient_type.save()
+
+    def test_save_parent_nutrient_no_hierarchy(self, nutrient_1):
+        """
+        The save method doesn't raise an exception if a `parent_nutrient`
+        is set to a nutrient that has only types with a null
+        `parent_nutrient`.
+        """
+        nutrient_type = models.NutrientType.objects.create(name="nt")
+        nutrient_1.types.add(nutrient_type)
+        nutrient_1.save()
+
+        new_nutrient_type = models.NutrientType(
+            name="test_type", parent_nutrient=nutrient_1
+        )
+
+        try:
+            new_nutrient_type.save()
+        except NutrientTypeHierarchyError as e:
+            pytest.fail(str(e))
 
 
 class TestIntakeRecommendation:
@@ -471,7 +523,7 @@ class TestIntakeRecommendation:
 
         assert recommendation.profile_amount_max(profile) is None
 
-    def test_unique_together_constraint_null_age_max(self, db, nutrient_1):
+    def test_unique_together_constraint_null_age_max(self, nutrient_1):
         """
         IntakeRecommendation unique together constraints take into
         account cases where age_max is None.
@@ -491,7 +543,7 @@ class TestIntakeRecommendationManager:
     @pytest.mark.parametrize(
         ("rec_sex", "expected"), [("B", True), ("F", True), ("M", False)]
     )
-    def test_for_profile_by_sex(self, db, nutrient_1, profile, rec_sex, expected):
+    def test_for_profile_by_sex(self, nutrient_1, profile, rec_sex, expected):
         """
         RecommendationQuerySet.for_profile() correctly selects
         IntakeRecommendations matching a profile based on sex.
@@ -512,9 +564,7 @@ class TestIntakeRecommendationManager:
         ("age_min", "age_max", "expected"),
         [(18, 50, True), (50, 60, True), (20, 30, False)],
     )
-    def test_for_profile_by_age(
-        self, db, nutrient_1, profile, age_min, age_max, expected
-    ):
+    def test_for_profile_by_age(self, nutrient_1, profile, age_min, age_max, expected):
         """
         RecommendationQuerySet.for_profile() correctly selects
         IntakeRecommendations matching a profile based on age.
@@ -533,7 +583,7 @@ class TestIntakeRecommendationManager:
 
         assert match is expected
 
-    def test_for_profile_age_max_is_none(self, db, nutrient_1):
+    def test_for_profile_age_max_is_none(self, nutrient_1):
         """
         RecommendationQuerySet.for_profile() treats recommendations with
         `age_max=None` as a recommendation without an upper age
@@ -554,7 +604,7 @@ class TestIntakeRecommendationManager:
 class TestUpdateCompoundNutrient:
     """Tests of the update_compound_nutrients() function."""
 
-    def test_commit_true(self, db, compound_nutrient):
+    def test_commit_true(self, compound_nutrient):
         """
         update_compound_nutrients() updates the amounts of
         IngredientNutrients related to a compound nutrient based on the
@@ -567,7 +617,7 @@ class TestUpdateCompoundNutrient:
 
         assert compound_nutrient.ingredientnutrient_set.first().amount == expected
 
-    def test_commit_false(self, db, compound_nutrient):
+    def test_commit_false(self, compound_nutrient):
         """
         update_compound_nutrients() call with `commits=False` doesn't
         save updated IngredientNutrient records.
@@ -576,7 +626,7 @@ class TestUpdateCompoundNutrient:
 
         assert not compound_nutrient.ingredientnutrient_set.exists()
 
-    def test_returns_ingredient_nutrient_list(self, db, compound_nutrient):
+    def test_returns_ingredient_nutrient_list(self, compound_nutrient):
         """
         update_compound_nutrients() call with `commits=False` doesn't
         save updated IngredientNutrient records.
@@ -586,7 +636,7 @@ class TestUpdateCompoundNutrient:
         assert len(result) == 1
         assert isinstance(result[0], models.IngredientNutrient)
 
-    def test_different_compound_unit(self, db, compound_nutrient):
+    def test_different_compound_unit(self, compound_nutrient):
         """
         update_compound_nutrients() uses unit conversion when
         the components have a different unit than the compound nutrient.
@@ -598,7 +648,7 @@ class TestUpdateCompoundNutrient:
 
         assert compound_nutrient.ingredientnutrient_set.first().amount == 3000
 
-    def test_different_component_unit(self, db, compound_nutrient):
+    def test_different_component_unit(self, compound_nutrient):
         """
         update_compound_nutrients() uses unit conversion when
         the components have a different unit than the compound nutrient.
@@ -611,7 +661,7 @@ class TestUpdateCompoundNutrient:
 
         assert compound_nutrient.ingredientnutrient_set.first().amount == 2.001
 
-    def test_energy_and_weight_unit_mix_warning(self, db, compound_nutrient):
+    def test_energy_and_weight_unit_mix_warning(self, compound_nutrient):
         """
         update_compound_nutrients() issues a warning if it encounters
         a component relationship where one nutrient has an energy unit
@@ -625,7 +675,7 @@ class TestUpdateCompoundNutrient:
             update_compound_nutrients(compound_nutrient)
 
     @pytest.mark.filterwarnings("ignore::UserWarning")
-    def test_energy_and_weight_unit_mix_doesnt_save(self, db, compound_nutrient):
+    def test_energy_and_weight_unit_mix_doesnt_save(self, compound_nutrient):
         """
         update_compound_nutrients() doesn't save IngredientNutrient if
         it encounters a component relationship where one nutrient has an
@@ -656,7 +706,7 @@ class TestIngredientNutrient:
         return nutrient_2
 
     def test_save_updates_amounts_from_db(
-        self, db, component, ingredient_nutrient_1_1, ingredient_nutrient_1_2
+        self, component, ingredient_nutrient_1_1, ingredient_nutrient_1_2
     ):
         """
         Updating an IngredientNutrient's amount changes the amount value
@@ -674,7 +724,7 @@ class TestIngredientNutrient:
         assert ingredient_nutrient_1_2.amount == 2
 
     def test_save_updates_amounts_created(
-        self, db, component, ingredient_nutrient_1_1, ingredient_nutrient_1_2
+        self, component, ingredient_nutrient_1_1, ingredient_nutrient_1_2
     ):
         """
         Updating an IngredientNutrient's amount changes the amount value
@@ -689,7 +739,7 @@ class TestIngredientNutrient:
         assert ingredient_nutrient_1_2.amount == 2
 
     def test_save_updates_amounts_from_db_deferred(
-        self, db, component, ingredient_nutrient_1_1, ingredient_nutrient_1_2
+        self, component, ingredient_nutrient_1_1, ingredient_nutrient_1_2
     ):
         """
         Updating an IngredientNutrient's amount changes the amount value
@@ -708,7 +758,7 @@ class TestIngredientNutrient:
         assert ingredient_nutrient_1_2.amount == 2
 
     def test_save_update_amounts_false(
-        self, db, component, ingredient_nutrient_1_1, ingredient_nutrient_1_2
+        self, component, ingredient_nutrient_1_1, ingredient_nutrient_1_2
     ):
         """
         Updating an IngredientNutrient's amount doesn't change the

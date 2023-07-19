@@ -1,5 +1,7 @@
 """Command and associated functions for populating nutrient data."""
+from copy import deepcopy
 from typing import Dict
+from warnings import warn
 
 from django.core.management.base import BaseCommand
 from main.models import (
@@ -10,7 +12,7 @@ from main.models import (
     NutrientType,
 )
 
-from ._data import FULL_NUTRIENT_DATA, NUTRIENT_TYPE_DISPLAY_NAME, NUTRIENT_TYPES
+from ._data import FULL_NUTRIENT_DATA, NUTRIENT_TYPE_DATA, NUTRIENT_TYPES
 
 # TODO: Custom data options and a better explanation of the format in
 #  the documentation / better way to display it.
@@ -79,8 +81,9 @@ def create_recommendations(
     )
 
 
+# TODO: Add parent nutrient support
 def create_nutrient_types(
-    nutrient_dict: Dict[str, Nutrient], data: list = None
+    nutrient_dict: Dict[str, Nutrient], data: list = None, type_data: dict = None
 ) -> None:
     """Create and save nutrient type entries for important nutrients.
 
@@ -92,23 +95,43 @@ def create_nutrient_types(
         A list containing the nutrient information in the same
         format as FULL_NUTRIENT_DATA.
         If `data` is None, the built-in data will be used.
+    type_data
+        A dict containing additional data for nutrient types (displayed
+        name and parent nutrient) in the same format as
+        NUTRIENT_TYPE_DATA.
+        If `type_data` is None, the built-in data will be used.
     """
     data = data or FULL_NUTRIENT_DATA
-    nutrient_type_data = (
+    nutrient_type_data = deepcopy(type_data or NUTRIENT_TYPE_DATA)
+    nutrient_type_names = (
         NUTRIENT_TYPES if data is FULL_NUTRIENT_DATA else get_nutrient_types(data)
     )
 
+    # Replace the parent nutrient values from the nutrient's name to its
+    # instance.
+    for nutrient_type, info in list(nutrient_type_data.items()):
+        if "parent_nutrient" in info:
+            try:
+                nutrient = nutrient_dict[info["parent_nutrient"]]
+            except KeyError:
+                warn(
+                    f"NutrientType's '{nutrient_type}' parent nutrient "
+                    f"'{info['parent_nutrient']}' not found. Skipping assignment."
+                )
+                nutrient = None
+            info["parent_nutrient"] = nutrient
+
     # Create NutrientType instances
     type_instances = [
-        NutrientType(name=type_, displayed_name=NUTRIENT_TYPE_DISPLAY_NAME.get(type_))
-        for type_ in nutrient_type_data
+        NutrientType(name=type_, **nutrient_type_data.get(type_, {}))
+        for type_ in nutrient_type_names
     ]
     NutrientType.objects.bulk_create(type_instances, ignore_conflicts=True)
 
     # Associate NutrientTypes with Nutrients
     types = {
         type_.name: type_
-        for type_ in NutrientType.objects.filter(name__in=nutrient_type_data)
+        for type_ in NutrientType.objects.filter(name__in=nutrient_type_names)
     }
     for nutrient in data:
         for type_ in nutrient["type"]:

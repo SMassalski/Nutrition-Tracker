@@ -172,3 +172,11 @@ REST_FRAMEWORK = {
 # Crispy Forms
 
 CRISPY_TEMPLATE_PACK = "bootstrap4"
+
+
+# Session's Current Meal
+
+# Set to `None` if you want the `current_meal_date` session var to never
+# expire.
+# In seconds
+MEAL_EXPIRY_TIME = 60 * 60 * 12

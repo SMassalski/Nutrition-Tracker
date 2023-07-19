@@ -1,17 +1,31 @@
+{% if nutrient.recommendations %}
+{% for rec in nutrient.recommendations %}
 <tr{% if subrow %} class="subrow"{% endif %}>
     <td>{{ nutrient.name }}</td>
     <td>
         {# No progress bar for ALAP recommendations #}
-        {% if nutrient.dri_type != "ALAP" %}
+        {% if rec.dri_type != "ALAP" %}
         <div class="progress position-relative">
-            <div class="progress-bar {% if nutrient.over_limit %}pb-danger{% elif nutrient.progress == 100 %}pb-success{% endif %}"
-             role="progressbar" style="width: {{ nutrient.progress }}%"
-             aria-valuenow="{{ nutrient.progress }}" aria-valuemin="0"
+            <div class="progress-bar {% if rec.over_limit %}pb-danger{% elif rec.progress == 100 %}pb-success{% endif %}"
+             role="progressbar" style="width: {{ rec.progress }}%"
+             aria-valuenow="{{ rec.progress }}" aria-valuemin="0"
              aria-valuemax="100">
             </div>
         </div>
         {% endif %}
     </td>
-    <td>{{ nutrient.intake }}{% if nutrient.displayed_amount %} / {{ nutrient.displayed_amount }}{% endif %}</td>
+    <td>{{ nutrient.intake| floatformat }}{% if rec.amount %} / {{ rec.amount| floatformat }}{% endif %}</td>
     <td>{{ nutrient.unit }}</td>
 </tr>
+{% endfor %}
+{% else %}
+<tr>
+    <td>{{ nutrient.name }}</td>
+    <td></td>
+    <td>{{ nutrient.intake| floatformat }}</td>
+    <td>{{ nutrient.unit }}</td>
+</tr>
+{% endif %}
+{% for child in nutrient.children %}
+{% include "main/data/micronutrient_table_row.html" with nutrient=child subrow=True %}
+{% endfor %}

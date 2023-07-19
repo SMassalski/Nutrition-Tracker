@@ -113,6 +113,7 @@ class TestCreateNutrient:
 class TestCreateNutrientTypes:
     """Tests of the create_nutrient_types() function."""
 
+    @pytest.mark.filterwarnings("ignore: NutrientType's")
     def test_saves_all(self, db, type_data):
         """
         create_nutrient_types() saves all the nutrient types in _data.
@@ -123,6 +124,7 @@ class TestCreateNutrientTypes:
         expected = {"nutrient_type_1", "nutrient_type_2", "nutrient_type_3"}
         assert result == expected
 
+    @pytest.mark.filterwarnings("ignore: NutrientType's")
     def test_associates_types_with_nutrients(self, db, nutrient_1, nutrient_1_data):
         """
         create_nutrient_types() associates NutrientTypes with their
@@ -134,6 +136,7 @@ class TestCreateNutrientTypes:
         assert nutrient_1.types.first().name == "nutrient_type"
 
     # TODO: The way the display names are handled needs to change
+    @pytest.mark.filterwarnings("ignore: NutrientType's")
     def test_with_display_name(self, db):
         """
         create_nutrient_types() creates NutrientType records with their
@@ -152,6 +155,7 @@ class TestCreateNutrientTypes:
         expected = NUTRIENT_TYPE_DISPLAY_NAME["Fatty acid type"]
         assert displayed_name == expected
 
+    @pytest.mark.filterwarnings("ignore: NutrientType's")
     def test_already_existing_nutrient_type(self, db, nutrient_1, nutrient_1_data):
         """
         create_nutrient_types() does not raise an exception if a nutrient
@@ -165,6 +169,45 @@ class TestCreateNutrientTypes:
             create_nutrient_types(nutrient_dict, data=data)
         except IntegrityError as e:
             pytest.fail(f"create_nutrient_types() violated a constraint - {e}")
+
+    def test_associates_parent_nutrient(
+        self, db, nutrient_1, nutrient_2, nutrient_1_data
+    ):
+        """
+        create_nutrient_types() sets the type's `parent_nutrient` field
+        to the value provided in the 'type_data' parameter.
+        """
+        data, nutrient_dict = nutrient_1_data
+        nutrient_dict[nutrient_2.name] = nutrient_2
+        type_data = {"nutrient_type": {"parent_nutrient": nutrient_2.name}}
+
+        create_nutrient_types(nutrient_dict, data, type_data)
+
+        assert models.NutrientType.objects.first().parent_nutrient == nutrient_2
+
+    def test_missing_parent_nutrient_warning(self, db, nutrient_1, nutrient_1_data):
+        """
+        If the `parent_nutrient` in the type data is missing from
+        the database, create_nutrient_types() issues a warning.
+        """
+        data, nutrient_dict = nutrient_1_data
+        type_data = {"nutrient_type": {"parent_nutrient": "missing_nutrient"}}
+
+        with pytest.warns(UserWarning):
+            create_nutrient_types(nutrient_dict, data, type_data)
+
+    @pytest.mark.filterwarnings("ignore: NutrientType's")
+    def test_missing_parent_nutrient_null(self, db, nutrient_1, nutrient_1_data):
+        """
+        If the `parent_nutrient` in the type data is missing from
+        the database, create_nutrient_types() keeps the field empty.
+        """
+        data, nutrient_dict = nutrient_1_data
+        type_data = {"nutrient_type": {"parent_nutrient": "missing_nutrient"}}
+
+        create_nutrient_types(nutrient_dict, data, type_data)
+
+        assert models.NutrientType.objects.first().parent_nutrient is None
 
 
 def test_create_recommendations(db, nutrient_1_data, nutrient_1):

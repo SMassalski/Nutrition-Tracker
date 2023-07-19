@@ -63,42 +63,91 @@ def test_meal_component_nutritional_value_is_correct_with_different_final_weight
 
 
 # Meal model
+class TestMeal:
+    """Tests of the meal model."""
 
+    def test_get_intake_no_ingredients(self, meal):
+        """
+        Meal.get_intakes() returns an empty dict if the meal doesn't
+        have any ingredients.
+        """
+        result = meal.get_intakes()
 
-def test_meal_nutritional_value_calculates_nutrients(
-    db,
-    ingredient_nutrient_1_1,
-    ingredient_nutrient_1_2,
-    ingredient_nutrient_2_2,
-    nutrient_1,
-    nutrient_2,
-    meal_component,
-    user,
-):
-    """
-    Meal.nutritional_value() calculates the amount of each nutrient in
-    the meal.
-    """
-    # INFO
-    # 0.75g of nutrient_1 in 100g of meal_component
-    # 10g of nutrient_2 in 100g of meal_component
+        assert result == {}
 
-    # 20g of nutrient_1 in 100g of meal_component_2
-    meal_component_2 = models.MealComponent.objects.create(
-        name="test_component_2", final_weight=100
-    )
-    ingredient_3 = models.Ingredient(
-        name="test_ingredient_3", external_id=111, dataset="dataset"
-    )
-    ingredient_3.save()
-    ingredient_3.ingredientnutrient_set.create(nutrient=nutrient_1, amount=20)
-    meal_component_2.ingredients.create(ingredient=ingredient_3, amount=100)
-    meal = models.Meal.objects.create(user=user, name="test_meal")
+    def test_get_intake_single_ingredient(
+        self, ingredient_nutrient_1_1, ingredient_1, nutrient_1, meal
+    ):
+        """
+        Meal.get_intakes() returns the nutrient intakes of a meal with
+        a single ingredient and amount of 1.
+        """
+        meal.mealingredient_set.create(ingredient=ingredient_1, amount=1)
+        expected_amount = 0.015  # ingredient_nutrient amounts are per 100g
 
-    # 100g each of meal_component and meal_component_2
-    meal.components.create(component=meal_component, amount=100)
-    meal.components.create(component=meal_component_2, amount=100)
+        result = meal.get_intakes()
 
-    result = meal.nutritional_value()
-    assert result[nutrient_1] == 20.75
-    assert result[nutrient_2] == 10
+        assert result[nutrient_1.id] == expected_amount
+
+    def test_get_intake_single_ingredient_amount_changed(
+        self, ingredient_nutrient_1_1, ingredient_1, nutrient_1, meal
+    ):
+        """
+        Meal.get_intakes() returns the nutrient intakes of a meal with
+        a single ingredient and an amount other than 1.
+        """
+        meal.mealingredient_set.create(ingredient=ingredient_1, amount=5)
+        expected_amount = 0.075  # ingredient_nutrient amounts are per 100g
+
+        result = meal.get_intakes()
+
+        assert result[nutrient_1.id] == expected_amount
+
+    def test_get_intake_single_ingredient_multiple_nutrients(
+        self,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_1,
+        nutrient_1,
+        nutrient_2,
+        meal,
+    ):
+        """
+        Meal.get_intakes() returns the nutrient intakes of a meal with
+        a single ingredient that has multiple nutrients.
+        """
+        meal.mealingredient_set.create(ingredient=ingredient_1, amount=2)
+        expected = {
+            nutrient_1.id: 0.03,
+            nutrient_2.id: 0.2,
+        }  # ingredient_nutrient amounts are per 100g
+
+        result = meal.get_intakes()
+
+        assert result == expected
+
+    def test_get_intake_multiple_ingredients(
+        self,
+        meal,
+        ingredient_1,
+        ingredient_2,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+    ):
+        """
+        Meal.get_intakes() returns the nutrient intakes of a meal with
+        multiple ingredients.
+        """
+        meal.mealingredient_set.create(ingredient=ingredient_1, amount=2)
+        meal.mealingredient_set.create(ingredient=ingredient_2, amount=3)
+        expected = {
+            nutrient_1.id: 0.03,
+            nutrient_2.id: 0.5,
+        }  # ingredient_nutrient amounts are per 100g
+
+        result = meal.get_intakes()
+
+        assert result == expected

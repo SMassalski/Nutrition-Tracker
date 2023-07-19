@@ -30,6 +30,14 @@ class FoodDataSource(models.Model):
         return self.name
 
 
+class NutrientTypeHierarchyError(ValueError):
+    """
+    Raised when attempting to save a NutrientType that has a
+    `parent_nutrient` with a type that also has a `parent_nutrient`.
+    """
+
+
+# TODO: Rename to nutrient group?
 class NutrientType(models.Model):
     """
     Represents a type a nutrient might be classified by e.g.,
@@ -38,9 +46,32 @@ class NutrientType(models.Model):
 
     name = models.CharField(max_length=32, unique=True)
     displayed_name = models.CharField(max_length=32, null=True)
+    parent_nutrient = models.OneToOneField(
+        "Nutrient", on_delete=models.SET_NULL, null=True, related_name="child_type"
+    )
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        """Save the current instance.
+
+        The method was modified to prevent hierarchies (NutrientTypes
+        can't have a `paren_nutrient` with a type that also has
+        a `parent_nutrient`).
+        """
+        # Prevent saving the NutrientType if the `parent_nutrient`
+        # has a type that also has a parent nutrient.
+        if self.parent_nutrient is not None:
+            parent_nutrient_is_child_type = NutrientType.objects.filter(
+                nutrients=self.parent_nutrient, parent_nutrient__isnull=False
+            ).exists()
+            if parent_nutrient_is_child_type:
+                raise NutrientTypeHierarchyError(
+                    "`parent_nutrient` can't be of a type that has a `parent_nutrient`."
+                )
+
+        super().save(*args, **kwargs)
 
 
 class Nutrient(models.Model):
@@ -156,7 +187,7 @@ class Nutrient(models.Model):
 
     @property
     def pretty_unit(self) -> str:
-        """The unit's symbols (e.g. µg or kcal)."""
+        """The unit's symbols (e.g., µg or kcal)."""
         return self.PRETTY_UNITS[self.unit]
 
     @cached_property
@@ -217,6 +248,11 @@ class NutrientComponent(models.Model):
         ]
 
     def save(self, *args, **kwargs):
+        """Save the current instance.
+
+        Modified to update the `amount` of the target's ingredient
+        nutrients
+        """
         super().save(*args, **kwargs)
         update_compound_nutrients(self.target)
 
@@ -297,6 +333,7 @@ class IngredientNutrient(models.Model):
             )
         ]
 
+    # docstr-coverage: inherited
     def __init__(self, *args, **kwargs):
         self._old_amount = None
         super().__init__(*args, **kwargs)

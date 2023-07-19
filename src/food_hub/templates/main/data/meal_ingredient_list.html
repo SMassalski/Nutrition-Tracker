@@ -1,0 +1,10 @@
+{% for meal_ing in results %}
+    {% with ingredient_name=meal_ing.ingredient_name amount=meal_ing.amount id=meal_ing.id %}
+        {% include "main/data/meal_ingredient_table_row.html" %}
+    {% endwith %}
+{% endfor %}
+{% if next %}
+<tr hx-get="{{ next }}" hx-swap="outerHTML" hx-trigger="intersect once">
+    <td colspan="3"></td>
+</tr>
+{% endif %}

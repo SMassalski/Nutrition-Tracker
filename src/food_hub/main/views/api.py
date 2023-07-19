@@ -40,7 +40,6 @@ class IngredientView(GenericAPIView, ListModelMixin):
     search_fields = ["name"]
     renderer_classes = [BrowsableAPIRenderer, JSONRenderer, TemplateHTMLRenderer]
 
-    # TODO: HTMX in separate views?
     def get(self, request, *args, **kwargs):
         """List ingredients.
 
@@ -63,26 +62,6 @@ class IngredientDetailView(RetrieveAPIView):
     queryset = Ingredient.objects.all()
     serializer_class = serializers.IngredientDetailSerializer
     renderer_classes = [BrowsableAPIRenderer, JSONRenderer, TemplateHTMLRenderer]
-
-
-class IngredientPreview(GenericAPIView):
-    """Ingredient preview (selected ingredient information)."""
-
-    queryset = Ingredient.objects.all()
-    serializer_class = serializers.IngredientPreviewSerializer
-    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
-
-    def get(self, request, *args, **kwargs):
-        """Retrieve ingredient preview in HTML format
-
-        The preview includes a macronutrient pie chart, a description
-        and an `add ingredient` form.
-        """
-        obj = self.get_object()
-        return Response(
-            {"ingredient": self.get_serializer(obj).data},
-            template_name="main/data/ingredient_preview.html",
-        )
 
 
 class NutrientView(ListAPIView):
