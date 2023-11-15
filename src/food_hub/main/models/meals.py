@@ -1,13 +1,20 @@
 """Models related to meal / recipe features."""
 from typing import Dict
 
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
-from main.models.foods import Ingredient
+from main.models.foods import Ingredient, IngredientNutrient
 from main.models.user import User
 from util import weighted_dict_sum
 
-__all__ = ["Meal", "MealComponent", "MealComponentAmount", "MealComponentIngredient"]
+__all__ = [
+    "Meal",
+    "MealComponent",
+    "MealComponentAmount",
+    "MealComponentIngredient",
+    "MealIngredient",
+]
 
 # Meals and Meal Components
 #
@@ -19,36 +26,64 @@ __all__ = ["Meal", "MealComponent", "MealComponentAmount", "MealComponentIngredi
 # Calculating the component's nutritional values allows balancing a meal
 # by adjusting relative amounts of components in a meal.
 
-# TODO: This needs a redesign
-
 
 class Meal(models.Model):
-    """
-    Represents a portion of food composed of one or more MealComponents.
-    """
+    """Represents the foods eaten in a single day."""
 
-    date = models.DateTimeField(default=timezone.now)
-    name = models.CharField(max_length=50)
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="meals", null=True
-    )
+    owner = models.ForeignKey("main.Profile", on_delete=models.CASCADE)
+    date = models.DateField(default=timezone.now)
+    ingredients = models.ManyToManyField("Ingredient", through="main.MealIngredient")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint("owner", "date", name="meal_unique_profile_date")
+        ]
 
     def __str__(self):
-        return f"{self.name} ({self.date.strftime('%H:%M - %d %b %Y')})"
+        return f"{self.owner.user.username} ({self.date.strftime('%d %b %Y')})"
 
-    def nutritional_value(self):
-        """
-        Calculate the aggregate amount of each nutrient in the meal.
-        """
-        components, amounts = zip(
-            *[(i.component, i.amount) for i in self.components.all()]
-        )
+    def get_intakes(self):
+        """Calculate the amount of each nutrient in the meal.
 
-        # Divide by 100 because its no longer per 100 g, so now its
-        # amount * nutrients per gram
-        weights = [amount / 100 for amount in amounts]
-        nutrients = [component.nutritional_value() for component in components]
-        return weighted_dict_sum(nutrients, weights)
+        Returns
+        -------
+        dict[int, float]
+            Mapping of nutrient ids to their amount in the meal.
+        """
+
+        # Grab each ingredient and its amount in the meal.
+        queryset = self.mealingredient_set.values_list("ingredient_id", "amount")
+        ingredient_amounts = {}
+        for id_, amount in queryset:
+            ingredient_amounts[id_] = ingredient_amounts.get(id_, 0) + amount
+
+        # Grab the amount of each nutrient in the ingredients.
+        nutrient_amounts = IngredientNutrient.objects.filter(
+            ingredient_id__in=ingredient_amounts.keys()
+        ).values_list("nutrient_id", "ingredient_id", "amount")
+
+        # Combine the nutrient amounts.
+        result = {}
+        for nutrient, ingredient, amount in nutrient_amounts:
+            result[nutrient] = (
+                result.get(nutrient, 0) + amount * ingredient_amounts[ingredient] / 100
+            )  # Divided by 100 because IngredientNutrients store amounts per 100g
+
+        return result
+
+
+class MealIngredient(models.Model):
+    """Represents the amount (in grams) of an Ingredient in a Meal."""
+
+    ingredient = models.ForeignKey("Ingredient", on_delete=models.CASCADE)
+    meal = models.ForeignKey(Meal, on_delete=models.CASCADE)
+    amount = models.FloatField(validators=[MinValueValidator(0.1)])
+
+    def __str__(self):
+        return f"{self.meal}: {self.ingredient}"
+
+
+# NOTE: Ignore the stuff below for now.
 
 
 class MealComponent(models.Model):

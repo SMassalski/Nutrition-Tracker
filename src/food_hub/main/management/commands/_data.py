@@ -2893,4 +2893,17 @@ for nutrient in FULL_NUTRIENT_DATA:
     for id_ in nutrient["fdc_ids"]:
         FDC_TO_NUTRIENT[id_] = nutrient["name"]
 
+
+NUTRIENT_TYPES = set()
+for nutrient in FULL_NUTRIENT_DATA:
+    for type_ in nutrient["type"]:
+        NUTRIENT_TYPES.add(type_)
+
+# TODO: Change to NUTRIENT_TYPE_DATA
 NUTRIENT_TYPE_DISPLAY_NAME = {"Fatty acid type": "Lipid"}
+
+NUTRIENT_TYPE_DATA = {
+    "Fatty acid type": {"displayed_name": "Lipid"},
+    "Polyunsaturated fatty acid": {"parent_nutrient": "Polyunsaturated fatty acids"},
+    "Carbohydrate": {"parent_nutrient": "Carbohydrate"},
+}

@@ -10,7 +10,7 @@ urlpatterns = [
         login_required(TemplateView.as_view(template_name="main/dashboard.html")),
         name="dashboard",
     ),
-    path("new_meal/", login_required(views.MealView.as_view()), name="create-meal"),
+    path("meal/", login_required(views.MealView.as_view()), name="meal"),
     path("profile/", views.profile_view, name="profile"),
     path(
         "profile/done",

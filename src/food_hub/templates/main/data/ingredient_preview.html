@@ -1,44 +1,48 @@
-<form hx-post="{% url 'dashboard' %}">
-    <div class="container">
-        <div class="row-md mt-4">
-            <div class="container">
-                <!-- TODO: Make the chart change values instead of redrawing it every time -->
-                <!-- TODO: The chart needs to indicate what its actually showing (kcal / 100g) -->
-                <div class="row" style="min-height: 250px;">
-                    <!-- Ingredient macronutrients -->
-                    <div class="col-md-6 mb-2">
-                        <div class="chart-container" style="height: 250px">
-                            <canvas id="macroPieChart"></canvas>
-                        </div>
-                        {{ ingredient.macronutrients|json_script:"macronutrient-data" }}
-                        <script>
-                            pieChart(
-                            "macroPieChart",
-                             JSON.parse(document.getElementById('macronutrient-data').textContent)
-                             );
-                        </script>
-                    </div>
-                    <div class="col-md-6 mb-2">
-                        <div class="d-flex flex-column align-items-end h-100">
-                            <!-- Other details -->
-                            <h5 style="margin-right: auto;">{{ ingredient.name }}</h5>
-                            <div>
-                                {# Badges / tags #}
+<div hx-get='{% url "ingredient-preview" pk=id %}' hx-swap="outerHTML" hx-trigger="currentMealChanged from:body" >
+    <form hx-post="{% url 'meal-ingredients' meal_id=meal_id %}" hx-target="#meal-ingredients" hx-swap="beforebegin">
+        <div class="container">
+            <div class="row-md mt-4">
+                <div class="container">
+                    {% comment %}
+                    TODO: Make the chart change values instead of redrawing it every time
+                    TODO: The chart needs to indicate what its actually showing (kcal / 100g)
+                    {% endcomment %}
+                    <div class="row" style="min-height: 250px;">
+                        <!-- Ingredient macronutrients -->
+                        <div class="col-md-6 mb-2">
+                            <div class="chart-container" style="height: 250px">
+                                <canvas id="macro-pie-chart"></canvas>
                             </div>
-                            <!-- Add ingredient form inputs -->
-                            <div class="d-flex justify-content-end w-100 p-2 mt-auto">
-                                <input type="hidden" name="id" value="{{ ingredient.id }}">
-                                <input class="w-100" type="number" name="amount" id="amount-field" placeholder="Amount (g)">
+                            {{ macronutrients|json_script:"macronutrient-data" }}
+                            <script>
+                                pieChart(
+                                "macro-pie-chart",
+                                JSON.parse(document.getElementById('macronutrient-data').textContent)
+                                );
+                            </script>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex flex-column align-items-end h-100">
+                                <!-- Other details -->
+                                <h5 style="margin-right: auto;">{{ name }}</h5>
+                                <div>
+                                    {# Badges / tags #}
+                                </div>
+                                <!-- Add ingredient form inputs -->
+                                <div class="d-flex justify-content-end w-100 p-2 mt-auto">
+                                    <input type="hidden" name="ingredient" value="{{ id }}">
+                                    <input class="w-100" type="number" min="0.1" step="0.1" name="amount" id="amount-field" placeholder="Amount (g)" required>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="row-md mt-3">
-            <div class="col-md-12 d-grid gap-2">
-                <button class="btn btn-primary" type="submit" style="width: 100%">Add Ingredient</button>
+            <div class="row-md mt-3">
+                <div class="col-md-12 d-grid gap-2">
+                    <button class="btn btn-primary" type="submit" style="width: 100%">Add Ingredient</button>
+                </div>
             </div>
         </div>
-    </div>
-</form>
+    </form>
+</div>

@@ -1,10 +1,14 @@
 """Global test fixtures."""
+from datetime import date
+from typing import List
+
 import pytest
+from django.test.client import Client
 from main import models
 
 
 @pytest.fixture
-def ingredient_1(db):
+def ingredient_1(db) -> models.Ingredient:
     """Ingredient record and instance.
 
     name: test_ingredient
@@ -21,7 +25,7 @@ def ingredient_1(db):
 
 
 @pytest.fixture
-def ingredient_2(db):
+def ingredient_2(db) -> models.Ingredient:
     """Ingredient record and instance.
 
     name: test_ingredient_2
@@ -38,7 +42,7 @@ def ingredient_2(db):
 
 
 @pytest.fixture
-def nutrient_1(db):
+def nutrient_1(db) -> models.Nutrient:
     """Nutrient record and instance.
 
     name: test_nutrient
@@ -51,7 +55,7 @@ def nutrient_1(db):
 
 
 @pytest.fixture
-def nutrient_2(db):
+def nutrient_2(db) -> models.Nutrient:
     """Nutrient record and instance.
 
     name: test_nutrient_2
@@ -64,7 +68,7 @@ def nutrient_2(db):
 
 
 @pytest.fixture
-def ingredient_nutrient_1_1(db, ingredient_1, nutrient_1):
+def ingredient_nutrient_1_1(db, ingredient_1, nutrient_1) -> models.IngredientNutrient:
     """
     IngredientNutrient associating nutrient_1 with ingredient_1.
 
@@ -77,7 +81,7 @@ def ingredient_nutrient_1_1(db, ingredient_1, nutrient_1):
 
 
 @pytest.fixture
-def user(db):
+def user(db) -> models.User:
     """
     A sample user record and instance.
 
@@ -91,7 +95,7 @@ def user(db):
 
 
 @pytest.fixture
-def profile():
+def profile() -> models.Profile:
     """An unsaved Profile instance.
 
     sex: F
@@ -112,7 +116,7 @@ def profile():
 
 
 @pytest.fixture
-def saved_profile(profile, user):
+def saved_profile(profile, user) -> models.Profile:
     """A saved Profile instance.
 
     sex: F
@@ -129,14 +133,14 @@ def saved_profile(profile, user):
 
 
 @pytest.fixture
-def logged_in_client(client, user, db):
+def logged_in_client(client, user, db) -> Client:
     """Client with the user from the user fixture logged in."""
     client.force_login(user)
     return client
 
 
 @pytest.fixture
-def compound_nutrient(db, ingredient_1):
+def compound_nutrient(db, ingredient_1) -> models.Nutrient:
     """A sample compound nutrient.
 
     name: compound
@@ -184,7 +188,7 @@ def compound_nutrient(db, ingredient_1):
 
 
 @pytest.fixture
-def recommendation(nutrient_1):
+def recommendation(nutrient_1) -> models.IntakeRecommendation:
     """An unsaved IntakeRecommendation instance.
 
     dri_type: "RDA"
@@ -202,3 +206,181 @@ def recommendation(nutrient_1):
         age_min=0,
         sex="B",
     )
+
+
+@pytest.fixture
+def saved_recommendation(recommendation):
+    """A saved IntakeRecommendation instance.
+
+    dri_type: "RDA"
+    amount_min: 5.0
+    amount_max: 5.0
+    age_min: 0
+    sex: B
+    nutrient: nutrient_1
+    """
+    recommendation.save()
+    return recommendation
+
+
+@pytest.fixture
+def meal(saved_profile) -> models.Meal:
+    """A saved Meal instance.
+
+    date: 2020-6-15
+    profile: saved_profile (fixture)
+    """
+    return models.Meal.objects.create(owner=saved_profile, date=date(2020, 6, 15))
+
+
+@pytest.fixture
+def meal_ingredient(meal, ingredient_1):
+    """A MealIngredient database entry and instance.
+
+    meal: meal (fixture)
+    ingredient_1: ingredient_1 (fixture)
+    amount: 200
+    """
+    return meal.mealingredient_set.create(ingredient=ingredient_1, amount=200)
+
+
+@pytest.fixture
+def nutrient_1_energy(nutrient_1):
+    return models.NutrientEnergy.objects.create(nutrient=nutrient_1, amount=10)
+
+
+@pytest.fixture
+def nutrient_type() -> models.NutrientType:
+    """A saved NutrientType without a `parent_nutrient`.
+
+    name: "nutrient_type"
+    displayed_name: "Displayed Name"
+    """
+    return models.NutrientType.objects.create(
+        name="nutrient_type",
+        displayed_name="Displayed Name",
+    )
+
+
+@pytest.fixture
+def nutrient_1_child_type(nutrient_1):
+    """A saved NutrientType with nutrient_1 as the `parent_nutrient`.
+
+    name: "child_type"
+    displayed_name: "Child Name"
+    parent_nutrient: nutrient_1 (fixture)
+    """
+    return models.NutrientType.objects.create(
+        name="child_type",
+        displayed_name="Child Name",
+        parent_nutrient=nutrient_1,
+    )
+
+
+@pytest.fixture
+def nutrient_1_with_type(nutrient_1, nutrient_type):
+    """nutrient_1 but with the nutrient_type added to its types.
+
+    nutrient_1
+    name: test_nutrient
+    unit: G
+
+    nutrient_type
+    name: nutrient_type
+    displayed_name: Displayed Name
+    parent_nutrient: None
+    """
+    nutrient_1.types.add(nutrient_type)
+    return nutrient_1
+
+
+@pytest.fixture
+def nutrient_2_with_type(nutrient_2, nutrient_1_child_type):
+    """nutrient_2, but with the `nutrient_1_child_type` added to its
+    types.
+
+    nutrient_2
+    name: test_nutrient_2
+    unit: UG
+
+    nutrient_1_child_type
+    name: child_type
+    displayed_name: Child Name
+    parent_nutrient: nutrient_1
+    """
+    nutrient_2.types.add(nutrient_1_child_type)
+    return nutrient_2
+
+
+# Moved here because might be useful when testing views
+@pytest.fixture
+def many_recommendations(nutrient_1, nutrient_2) -> List[models.IntakeRecommendation]:
+    """Multiple saved IntakeRecommendation instances.
+
+    Only the first two recommendations match the profile:
+
+    dri_type: RDA
+    nutrient: nutrient_1
+    age_min: 30
+    age_max: 60
+    sex: "B"
+
+    dri_type: RDA
+    nutrient: nutrient_2
+    age_min: 0
+    sex: "F"
+
+    Three recommendations are for nutrient_1, two are for nutrient_2.
+    """
+    recommendations = [
+        models.IntakeRecommendation(
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_1,
+            age_min=30,
+            age_max=60,
+            sex="B",
+        ),
+        models.IntakeRecommendation(
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_2,
+            age_min=0,
+            sex="F",
+        ),
+        models.IntakeRecommendation(
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_1,
+            age_min=0,
+            sex="M",
+        ),
+        models.IntakeRecommendation(
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_2,
+            age_min=60,
+            sex="F",
+        ),
+        models.IntakeRecommendation(
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_1,
+            age_min=0,
+            age_max=10,
+            sex="B",
+        ),
+    ]
+
+    return models.IntakeRecommendation.objects.bulk_create(recommendations)
+
+
+@pytest.fixture
+def new_user(db) -> models.User:
+    """Another saved user instance with a profile"""
+    user = models.User.objects.create_user("name")
+    profile = models.Profile(
+        user=user,
+        age=20,
+        height=180,
+        weight=80,
+        activity_level=models.Profile.ACTIVE,
+        sex=models.Profile.MALE,
+    )
+    profile.save()
+    return user

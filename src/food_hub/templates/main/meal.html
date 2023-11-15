@@ -1,0 +1,101 @@
+{% extends "main/base.html" %}
+{% block title %}Compose Meal{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            {# Meal Date Selector Header #}
+            <div class="card">
+                <div class="card-body">
+                    <div class="container top-panel" >
+                        <div class="row">
+                            <div class="col">
+                                <div class="d-flex" id="meal-date-header-content" hx-get="{% url 'current-meal' %}" hx-trigger="load">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-6">
+            {# Meal Ingredient List #}
+            <div class="card card-outline card-primary">
+                <div class="card-header">
+                    <h3 class="card-title">Ingredients</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row-md">
+                        <div class="col-md-12 table-responsive bordered" style="min-height: 180px; max-height: 350px">
+                            <table class="table table-hover table-head-fixed amounts-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th style="width: 100px">Amount</th>
+                                        <th style="width: 100px"></th> {# Use colspan="2" in regular view #}
+                                    </tr>
+                                </thead>
+                                <tbody id="meal-ingredients" hx-get="{% url 'current-meal-ingredients' %}" hx-trigger="currentMealChanged from:body, load">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            {# Add Ingredient #}
+            <div class="card card-outline card-info">
+                <div class="card-header">
+                    <h3 class="card-title">Add Ingredient</h3>
+                </div>
+                <div class="card-body">
+                    {# Search bar #}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="input-group">
+                                <input type="search" class="form-control" placeholder="Type your keywords here{# TODO: Change this #}"
+                                name="search"
+                                hx-get="{% url 'ingredient-list' format='html' %}"
+                                hx-trigger="keyup[target.value.length > 2] changed delay:500ms, search"
+                                hx-target="#ingredient-search-results">
+                            </div>
+                        </div>
+                    </div>
+                    {# Search results #}
+                    <div class="row-md mt-3">
+                        <div class="col-md-12 table-responsive bordered" style="height: 300px;">
+                            <table class="table table-hover table-head-fixed">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ingredient-search-results">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="ingredient-preview">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-outline card-secondary">
+                <div class="card-body">
+                    <div class="container-fluid mt-3">
+                        <div class="row" hx-get="{% url 'current-meal-intakes' %}"
+                        hx-trigger="currentMealChanged from:body, mealComponentsChanged from:body, load">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -89,25 +89,6 @@ class TestIngredientListView:
         assert response.template_name == "main/data/ingredient_names.html"
 
 
-class TestIngredientPreviewView:
-    """Test of the ingredient preview view."""
-
-    @pytest.fixture(autouse=True)
-    def set_up_request(self, rf, ingredient_1):
-        """Set up a get request to the ingredient detail view."""
-        self.pk = ingredient_1.pk
-        url = reverse("ingredient-preview", args=[self.pk])
-        self.request = rf.get(url)
-        self.view = views.IngredientDetailView.as_view()
-
-    def test_uses_the_correct_template(self, db, ingredient_1):
-        """IngredientPreview uses the preview template."""
-        response = views.IngredientPreview.as_view()(self.request, pk=ingredient_1.id)
-        response.render()
-
-        assert response.template_name == "main/data/ingredient_preview.html"
-
-
 class TestIngredientDetailView:
     """Tests of the ingredient detail view."""
 

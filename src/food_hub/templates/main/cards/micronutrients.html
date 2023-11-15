@@ -6,51 +6,8 @@
 
 {% block card_body %}
 <div class="container-fluid mt-3">
-    <div class="row">
-        {% for group_key, group in displayed_nutrients.items %}
-        <div class="col-md-6">
-            {# TODO: Clearer UL indication #}
-            <div class="bordered mb-3">
-                <table class="table table-sm micronutrient-table">
-                    <thead>
-                        <tr class="nutrient-table-label">
-                            <th class="nutrient-label">{{ group.name|title }}s</th>
-                            <th class="nutrient-progress"></th>
-                            <th class="nutrient-amount"></th>
-                            <th class="nutrient-unit"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="{{ group.name|lower|slugify }}s">
-                        {# TODO: This will be better handled when combined with meal intake display #}
-                        {% if group_key == "Fatty_acid_type" %}
-                        <tr>
-                            <td>Monounsaturated fatty acids</td>
-                            <td>
-                            </td>
-                            <td>13</td>
-                            <td>g</td>
-                        </tr>
-                        <tr>
-                            <td>Polyunsaturated fatty acids</td>
-                            <td>
-                            </td>
-                            <td>13</td>
-                            <td>g</td>
-                        </tr>
-                            {% for nutrient in nutrients.Polyunsaturated_fatty_acid.nutrients %}
-                                {% if  nutrient.dri_type != "AMDR" %}  {# Exclude AMDR recommendations for ALA and LA #}
-                                    {% include "main/data/micronutrient_table_row.html" with nutrient=nutrient subrow=True %}
-                                {% endif %}
-                            {% endfor %}
-                        {% endif %}
-                        {% for nutrient in group.nutrients %}
-                            {% include "main/data/micronutrient_table_row.html" with nutrient=nutrient %}
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        {% endfor %}
+    <div class="row" hx-get="{% url 'current-meal-intakes' %}"
+    hx-trigger="currentMealChanged from:body, mealComponentsChanged from:body, load">
     </div>
 </div>
 {% endblock card_body %}

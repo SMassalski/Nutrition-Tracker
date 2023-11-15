@@ -1,0 +1,22 @@
+{% for group in results %}
+        <div class="col-md-6">
+            {# TODO: Clearer UL indication #}
+            <div class="bordered mb-3">
+                <table class="table table-sm micronutrient-table">
+                    <thead>
+                        <tr class="nutrient-table-label">
+                            <th class="nutrient-label">{{ group.type_name|title }}s</th>
+                            <th class="nutrient-progress"></th>
+                            <th class="nutrient-amount"></th>
+                            <th class="nutrient-unit"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="{{ group.type_name|lower|slugify }}s">
+                        {% for nutrient in group.nutrients %}
+                            {% include "main/data/micronutrient_table_row.html" with nutrient=nutrient %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+{% endfor %}

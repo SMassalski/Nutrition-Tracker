@@ -1,5 +1,5 @@
 {% for ingredient in ingredient_list %}
-<tr hx-get='{% url "ingredient-preview" pk=ingredient.id format="html" %}' hx-target='#ingredient-preview'>
+<tr hx-get='{% url "ingredient-preview" pk=ingredient.id %}' hx-target='#ingredient-preview'>
     <td>{{ ingredient.name }}</td>
 </tr>
 {% endfor %}
