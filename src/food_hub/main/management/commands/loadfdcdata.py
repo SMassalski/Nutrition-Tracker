@@ -33,10 +33,22 @@ class Command(BaseCommand):
         "the DATA_DIR setting."
     )
 
-    def __init__(self, preferred_nutrients=None, additive_nutrients=None, **kwargs):
+    def __init__(self, preferred=None, additive=None, **kwargs):
+        """Command for populating the database with data from FDC csv.
+
+        Parameters
+        ----------
+        preferred: collections.abc.Container
+            The FDC ids that should take priority if the referred to
+            nutrient has multiple entries in the FDC database.
+        additive: collections.abc.Container
+            The FDC ids that should be summed together if the referred
+            to nutrient has multiple entries in the FDC database.
+        kwargs
+        """
         super().__init__(**kwargs)
-        self.preferred_nutrients = preferred_nutrients or PREFERRED_NONSTANDARD
-        self.additive_nutrients = additive_nutrients or VITAMIN_K_IDS
+        self.preferred = PREFERRED_NONSTANDARD if preferred is None else preferred
+        self.additive = VITAMIN_K_IDS if additive is None else additive
 
     # docstr-coverage: inherited
     def add_arguments(self, parser):
@@ -101,8 +113,8 @@ class Command(BaseCommand):
                 food_nutrient_file,
                 nutrient_file,
                 options["batch_size"],
-                preferred_nutrients=self.preferred_nutrients,
-                additive_nutrients=self.additive_nutrients,
+                preferred_nutrients=self.preferred,
+                additive_nutrients=self.additive,
             )
         except NoNutrientException:
             raise CommandError(

@@ -73,7 +73,7 @@ def parse_nutrient_csv(
 
     Returns
     -------
-    Dict[int,str]
+    Dict[int, str]
         Mapping of nutrient's id to its unit in FDC data.
     Dict[str, int]
         Mapping of nutrient_nbr to id in FDC data.

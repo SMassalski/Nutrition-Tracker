@@ -204,7 +204,7 @@ class TestLoadFdcDataCommand:
         The loadfdcdata command allows setting preferred nutrients in
         the init method.
         """
-        cmd = Command(preferred_nutrients=(1104,))
+        cmd = Command(preferred=(1104,))
 
         call_command(cmd, **fdc_files_w_nonstandard)
 

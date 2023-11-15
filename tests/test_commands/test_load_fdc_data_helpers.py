@@ -28,12 +28,13 @@ VIT_K_DHP = 1184
 VIT_K_P = 1185
 
 
-# TODO: No ability to input nutrient preferences seems bad
 class TestHandleNonstandard:
     """Tests of the handle_nonstandard() function."""
 
-    def test_sums_vitamin_k(self, ingredient_1, nutrient_1):
-        """handle_nonstandard() sums the amounts for vitamin K."""
+    def test_sums_additive(self, ingredient_1, nutrient_1):
+        """
+        handle_nonstandard() sums the amounts for additive nutrients.
+        """
         result = {}
         additive = {1, 2, 3}
 

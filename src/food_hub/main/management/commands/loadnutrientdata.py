@@ -1,4 +1,42 @@
-"""Command and associated functions for populating nutrient data."""
+"""Command and associated functions for populating nutrient data.
+
+Notes
+-----
+The FULL_NUTRIENT_DATA format is as follows:
+[
+    {
+        'name': <nutrient's name>, (Required for nutrient)
+        'unit': <nutrient's unit>, (Required for nutrient)
+        'energy': <energy provided by the nutrient in kcal/unit>,
+        'fdc_ids':
+            [<ids of the nutrient in the FDC database>,...],
+        'type': [<names of types of the nutrient>],
+        'recommendations`: [
+            'age_min': <The youngest age the recommendation applies to>
+            (Required for recommendation),
+            'age_max': <The oldest age the recommendation applies to>,
+            'amount_min': <lower limit of the recommendation>,
+            'amount_max': <upper limit of the recommendation>,
+            'dri_type': <type of the recommendation> (Required for
+                recommendations, one of AI, AIK, AI/KG, ALAP, AMDR, RDA,
+                RDA/KG, UL),
+            'sex': <sex the recommendation applies to> (Required for
+                recommendations, one of M, F, B),
+        ]
+        'components':
+            [<names of nutrients this nutrient consists of>,...]
+            (Used for compound nutrients),
+    }
+]
+
+The NUTRIENT_TYPE_DATA is as follows:
+{
+    <nutrient_type_name>: {
+        'displayed_name': <display name of the type>,
+        'parent_nutrient': <name of the type's parent nutrient>,
+    }
+}
+"""
 from copy import deepcopy
 from typing import Dict
 from warnings import warn
@@ -12,29 +50,38 @@ from main.models import (
     NutrientType,
 )
 
-from ._data import (
-    FULL_NUTRIENT_DATA,
-    NUTRIENT_TYPE_DATA,
-    NUTRIENT_TYPE_DISPLAY_NAME,
-    NUTRIENT_TYPES,
-)
-
-# TODO: A better explanation of the format in the documentation /
-#  better way to display it.
+from ._data import FULL_NUTRIENT_DATA, NUTRIENT_TYPE_DATA
 
 
 class Command(BaseCommand):
-    """
-    Command populating the database with nutrient data required for the
-    functioning of the application.
-    """
+    """Command populating the database with nutrient data."""
 
     help = "Populates the database with nutrient data."
 
-    def __init__(self, data=None, **kwargs):
-        """"""
+    def __init__(self, data=None, type_data=None, **kwargs):
+        """Command populating the database with nutrient data.
+
+        Parameters
+        ----------
+        data: list
+            Alternative data to be used instead of the built-in data.
+            Must be in the FULL_NUTRIENT_DATA format (see module docs).
+        type_data: dict
+            A dict containing additional data for nutrient types
+            (displayed name and parent nutrient) in the same format as
+            NUTRIENT_TYPE_DATA.
+            If `None` the built-in type data is used.
+        kwargs
+
+        Notes
+        -----
+
+        """
         super().__init__(**kwargs)
         self.data = data or FULL_NUTRIENT_DATA
+
+        # Don't use 'or' so the user can specify an empty dict.
+        self.type_data = type_data if type_data is not None else NUTRIENT_TYPE_DATA
 
     # docstr-coverage: inherited
     def handle(self, *args, **options):
@@ -46,7 +93,7 @@ class Command(BaseCommand):
         nutrient_instances = {nut.name: nut for nut in nutrients}
 
         create_recommendations(nutrient_instances, self.data)
-        create_nutrient_types(nutrient_instances, self.data, NUTRIENT_TYPE_DISPLAY_NAME)
+        create_nutrient_types(nutrient_instances, self.data, self.type_data)
         create_energy(nutrient_instances, self.data)
         create_nutrient_components(nutrient_instances, self.data)
 
@@ -58,8 +105,7 @@ def create_nutrients(data: list) -> None:
     ----------
     data
         A list containing the nutrient information in the same
-        format as FULL_NUTRIENT_DATA.
-        If `data` is None, the built-in data will be used.
+        format as FULL_NUTRIENT_DATA (see module docs).
     """
     nutrient_data = [{"name": nut["name"], "unit": nut["unit"]} for nut in data]
     instances = [Nutrient(**data) for data in nutrient_data]
@@ -75,17 +121,22 @@ def create_recommendations(nutrient_dict: Dict[str, Nutrient], data: list) -> No
         Mapping of nutrient names to their respective instances.
     data
         A list containing the nutrient information in the same
-        format as FULL_NUTRIENT_DATA.
-        If `data` is None, the built-in data will be used.
+        format as FULL_NUTRIENT_DATA (see module docs).
     """
     recommendation_instances = []
     for nutrient in data:
         for recommendation in nutrient["recommendations"]:
-            instance = nutrient_dict.get(nutrient.get("name"))
-            if instance is not None:
-                recommendation_instances.append(
-                    IntakeRecommendation(nutrient=instance, **recommendation)
+            instance = nutrient_dict.get(nutrient["name"])
+            if instance is None:
+                warn(
+                    f"There are no nutrients with the name '{nutrient['name']}' "
+                    f"in the `nutrient_dict`. Skipping the recommendation..."
                 )
+                continue
+
+            recommendation_instances.append(
+                IntakeRecommendation(nutrient=instance, **recommendation)
+            )
 
     IntakeRecommendation.objects.bulk_create(
         recommendation_instances, ignore_conflicts=True
@@ -93,7 +144,7 @@ def create_recommendations(nutrient_dict: Dict[str, Nutrient], data: list) -> No
 
 
 def create_nutrient_types(
-    nutrient_dict: Dict[str, Nutrient], data: list = None, type_data: dict = None
+    nutrient_dict: Dict[str, Nutrient], data: list, type_data: dict = None
 ) -> None:
     """Create and save nutrient type entries for important nutrients.
 
@@ -103,19 +154,14 @@ def create_nutrient_types(
         Mapping of nutrient names to their respective instances.
     data
         A list containing the nutrient information in the same
-        format as FULL_NUTRIENT_DATA.
-        If `data` is None, the built-in data will be used.
+        format as FULL_NUTRIENT_DATA (see module docs).
     type_data
         A dict containing additional data for nutrient types (displayed
         name and parent nutrient) in the same format as
-        NUTRIENT_TYPE_DATA.
-        If `type_data` is None, the built-in data will be used.
+        NUTRIENT_TYPE_DATA (see module docs).
     """
-    data = data or FULL_NUTRIENT_DATA
-    nutrient_type_data = deepcopy(type_data or NUTRIENT_TYPE_DATA)
-    nutrient_type_names = (
-        NUTRIENT_TYPES if data is FULL_NUTRIENT_DATA else get_nutrient_types(data)
-    )
+    nutrient_type_data = deepcopy(type_data) if type_data else {}
+    nutrient_type_names = get_nutrient_types(data)
 
     # Replace the parent nutrient values from the nutrient's name to its
     # instance.
@@ -159,10 +205,8 @@ def create_energy(nutrient_dict: Dict[str, Nutrient], data: list) -> None:
         Mapping of nutrient names to their respective instances.
     data
         A list containing the nutrient information in the same
-        format as FULL_NUTRIENT_DATA.
-        If `data` is None, the built-in data will be used.
+        format as FULL_NUTRIENT_DATA (see module docs).
     """
-    data = data or FULL_NUTRIENT_DATA
     instances = []
     for nutrient in data:
         energy = nutrient.get("energy")
@@ -184,8 +228,7 @@ def create_nutrient_components(nutrient_dict: Dict[str, Nutrient], data: list) -
         Mapping of nutrient names to their respective instances.
     data
         A list containing the nutrient information in the same
-        format as FULL_NUTRIENT_DATA.
-        If `data` is None, the built-in data will be used.
+        format as FULL_NUTRIENT_DATA (see module docs).
     """
     instances = []
     for nutrient in data:
@@ -217,7 +260,7 @@ def get_nutrient_types(data: list) -> set:
     ----------
     data
         A list containing the nutrient information in the same format as
-        FULL_NUTRIENT_DATA.
+        FULL_NUTRIENT_DATA (see module docs).
 
     Returns
     -------

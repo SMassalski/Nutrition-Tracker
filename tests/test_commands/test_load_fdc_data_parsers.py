@@ -269,7 +269,6 @@ class TestParseFoodNutrient:
             ingredient__external_id=5
         ).exists()
 
-    # TODO: This needs some rework
     def test_nonstandard_duplicate(
         self, db, food_nutrient_csv, real_nutrient_csv, ingredient_and_nutrient_data
     ):
@@ -325,7 +324,6 @@ class TestParseFoodNutrient:
         ing = models.Ingredient.objects.get(external_id=4)
         assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin K").amount == 6
 
-    # TODO: This needs some rework
     def test_batch_size(
         self,
         db,
@@ -339,7 +337,16 @@ class TestParseFoodNutrient:
         """
         parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv, batch_size=1)
 
-    # TODO: This needs some rework
+    def test_raises_error_if_batch_size_is_zero(
+        self,
+        db,
+        food_nutrient_csv,
+        real_nutrient_csv,
+        ingredient_and_nutrient_data,
+    ):
+        with pytest.raises(ValueError):
+            parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv, batch_size=0)
+
     def test_batch_size_nonstandard(
         self,
         db,
