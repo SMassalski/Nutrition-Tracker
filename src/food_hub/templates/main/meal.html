@@ -56,10 +56,10 @@
                     <div class="row">
                         <div class="col-md-12">
                             <div class="input-group">
-                                <input type="search" class="form-control" placeholder="Type your keywords here{# TODO: Change this #}"
+                                <input type="search" class="form-control" placeholder="Search for ingredients"
                                 name="search"
                                 hx-get="{% url 'ingredient-list' format='html' %}"
-                                hx-trigger="keyup[target.value.length > 2] changed delay:500ms, search"
+                                hx-trigger="keyup[target.value.length > 2] changed delay:500ms, keydown[key=='Enter']"
                                 hx-target="#ingredient-search-results">
                             </div>
                         </div>

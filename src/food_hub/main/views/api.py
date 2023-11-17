@@ -1,8 +1,7 @@
 """Main app's api views"""
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.filters import SearchFilter
-from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
-from rest_framework.mixins import ListModelMixin
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.renderers import (
     BrowsableAPIRenderer,
     JSONRenderer,
@@ -27,33 +26,19 @@ def api_root(request, format=None):
     )
 
 
-class IngredientView(GenericAPIView, ListModelMixin):
+class IngredientView(ListAPIView):
     """List of ingredients.
 
     Include a query in the `search` query parameter to only
     list the ingredients with matching names.
     """
 
-    queryset = Ingredient.objects.all()
+    queryset = Ingredient.objects.order_by("name")
     serializer_class = serializers.IngredientSerializer
     filter_backends = [SearchFilter]
     search_fields = ["name"]
-    renderer_classes = [BrowsableAPIRenderer, JSONRenderer, TemplateHTMLRenderer]
-
-    def get(self, request, *args, **kwargs):
-        """List ingredients.
-
-        Search filtering enabled. HTML format returns ingredients in
-        the form of table rows.
-        """
-        if kwargs.get("format") == "html":
-            queryset = self.filter_queryset(self.get_queryset())
-            serializer = self.get_serializer(queryset, many=True)
-            return Response(
-                {"ingredient_list": serializer.data},
-                template_name="main/data/ingredient_names.html",
-            )
-        return self.list(request, *args, **kwargs)
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer, BrowsableAPIRenderer]
+    template_name = "main/data/ingredient_names.html"
 
 
 class IngredientDetailView(RetrieveAPIView):

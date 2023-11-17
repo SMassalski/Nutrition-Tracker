@@ -1,5 +1,16 @@
-{% for ingredient in ingredient_list %}
+{% if results %}
+{% for ingredient in results %}
 <tr hx-get='{% url "ingredient-preview" pk=ingredient.id %}' hx-target='#ingredient-preview'>
     <td>{{ ingredient.name }}</td>
 </tr>
 {% endfor %}
+{% if next %}
+<tr hx-get="{{ next }}" hx-swap="outerHTML" hx-trigger="intersect once">
+    <td></td>
+</tr>
+{% endif %}
+{% else %}
+<tr class="hover-passive">
+    <td>No ingredients match your query.</td>
+</tr>
+{% endif %}

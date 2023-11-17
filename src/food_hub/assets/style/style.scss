@@ -134,6 +134,14 @@ tr th.nutrient-label {
     tr.table-form:hover td {
         background-color: white;
     }
+    tr.hover-passive:hover td {
+        background-color: white;
+        color: gray;
+    }
+}
+
+.hover-passive {
+    color: gray;
 }
 
 .progress {
