@@ -224,7 +224,9 @@ def parse_food_nutrient_csv(
             if ing is None or nut is None:
                 continue
 
-            amount = float(record["amount"]) * conversion_factors[nutrient_id]
+            # Divided by 100 because the amounts in the FDC data are
+            # stored in <unit> per 100 g.
+            amount = float(record["amount"]) * conversion_factors[nutrient_id] / 100
 
             if nutrient_id in FDC_EXCEPTION_IDS:
                 handle_nonstandard(

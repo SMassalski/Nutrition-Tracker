@@ -13,7 +13,7 @@
                             <div class="chart-container" style="height: 250px">
                                 <canvas id="macro-pie-chart"></canvas>
                             </div>
-                            {{ macronutrients|json_script:"macronutrient-data" }}
+                            {{ calories|json_script:"macronutrient-data" }}
                             <script>
                                 pieChart(
                                 "macro-pie-chart",

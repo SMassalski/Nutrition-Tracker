@@ -66,8 +66,8 @@ class Meal(models.Model):
         result = {}
         for nutrient, ingredient, amount in nutrient_amounts:
             result[nutrient] = (
-                result.get(nutrient, 0) + amount * ingredient_amounts[ingredient] / 100
-            )  # Divided by 100 because IngredientNutrients store amounts per 100g
+                result.get(nutrient, 0) + amount * ingredient_amounts[ingredient]
+            )
 
         return result
 

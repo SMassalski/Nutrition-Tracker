@@ -59,11 +59,17 @@ class IngredientDetailSerializer(serializers.ModelSerializer):
 class IngredientPreviewSerializer(serializers.ModelSerializer):
     """Serializer for previewing ingredients."""
 
-    macronutrients = serializers.ReadOnlyField(source="macronutrient_calories")
+    calories = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Ingredient
-        fields = ["id", "name", "macronutrients"]
+        fields = ["id", "name", "calories"]
+
+    def get_calories(self, obj: models.Ingredient) -> dict:
+        """The percentage of energy each nutrient provides."""
+        calories = obj.calories
+        total = sum(calories.values())
+        return {nutrient.name: val * 100 / total for nutrient, val in calories.items()}
 
 
 class CurrentMealSerializer(serializers.ModelSerializer):

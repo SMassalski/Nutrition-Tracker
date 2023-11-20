@@ -7,6 +7,18 @@ from django.http import HttpRequest
 from main import models, serializers
 
 
+@pytest.fixture
+def ingredient_nutrient_1_1(ingredient_nutrient_1_1) -> models.IngredientNutrient:
+    """
+    IngredientNutrient associating nutrient_1 with ingredient_1.
+
+    amount: 0.015
+    """
+    ingredient_nutrient_1_1.amount = 0.015
+    ingredient_nutrient_1_1.save()
+    return ingredient_nutrient_1_1
+
+
 class TestMealIngredientSerializer:
     """Tests of the MealIngredientSerializer class."""
 
@@ -114,7 +126,7 @@ class TestRecommendationSerializer:
         the meal from the `meal` context kwarg.
         """
         # meal_ingredient amount = 200 (g)
-        # ingredient_nutrient_1_1 amount = 1.5 (per 100g)
+        # ingredient_nutrient_1_1 amount = 0.015
         expected = 3
 
         # self.init_kwargs contains the context

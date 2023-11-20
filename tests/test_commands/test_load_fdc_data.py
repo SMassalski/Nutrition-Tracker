@@ -67,8 +67,8 @@ class TestLoadFdcDataCommand:
         with open(fdc_data_file_paths["food_nutrient_file"], "a") as f:
             food_nutrient_position = f.tell()
             lines = (
-                '"13706915","4","1106","6","","71","","","","","",""\n'
-                '"13706916","4","1104","4","","71","","","","","",""\n'
+                '"13706915","4","1106","600","","71","","","","","",""\n'
+                '"13706916","4","1104","400","","71","","","","","",""\n'
             )
             f.write(lines)
 

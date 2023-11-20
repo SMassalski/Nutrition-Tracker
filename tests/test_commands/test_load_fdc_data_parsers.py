@@ -47,7 +47,7 @@ def food_nutrient_csv():
         '"id","fdc_id","nutrient_id","amount","data_points","derivation_id","min",'
         '"max","median","loq","footnote","min_year_acquired"\n'
         '"13706913","3","1003","0.0","","71","","","","","",""\n'  # Protein
-        '"13706914","4","1089","93.33","","71","","","","","",""\n'  # Iron
+        '"13706914","4","1089","90.0","","71","","","","","",""\n'  # Iron
     )
     yield file
     file.close()
@@ -233,6 +233,16 @@ class TestParseFoodNutrient:
         assert in_1.nutrient.name == "Protein"
         assert in_1.amount == 0
 
+    def test_divides_amount_by_100(
+        self, db, food_nutrient_csv, real_nutrient_csv, ingredient_and_nutrient_data
+    ):
+        parse_food_nutrient_csv(food_nutrient_csv, real_nutrient_csv)
+
+        ingredient = models.IngredientNutrient.objects.get(ingredient__external_id=4)
+
+        # The amount is 90 in the food_nutrient_csv fixture
+        assert ingredient.amount == 0.9
+
     def test_ingredient_not_in_db(
         self, db, food_nutrient_csv, real_nutrient_csv, ingredient_and_nutrient_data
     ):
@@ -294,7 +304,7 @@ class TestParseFoodNutrient:
         )
 
         ing = models.Ingredient.objects.get(external_id=4)
-        assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin A").amount == 1
+        assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin A").amount == 0.01
 
     def test_nonstandard_additive(
         self, db, food_nutrient_csv, real_nutrient_csv, ingredient_and_nutrient_data
@@ -322,7 +332,7 @@ class TestParseFoodNutrient:
         )
 
         ing = models.Ingredient.objects.get(external_id=4)
-        assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin K").amount == 6
+        assert ing.ingredientnutrient_set.get(nutrient__name="Vitamin K").amount == 0.06
 
     def test_batch_size(
         self,

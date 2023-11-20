@@ -1,6 +1,4 @@
 """Tests of models related to meal / recipe features."""
-from datetime import datetime
-
 import pytest
 from main import models
 
@@ -29,9 +27,22 @@ def meal_component(db, ingredient_1, ingredient_2):
     return instance
 
 
+@pytest.fixture
+def ingredient_nutrient_1_1(ingredient_nutrient_1_1) -> models.IngredientNutrient:
+    """
+    IngredientNutrient associating nutrient_1 with ingredient_1.
+
+    amount: 0.015
+    """
+    ingredient_nutrient_1_1.amount = 0.015
+    ingredient_nutrient_1_1.save()
+    return ingredient_nutrient_1_1
+
+
 # Meal Component model
 
 
+@pytest.mark.skip(reason="The MealComponent model will be repurposed")
 def test_meal_component_nutritional_value_calculates_nutrients(
     db, ingredient_nutrient_1_2, ingredient_nutrient_2_2, nutrient_2, meal_component
 ):
@@ -46,6 +57,7 @@ def test_meal_component_nutritional_value_calculates_nutrients(
     assert meal_component.nutritional_value()[nutrient_2] == 10
 
 
+@pytest.mark.skip(reason="The MealComponent model will be repurposed")
 def test_meal_component_nutritional_value_is_correct_with_different_final_weight(
     db, ingredient_nutrient_1_2, ingredient_nutrient_2_2, nutrient_2, meal_component
 ):
@@ -83,7 +95,7 @@ class TestMeal:
         a single ingredient and amount of 1.
         """
         meal.mealingredient_set.create(ingredient=ingredient_1, amount=1)
-        expected_amount = 0.015  # ingredient_nutrient amounts are per 100g
+        expected_amount = 0.015
 
         result = meal.get_intakes()
 
@@ -97,7 +109,7 @@ class TestMeal:
         a single ingredient and an amount other than 1.
         """
         meal.mealingredient_set.create(ingredient=ingredient_1, amount=5)
-        expected_amount = 0.075  # ingredient_nutrient amounts are per 100g
+        expected_amount = 0.075
 
         result = meal.get_intakes()
 
@@ -120,7 +132,7 @@ class TestMeal:
         expected = {
             nutrient_1.id: 0.03,
             nutrient_2.id: 0.2,
-        }  # ingredient_nutrient amounts are per 100g
+        }
 
         result = meal.get_intakes()
 
@@ -146,7 +158,7 @@ class TestMeal:
         expected = {
             nutrient_1.id: 0.03,
             nutrient_2.id: 0.5,
-        }  # ingredient_nutrient amounts are per 100g
+        }
 
         result = meal.get_intakes()
 

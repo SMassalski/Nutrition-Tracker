@@ -25,28 +25,6 @@ def component(nutrient_1, nutrient_2):
 class TestIngredient:
     """Tests of the Ingredient model."""
 
-    @pytest.fixture()
-    def ingredient_1_macronutrients(self, ingredient_1):
-        protein = models.Nutrient.objects.create(name="Protein")
-        fat = models.Nutrient.objects.create(name="Total lipid (fat)")
-        carbs = models.Nutrient.objects.create(name="Carbohydrate, by difference")
-
-        models.IngredientNutrient.objects.bulk_create(
-            [
-                models.IngredientNutrient(
-                    ingredient_id=ingredient_1.id, nutrient_id=protein.id, amount=1
-                ),
-                models.IngredientNutrient(
-                    ingredient_id=ingredient_1.id, nutrient_id=fat.id, amount=2
-                ),
-                models.IngredientNutrient(
-                    ingredient_id=ingredient_1.id, nutrient_id=carbs.id, amount=3
-                ),
-            ]
-        )
-
-        return ingredient_1.macronutrient_calories
-
     def test_ingredient_nutritional_value_returns_nutrient_amounts(
         self, ingredient_1, ingredient_nutrient_1_1, ingredient_nutrient_1_2
     ):
@@ -62,46 +40,68 @@ class TestIngredient:
             result[ingredient_nutrient_1_2.nutrient] == ingredient_nutrient_1_2.amount
         )
 
-    def test_ingredient_macronutrient_calories_returns_only_3_macronutrients(
-        self,
-        ingredient_1_macronutrients,
+    def test_ingredient_calories_calculates_energies_in_ingredient(
+        self, ingredient_1, nutrient_1, ingredient_nutrient_1_1, nutrient_1_energy
     ):
-        """
-        Ingredient.macronutrient_calories returns values only for protein
-        fat and carbohydrates.
-        """
-        result = ingredient_1_macronutrients
-        assert len(result.keys()) == 3
-        for macronutrient in ["carbohydrate", "lipid", "protein"]:
-            assert len([k for k in result.keys() if macronutrient in k.lower()]) == 1
+        # ingredient_nutrient_1_1 amount * nutrient_1_energy amount
+        expected = 1.5 * 10
+        assert ingredient_1.calories == {nutrient_1: expected}
 
-    def test_ingredient_macronutrient_calories_converts_nutrients_to_calories_correctly(
+    def test_ingredient_calories_results_ordered_alphabetically(
         self,
-        ingredient_1_macronutrients,
+        ingredient_1,
+        nutrient_1,
+        ingredient_nutrient_1_1,
+        nutrient_2,
+        ingredient_nutrient_1_2,
+        nutrient_1_energy,
     ):
-        """
-        Ingredient.macronutrient_calories calculates calorie amounts
-        according to atwater conversion factors (4 kcal/g for protein and
-        carbs, 9 kcal/g for fats).
-        """
-        # Values depend on amounts in ingredient_1_macronutrients
-        assert ingredient_1_macronutrients == {
-            "Protein": 4,
-            "Total lipid (fat)": 18,
-            "Carbohydrate, by difference": 12,
-        }
+        models.NutrientEnergy.objects.create(nutrient=nutrient_2, amount=2)
 
-    def test_ingredient_macronutrient_calories_returns_a_dict_sorted_by_keys(
+        assert list(ingredient_1.calories.keys()) == [nutrient_1, nutrient_2]
+
+    def test_ingredient_calories_only_returns_nutrients_with_energy(
         self,
-        ingredient_1_macronutrients,
+        ingredient_1,
+        nutrient_1,
+        ingredient_nutrient_1_1,
+        nutrient_2,
+        ingredient_nutrient_1_2,
+        nutrient_1_energy,
     ):
-        """
-        Ingredient.macronutrient_calories calculates return dict is sorted
-        by keys.
-        """
-        assert ingredient_1_macronutrients == dict(
-            sorted(ingredient_1_macronutrients.items())
-        )
+        result = ingredient_1.calories
+
+        assert nutrient_1 in result
+        assert nutrient_2 not in result
+
+    def test_calories_excludes_component_nutrients(
+        self,
+        ingredient_1,
+        nutrient_1,
+        ingredient_nutrient_1_1,
+        nutrient_2,
+        nutrient_1_energy,
+        component,
+    ):
+
+        result = ingredient_1.calories
+
+        assert nutrient_1 not in result
+
+    def test_calories_excludes_child_type_nutrients(
+        self,
+        ingredient_1,
+        nutrient_1,
+        ingredient_nutrient_1_1,
+        nutrient_2,
+        nutrient_1_energy,
+    ):
+        type_ = models.NutrientType.objects.create(parent_nutrient=nutrient_2)
+        nutrient_1.types.add(type_)
+
+        result = ingredient_1.calories
+
+        assert nutrient_1 not in result
 
 
 class TestNutrient:
@@ -255,6 +255,7 @@ class TestNutrient:
         assert nutrient_2.is_component is True
 
 
+# noinspection PyUnusedLocal
 class TestNutrientComponent:
     """Tests of NutrientComponents."""
 
@@ -298,7 +299,8 @@ class TestNutrientType:
 
     def test_save_parent_nutrient_none(self, nutrient_1):
         """
-        NutrientTypes save without error if a `parent_nutrient` is None.
+        NutrientTypes save without raising an error
+        if the `parent_nutrient` is None.
         """
         models.NutrientType.objects.create(name="nt", parent_nutrient=nutrient_1)
         # The NutrientType above is created because it might trip up the
@@ -349,6 +351,7 @@ class TestNutrientType:
             pytest.fail(str(e))
 
 
+# noinspection PyUnusedLocal
 class TestIntakeRecommendation:
     """Tests of the IntakeRecommendation model."""
 
@@ -690,6 +693,7 @@ class TestUpdateCompoundNutrient:
         assert not compound_nutrient.ingredientnutrient_set.exists()
 
 
+# noinspection PyUnusedLocal
 class TestIngredientNutrient:
     """Tests of the IngredientNutrient model."""
 
@@ -705,8 +709,14 @@ class TestIngredientNutrient:
 
         return nutrient_2
 
+    # NOTE: The IngredientNutrient from the ingredient_nutrient_1_2
+    #  fixture is created with the creation of ingredient_nutrient_1_1
+    #  or component.
+    #  Using the ingredient_nutrient_1_2 fixture will
+    #  cause an IntegrityError
+
     def test_save_updates_amounts_from_db(
-        self, component, ingredient_nutrient_1_1, ingredient_nutrient_1_2
+        self, component, ingredient_1, nutrient_2, ingredient_nutrient_1_1
     ):
         """
         Updating an IngredientNutrient's amount changes the amount value
@@ -718,13 +728,15 @@ class TestIngredientNutrient:
             pk=ingredient_nutrient_1_1.pk
         )
         ingredient_nutrient.amount = 2
-        ingredient_nutrient.save(update_amounts=True)
+        ingredient_nutrient.save()
 
-        ingredient_nutrient_1_2.refresh_from_db()
-        assert ingredient_nutrient_1_2.amount == 2
+        ing_nut_1_2 = models.IngredientNutrient.objects.get(
+            ingredient=ingredient_1, nutrient=nutrient_2
+        )
+        assert ing_nut_1_2.amount == 2
 
     def test_save_updates_amounts_created(
-        self, component, ingredient_nutrient_1_1, ingredient_nutrient_1_2
+        self, component, ingredient_1, nutrient_1, ingredient_nutrient_1_2
     ):
         """
         Updating an IngredientNutrient's amount changes the amount value
@@ -732,14 +744,15 @@ class TestIngredientNutrient:
         compound nutrients.
         Test for when the instance was created and saved.
         """
-        ingredient_nutrient_1_1.amount = 2
-        ingredient_nutrient_1_1.save(update_amounts=True)
+        models.IngredientNutrient.objects.create(
+            ingredient=ingredient_1, nutrient=nutrient_1, amount=2
+        )
 
         ingredient_nutrient_1_2.refresh_from_db()
         assert ingredient_nutrient_1_2.amount == 2
 
     def test_save_updates_amounts_from_db_deferred(
-        self, component, ingredient_nutrient_1_1, ingredient_nutrient_1_2
+        self, component, ingredient_1, nutrient_2, ingredient_nutrient_1_1
     ):
         """
         Updating an IngredientNutrient's amount changes the amount value
@@ -752,22 +765,9 @@ class TestIngredientNutrient:
             pk=ingredient_nutrient_1_1.pk
         )
         ingredient_nutrient.amount = 2
-        ingredient_nutrient.save(update_amounts=True)
+        ingredient_nutrient.save()
 
-        ingredient_nutrient_1_2.refresh_from_db()
-        assert ingredient_nutrient_1_2.amount == 2
-
-    def test_save_update_amounts_false(
-        self, component, ingredient_nutrient_1_1, ingredient_nutrient_1_2
-    ):
-        """
-        Updating an IngredientNutrient's amount doesn't change the
-        amount value of IngredientNutrient records related to the
-        `nutrient's` compound nutrients if save() was called with
-        `update_amounts=False`.
-        """
-        ingredient_nutrient_1_1.amount = 2
-        ingredient_nutrient_1_1.save(update_amounts=False)
-
-        ingredient_nutrient_1_2.refresh_from_db()
-        assert ingredient_nutrient_1_2.amount == 10
+        ing_nut_1_2 = models.IngredientNutrient.objects.get(
+            ingredient=ingredient_1, nutrient=nutrient_2
+        )
+        assert ing_nut_1_2.amount == 2
