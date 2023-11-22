@@ -1,7 +1,7 @@
 {% if results %}
-{% for ingredient in results %}
-<tr hx-get='{% url "ingredient-preview" pk=ingredient.id %}' hx-target='#ingredient-preview'>
-    <td>{{ ingredient.name }}</td>
+{% for obj in results %}
+<tr hx-get='{{ obj.preview_url }}' hx-target='#component-preview'>
+    <td>{{ obj.name }}</td>
 </tr>
 {% endfor %}
 {% if next %}
@@ -11,6 +11,6 @@
 {% endif %}
 {% else %}
 <tr class="hover-passive">
-    <td>No ingredients match your query.</td>
+    <td>No {{ obj_type }} match your query.</td>
 </tr>
 {% endif %}

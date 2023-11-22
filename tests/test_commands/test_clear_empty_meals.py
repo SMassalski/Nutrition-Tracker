@@ -1,5 +1,4 @@
 """Tests of the `clearemptymeals` command."""
-import pytest
 from django.contrib.sessions.backends.db import SessionStore
 from django.core.management import call_command
 from main.models import Meal
@@ -28,13 +27,13 @@ class TestCommand:
 
     # The MealComponent model needs to be deleted. It causes an extra
     # cascade delete query
-    @pytest.mark.xfail
     def test_num_queries(self, meal, django_assert_num_queries):
 
-        with django_assert_num_queries(4):
+        with django_assert_num_queries(5):
             # 1) Fetch sessions
             # 2) Select meals
             # 3) Cascade delete MealIngredients
+            # 4) Cascade delete MealRecipes
             # 4) Delete Meals
 
             call_command("clearemptymeals")

@@ -1,10 +1,11 @@
 """Main app API URL Configuration"""
 from django.contrib.auth.decorators import login_required
 from django.urls import path
+from rest_framework.routers import SimpleRouter
 from rest_framework.urlpatterns import format_suffix_patterns
 
+from .routers import ModelCollectionRouter
 from .views import api as views
-from .views import htmx
 
 urlpatterns = [
     path("", views.api_root, name="api-root"),
@@ -15,9 +16,19 @@ urlpatterns = [
         name="ingredient-detail",
     ),
     path(
-        "ingredients/<int:pk>/preview",
-        htmx.IngredientPreviewView.as_view(),
-        name="ingredient-preview",
+        "ingredients/<int:pk>/meal-preview",
+        views.MealIngredientPreviewView.as_view(),
+        name="meal-ingredient-preview",
+    ),
+    path(
+        "recipes/<int:pk>/meal-preview",
+        views.MealRecipePreviewView.as_view(),
+        name="meal-recipe-preview",
+    ),
+    path(
+        "ingredients/<int:pk>/recipe-preview",
+        views.IngredientPreviewView.as_view(),
+        name="recipe-ingredient-preview",
     ),
     path("nutrients/", views.NutrientView.as_view(), name="nutrient-list"),
     path(
@@ -26,38 +37,58 @@ urlpatterns = [
     # Meal and meal ingredients
     path(
         "meals/current-meal",
-        login_required(htmx.CurrentMealView.as_view()),
+        login_required(views.CurrentMealView.as_view()),
         name="current-meal",
-    ),
-    path(
-        "meals/<int:meal_id>/ingredients",
-        login_required(htmx.MealIngredientView.as_view()),
-        name="meal-ingredients",
     ),
     path(
         "meals/current/ingredients",
         login_required(
-            htmx.CurrentMealRedirectView.as_view(pattern_name="meal-ingredients")
+            views.CurrentMealRedirectView.as_view(pattern_name="meal-ingredient-list")
         ),
         name="current-meal-ingredients",
     ),
     path(
-        "meals/ingredients/<int:pk>",
-        login_required(htmx.MealIngredientDetailView.as_view()),
-        name="meal-ingredient-detail",
+        "meals/current/recipes",
+        login_required(
+            views.CurrentMealRedirectView.as_view(pattern_name="meal-recipe-list")
+        ),
+        name="current-meal-recipes",
     ),
     path(
-        "meals/<int:meal_id>/intakes",
-        login_required(htmx.MealNutrientIntakeView.as_view()),
+        "meals/<int:meal>/intakes",
+        login_required(views.MealNutrientIntakeView.as_view()),
         name="meal-intakes",
     ),
     path(
         "meals/current/intakes",
         login_required(
-            htmx.CurrentMealRedirectView.as_view(pattern_name="meal-intakes")
+            views.CurrentMealRedirectView.as_view(pattern_name="meal-intakes")
         ),
         name="current-meal-intakes",
     ),
+    path(
+        "recipes/<int:recipe>/intakes",
+        views.RecipeIntakeView.as_view(),
+        name="recipe-intakes",
+    ),
+    path(
+        "add-meal-component/tabs",
+        views.MealComponentTabView.as_view(),
+        name="add-meal-component-tabs",
+    ),
 ]
+router = SimpleRouter()
+router.register("recipes", views.RecipeViewSet, "recipe")
+urlpatterns += router.urls
+
+collection_router = ModelCollectionRouter()
+collection_router.register("meal", views.MealIngredientViewSet, "meal-ingredient")
+collection_router.register(
+    "recipe",
+    views.RecipeIngredientViewSet,
+    "recipe-ingredient",
+)
+collection_router.register("meal", views.MealRecipeViewSet, "meal-recipe")
+urlpatterns += collection_router.urls
 
 urlpatterns = format_suffix_patterns(urlpatterns, allowed=["json", "html", "api"])

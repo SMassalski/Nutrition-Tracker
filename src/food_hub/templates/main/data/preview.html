@@ -1,5 +1,9 @@
-<div hx-get='{% url "ingredient-preview" pk=id %}' hx-swap="outerHTML" hx-trigger="currentMealChanged from:body" >
-    <form hx-post="{% url 'meal-ingredients' meal_id=meal_id %}" hx-target="#meal-ingredients" hx-swap="beforebegin">
+{% if refresh_event %}
+<div hx-get="{{ request.get_full_path }}" hx-swap="outerHTML" hx-trigger="{{ refresh_event }} from:body" >
+{% endif %}
+    {% if target_url %}
+    <form hx-post="{{ target_url }}" hx-target="#component-list" hx-swap="afterbegin">
+    {% endif %}
         <div class="container">
             <div class="row-md mt-4">
                 <div class="container">
@@ -28,9 +32,9 @@
                                 <div>
                                     {# Badges / tags #}
                                 </div>
-                                <!-- Add ingredient form inputs -->
+                                <!-- Add component form inputs -->
                                 <div class="d-flex justify-content-end w-100 p-2 mt-auto">
-                                    <input type="hidden" name="ingredient" value="{{ id }}">
+                                    <input type="hidden" name="{{ component_field }}" value="{{ id }}">
                                     <input class="w-100" type="number" min="0.1" step="0.1" name="amount" id="amount-field" placeholder="Amount (g)" required>
                                 </div>
                             </div>
@@ -40,9 +44,14 @@
             </div>
             <div class="row-md mt-3">
                 <div class="col-md-12 d-grid gap-2">
-                    <button class="btn btn-primary" type="submit" style="width: 100%">Add Ingredient</button>
+                    <button class="btn btn-primary" type="submit" style="width: 100%">Add {{ component_field|title }}</button>
                 </div>
             </div>
         </div>
+    {% if target_url %}
     </form>
+    {% endif %}
+
+{% if refresh_event %}
 </div>
+{% endif %}

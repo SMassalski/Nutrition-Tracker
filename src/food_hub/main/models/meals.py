@@ -1,30 +1,21 @@
 """Models related to meal / recipe features."""
+import re
 from typing import Dict
 
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import Case, F, OuterRef, Q, Subquery, Sum, When
 from django.utils import timezone
-from main.models.foods import Ingredient, IngredientNutrient
-from main.models.user import User
-from util import weighted_dict_sum
+from django.utils.text import slugify
+from main.models import Nutrient
 
 __all__ = [
     "Meal",
-    "MealComponent",
-    "MealComponentAmount",
-    "MealComponentIngredient",
     "MealIngredient",
+    "Recipe",
+    "MealRecipe",
+    "RecipeIngredient",
 ]
-
-# Meals and Meal Components
-#
-# Meals represent portions of eaten food composed of
-# one or more MealComponents and hold information on the time it was
-# eaten for keeping track of the diet.
-#
-# MealComponents represent prepared / cooked combinations of Ingredients.
-# Calculating the component's nutritional values allows balancing a meal
-# by adjusting relative amounts of components in a meal.
 
 
 class Meal(models.Model):
@@ -32,11 +23,18 @@ class Meal(models.Model):
 
     owner = models.ForeignKey("main.Profile", on_delete=models.CASCADE)
     date = models.DateField(default=timezone.now)
-    ingredients = models.ManyToManyField("Ingredient", through="main.MealIngredient")
+    ingredients = models.ManyToManyField(
+        "main.Ingredient", through="main.MealIngredient"
+    )
+    recipes = models.ManyToManyField("main.Recipe", through="main.MealRecipe")
 
     class Meta:
         constraints = [
-            models.UniqueConstraint("owner", "date", name="meal_unique_profile_date")
+            models.UniqueConstraint(
+                "owner",
+                "date",
+                name="meal_unique_profile_date",
+            )
         ]
 
     def __str__(self):
@@ -51,25 +49,65 @@ class Meal(models.Model):
             Mapping of nutrient ids to their amount in the meal.
         """
 
-        # Grab each ingredient and its amount in the meal.
-        queryset = self.mealingredient_set.values_list("ingredient_id", "amount")
-        ingredient_amounts = {}
-        for id_, amount in queryset:
-            ingredient_amounts[id_] = ingredient_amounts.get(id_, 0) + amount
+        recipe = self.recipe_intakes()
+        ingredient = self.ingredient_intakes()
 
-        # Grab the amount of each nutrient in the ingredients.
-        nutrient_amounts = IngredientNutrient.objects.filter(
-            ingredient_id__in=ingredient_amounts.keys()
-        ).values_list("nutrient_id", "ingredient_id", "amount")
+        # sum of values by key
+        return {
+            key: recipe.get(key, 0) + ingredient.get(key, 0)
+            for key in {*recipe.keys(), *ingredient.keys()}
+        }
 
-        # Combine the nutrient amounts.
-        result = {}
-        for nutrient, ingredient, amount in nutrient_amounts:
-            result[nutrient] = (
-                result.get(nutrient, 0) + amount * ingredient_amounts[ingredient]
+    def recipe_intakes(self):
+        """Get nutrient intakes from recipes."""
+        subquery = Recipe.objects.filter(meal=OuterRef("meal")).annotate(
+            weight=Case(
+                When(
+                    final_weight__isnull=True,
+                    then=Sum("recipeingredient__amount"),
+                ),
+                When(
+                    final_weight__isnull=False,
+                    then=F("final_weight"),
+                ),
             )
+        )
+        queryset = (
+            self.mealrecipe_set.annotate(
+                nutrient_id=F("recipe__ingredients__ingredientnutrient__nutrient")
+            )
+            .alias(recipe_weight=Subquery(subquery.values("weight")))
+            .alias(
+                nutrient_amount=F("amount")
+                * F("recipe__recipeingredient__amount")
+                * F("recipe__recipeingredient__ingredient__ingredientnutrient__amount")
+                / F("recipe_weight")
+            )
+            .values("nutrient_id")
+            # skip if ingredients don't have nutrients
+            .filter(nutrient_id__isnull=False)
+            .annotate(amount=Sum("nutrient_amount"))
+        )
 
-        return result
+        return {nutrient["nutrient_id"]: nutrient["amount"] for nutrient in queryset}
+
+    def ingredient_intakes(self):
+        """Get nutrient intakes from individual ingredients."""
+        queryset = (
+            self.mealingredient_set.annotate(
+                nutrient_id=F("ingredient__ingredientnutrient__nutrient")
+            )
+            .alias(
+                nutrient_amount=F("amount")
+                * F("ingredient__ingredientnutrient__amount")
+            )
+            .values("nutrient_id")
+            # skip if ingredients don't have nutrients
+            .filter(nutrient_id__isnull=False)
+            .annotate(amount=Sum("nutrient_amount"))
+        )
+
+        return {nutrient["nutrient_id"]: nutrient["amount"] for nutrient in queryset}
 
 
 class MealIngredient(models.Model):
@@ -83,69 +121,154 @@ class MealIngredient(models.Model):
         return f"{self.meal}: {self.ingredient}"
 
 
-# NOTE: Ignore the stuff below for now.
-
-
-class MealComponent(models.Model):
+class Recipe(models.Model):
     """Represents a prepared collection of Ingredients."""
 
     name = models.CharField(max_length=50)
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="meal_components", null=True
+    owner = models.ForeignKey(
+        "main.Profile", on_delete=models.CASCADE, related_name="recipes"
     )
-    final_weight = models.FloatField()
+    final_weight = models.FloatField(
+        validators=[MinValueValidator(0.1)], null=True
+    )  # In grams
+    ingredients = models.ManyToManyField(
+        "main.Ingredient", through="main.RecipeIngredient"
+    )
+    slug = models.SlugField(max_length=50, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint("owner", "slug", name="recipe_unique_owner_slug"),
+            models.UniqueConstraint("owner", "name", name="recipe_unique_owner_name"),
+        ]
 
     def __str__(self):
         return self.name
 
+    # docstr-coverage: inherited
+    def save(self, *args, **kwargs):
+        self.slug = self.get_slug()
+        return super().save(*args, **kwargs)
+
+    def get_slug(self):
+        """Generate a correct slug based on the recipe's name."""
+        base_slug = slugify(self.name)
+        pattern = rf"{base_slug}-\d+$"
+
+        if re.compile(pattern).match(self.slug or ""):
+            return self.slug
+
+        # Race conditions shouldn't matter as long as
+        # users create recipes one at a time
+        # because `slug` must be unique only for each `owner`
+        queryset = Recipe.objects.filter(owner=self.owner, slug__regex=pattern).values(
+            "slug"
+        )
+        i = max([int(s["slug"].rsplit("-", 1)[1]) for s in queryset]) if queryset else 0
+
+        return f"{base_slug}-{i+1}"
+
     def nutritional_value(self) -> Dict[int, float]:
         """
         Calculate the aggregate amount of each nutrient in the
-        component per 100g.
+        recipe per gram.
         """
-        ingredients, amounts = zip(
-            *[(i.ingredient, i.amount) for i in self.ingredients.all()]
+        queryset = (
+            self.recipeingredient_set.annotate(
+                nutrient_id=F("ingredient__ingredientnutrient__nutrient")
+            )
+            .alias(
+                nutrient_amount=F("amount")
+                * F("ingredient__ingredientnutrient__amount"),
+            )
+            .values("nutrient_id")
+            .filter(nutrient_id__isnull=False)
+            .annotate(total_amount=Sum("nutrient_amount") / self.weight)
         )
-        weights = [amount / self.final_weight for amount in amounts]
-        nutrients = [ingredient.nutritional_value() for ingredient in ingredients]
-        return weighted_dict_sum(nutrients, weights)
+
+        return {
+            nutrient["nutrient_id"]: nutrient["total_amount"] for nutrient in queryset
+        }
+
+    def get_intakes(self):
+        """Calculate the amount of each nutrient in 100g of the recipe.
+
+        Returns
+        -------
+        dict[int, float]
+            Mapping of nutrient ids to their amount in 100g of
+            the recipe.
+        """
+        return {k: v * 100 for k, v in self.nutritional_value().items()}
+
+    @property
+    def weight(self):
+        """
+        The total weight of the recipe which is either the
+        `final_weight` value or the sum of the ingredient
+        amounts in the recipe.
+        """
+        return (
+            self.final_weight
+            or self.recipeingredient_set.aggregate(Sum("amount"))["amount__sum"]
+        )
+
+    @property
+    def calories(self) -> Dict[str, float]:
+        """
+        The amount of calories by nutrient in a gram of the
+        recipe.
+
+        Does not include nutrients that have a parent in either
+        a NutrientType or NutrientComponent relationship.
+        """
+
+        # Nutrients that don't have a type with a parent nutrient or
+        # a parent compound nutrient.
+        subquery = Nutrient.objects.filter(
+            ~Q(types__parent_nutrient__isnull=False),
+            compounds=None,
+            ingredient=OuterRef("ingredient"),
+        )
+
+        queryset = (
+            self.recipeingredient_set.filter(
+                ingredient__nutrients__energy__amount__isnull=False,
+                ingredient__nutrients__in=Subquery(subquery.values("pk")),
+            )
+            .annotate(
+                energy=F("ingredient__nutrients__energy__amount")
+                * F("amount")
+                * F("ingredient__ingredientnutrient__amount"),
+                nutrient=F("ingredient__nutrients__name"),
+            )
+            .values("nutrient")
+            .order_by("nutrient")
+            .annotate(calories=Sum("energy") / self.weight)
+        )
+
+        return {nutrient["nutrient"]: nutrient["calories"] for nutrient in queryset}
 
 
-class MealComponentIngredient(models.Model):
+class RecipeIngredient(models.Model):
     """
     Represents the amount of an ingredient (in grams) in a
-    MealComponent.
+    recipe.
     """
 
-    meal_component = models.ForeignKey(
-        MealComponent, on_delete=models.CASCADE, related_name="ingredients"
-    )
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    amount = models.FloatField()
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey("main.Ingredient", on_delete=models.CASCADE)
+    amount = models.FloatField(validators=[MinValueValidator(0.1)])
 
     def __str__(self):
-        return f"{self.meal_component.name} - {self.ingredient.name}"
-
-    class Meta:
-
-        constraints = [
-            models.UniqueConstraint(
-                "meal_component", "ingredient", name="unique_meal_component_ingredient"
-            )
-        ]
+        return f"{self.recipe.name} - {self.ingredient.name}"
 
 
-class MealComponentAmount(models.Model):
+class MealRecipe(models.Model):
     """
-    Represents the amount (in grams) of a meal component in a meal.
+    Represents the amount (in grams) of a recipe in a meal.
     """
 
-    meal = models.ForeignKey(Meal, on_delete=models.CASCADE, related_name="components")
-    component = models.ForeignKey(MealComponent, on_delete=models.CASCADE)
-    amount = models.FloatField()
-
-    class Meta:
-
-        constraints = [
-            models.UniqueConstraint("meal", "component", name="unique_meal_component")
-        ]
+    meal = models.ForeignKey(Meal, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    amount = models.FloatField(validators=[MinValueValidator(0.1)])

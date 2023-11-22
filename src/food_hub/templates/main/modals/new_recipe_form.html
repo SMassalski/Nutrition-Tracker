@@ -1,0 +1,18 @@
+<form hx-post="{% url "recipe-list" %}?redirect=true" hx-swap="outerHTML">
+    <div class="modal-body">
+        {% for error in errors.non_field_errors %}
+        <div class="alert alert-danger mx-2" role="alert">
+            {{ error }}
+        </div>
+        {% endfor%}
+        <div class="form-group row">
+            <label for="new-recipe-name" class="col col-form-label">Name</label>
+            <div class="col">
+                <input name="name" id="new-recipe-name"  class="form-control" required value="{{name}}">
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary" >Create Recipe</button>
+    </div>
+</form>

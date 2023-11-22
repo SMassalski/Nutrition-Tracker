@@ -1,4 +1,5 @@
 import pytest
+from rest_framework.test import APIClient
 
 
 @pytest.fixture
@@ -13,3 +14,11 @@ def client_with_meal(logged_in_client, meal):
     session.save()
 
     return logged_in_client
+
+
+@pytest.fixture
+def logged_in_api_client(user):
+    """An APIClient authenticated with the user fixture."""
+    client = APIClient()
+    client.force_login(user)
+    return client

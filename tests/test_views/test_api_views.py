@@ -76,18 +76,17 @@ class TestIngredientListView:
         response.render()
 
         result = set(json.loads(response.content)["results"][0].keys())
-        expected = {"id", "name", "url"}
+        expected = {"id", "name", "url", "preview_url"}
         assert result == expected
 
-    @pytest.mark.skip(reason="Test should be fixed in a different branch.")
-    def test_html_format_uses_the_correct_template(self, db, ingredient_1):
-        """
-        IngredientView with html format uses the table row template.
-        """
-        response = views.IngredientView.as_view()(self.request, format="html")
+    def test_html_format_uses_the_correct_template(
+        self, ingredient_1, logged_in_client
+    ):
+        response = logged_in_client.get(self.url)
 
-        response.render()
-        assert response.template_name == "main/data/ingredient_names.html"
+        assert (
+            response.templates[0].name == "main/data/component_search_result_list.html"
+        )
 
 
 class TestIngredientDetailView:

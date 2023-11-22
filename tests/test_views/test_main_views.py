@@ -157,3 +157,24 @@ class TestMealView:
         view(request)
 
         assert request.session.get("meal_id") != meal.id
+
+
+class TestRecipeEditView:
+    def test_endpoint_ok(self, recipe, logged_in_client):
+        url = reverse("recipe-edit", args=(recipe.slug,))
+
+        response = logged_in_client.get(url)
+
+        assert is_success(response.status_code)
+
+    def test_get_context_data_retrieves_recipe_by_slug_and_owner(
+        self, recipe, rf, user
+    ):
+        request = rf.get("", kwargs=(recipe.slug,))
+        request.user = user
+        view = views.RecipeEditView()
+        view.setup(request, slug=recipe.slug)
+
+        data = view.get_context_data()
+
+        assert data["recipe"] == recipe

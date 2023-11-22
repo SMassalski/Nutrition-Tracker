@@ -64,3 +64,23 @@ class MealView(TemplateView):
         ping_meal_interact(self.request)
 
         return response
+
+
+class RecipeEditView(TemplateView):
+    """View for viewing and modifying recipes.
+
+    Selects the recipe based on the slug and the request profile.
+    """
+
+    template_name = "main/recipe_edit.html"
+
+    # docstr-coverage: inherited
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        slug = self.kwargs.get("slug")
+        context["recipe"] = models.Recipe.objects.get(
+            slug=slug, owner=self.request.user.profile
+        )
+
+        return context

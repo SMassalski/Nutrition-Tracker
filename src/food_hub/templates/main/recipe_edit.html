@@ -1,19 +1,16 @@
 {% extends "main/base.html" %}
-{% block title %}Compose Meal{% endblock %}
+{% block title %}Recipe{% endblock %}
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            {# Meal Date Selector Header #}
             <div class="card">
                 <div class="card-body">
-                    <div class="container top-panel" >
-                        <div class="row">
-                            <div class="col">
-                                <div class="d-flex" id="meal-date-header-content" hx-get="{% url 'current-meal' %}" hx-trigger="load">
-                                </div>
-                            </div>
-                        </div>
+                    <div class="container top-panel" id="top-panel-recipe-form"
+                    hx-get="{% url 'recipe-detail' recipe.id %}"
+                    hx-trigger="load">
+
+
                     </div>
                 </div>
             </div>
@@ -37,19 +34,11 @@
                                         <th style="width: 100px"></th> {# Use colspan="2" in regular view #}
                                     </tr>
                                 </thead>
-                                <tbody id="component-list">
+                                <tbody id="ingredient-list" hx-get="{% url 'recipe-ingredient-list' recipe.id %}" hx-trigger="load">
+
                                 </tbody>
                             </table>
                         </div>
-                        {# HTMX lazy load #}
-                        <div hx-get="{% url 'current-meal-ingredients' %}"
-                             hx-trigger="currentMealChanged from:body, load"
-                             hx-target="#component-list"
-                             hx-swap="beforeend"></div>
-                        <div hx-get="{% url 'current-meal-recipes' %}"
-                             hx-trigger="currentMealChanged from:body, load"
-                             hx-target="#component-list"
-                             hx-swap="beforeend"></div>
                     </div>
                 </div>
             </div>
@@ -65,36 +54,30 @@
                     <div class="row">
                         <div class="col-md-12">
                             <div class="input-group">
-                                <input type="search" class="form-control"
-                                placeholder="Search for ingredients"
-                                name="search" id="component-searchbar">
+                                <input type="search" class="form-control" placeholder="Search for ingredients"
+                                name="search"
+                                hx-get="{% url 'ingredient-list' format='html' %}?target=recipe"
+                                hx-trigger="keyup[target.value.length > 2] changed delay:500ms, keydown[key=='Enter']"
+                                hx-target="#ingredient-search-results">
                             </div>
                         </div>
                     </div>
                     {# Search results #}
                     <div class="row-md mt-3">
-                        <div class="col-md-12" style="padding: 0;">
-                            <ul class="nav nav-tabs" role="tablist" id="add-ingredient-tabs"
-                            hx-get="{% url "add-meal-component-tabs" %}?tab=ingredients"
-                            hx-trigger="load">
-
-                            </ul>
-                            <div class="table-responsive bordered" style="height: 300px;">
-
-                                <table class="table table-hover table-head-fixed">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="component-search-results">
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div class="col-md-12 table-responsive bordered" style="height: 300px;">
+                            <table class="table table-hover table-head-fixed">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ingredient-search-results">
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div id="component-preview">
-                    </div>
+                    <form id="component-preview" hx-post="{% url 'recipe-ingredient-list' recipe.id %}" hx-target="#ingredient-list" hx-swap="afterbegin">
+                    </form>
                 </div>
             </div>
         </div>
@@ -104,8 +87,8 @@
             <div class="card card-outline card-secondary">
                 <div class="card-body">
                     <div class="container-fluid mt-3">
-                        <div class="row" hx-get="{% url 'current-meal-intakes' %}"
-                        hx-trigger="currentMealChanged from:body, mealComponentsChanged from:body, load">
+                        <div class="row" hx-get="{% url 'recipe-intakes' recipe.id %}"
+                        hx-trigger="recipeComponentsChanged from:body, load">
                         </div>
                     </div>
                 </div>

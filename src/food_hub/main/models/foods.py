@@ -283,7 +283,7 @@ class Ingredient(models.Model):
     @property
     def calories(self) -> Dict[Nutrient, float]:
         """
-        The amount of calories by nutrient in a gram of the
+        The amount of calories by nutrient name in a gram of the
         ingredient.
 
         Does not include nutrients that have a parent in either
@@ -302,7 +302,7 @@ class Ingredient(models.Model):
         )
 
         return {
-            ing_nut.nutrient: ing_nut.amount * ing_nut.nutrient.energy_per_unit
+            ing_nut.nutrient.name: ing_nut.amount * ing_nut.nutrient.energy_per_unit
             for ing_nut in queryset
         }
 

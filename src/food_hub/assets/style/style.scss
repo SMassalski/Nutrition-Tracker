@@ -138,6 +138,16 @@ tr th.nutrient-label {
         background-color: white;
         color: gray;
     }
+    tr .recipe-actions {
+        i {
+            display: none;
+        }
+    }
+    tr:hover .recipe-actions{
+        i {
+            display: inline-block;
+        }
+    }
 }
 
 .hover-passive {

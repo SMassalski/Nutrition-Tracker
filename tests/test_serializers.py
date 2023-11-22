@@ -5,6 +5,7 @@ import pytest
 from django.db import IntegrityError
 from django.http import HttpRequest
 from main import models, serializers
+from rest_framework.reverse import reverse
 
 
 @pytest.fixture
@@ -29,13 +30,21 @@ class TestMealIngredientSerializer:
         """
         data = {"ingredient": ingredient_1.id, "amount": 3}
         serializer = serializers.MealIngredientSerializer(
-            data=data, context=dict(meal_id=meal.id)
+            data=data, context=dict(meal=meal.id)
         )
         serializer.is_valid()
 
         instance = serializer.save()
 
         assert instance.meal == meal
+
+    def test_raises_error_if_creating_with_missing_context(self, ingredient_1):
+        data = {"ingredient": ingredient_1.id, "amount": 1}
+        serializer = serializers.MealIngredientSerializer(data=data)
+        serializer.is_valid()
+
+        with pytest.raises(serializers.MissingContextError):
+            serializer.save()
 
 
 @pytest.fixture
@@ -633,3 +642,114 @@ class TestCurrentMealSerializer:
 
         with pytest.raises(serializers.MissingContextError):
             serializer.save()
+
+
+class TestRecipeSerializer:
+    def test_creates_recipes_using_request_in_context(self, rf, saved_profile):
+        request = rf.get("")
+        request.user = saved_profile.user
+        data = {"name": "recipe", "final_weight": 1}
+        context = {"request": request}
+        serializer = serializers.RecipeSerializer(data=data, context=context)
+        serializer.is_valid()
+
+        instance = serializer.save()
+
+        assert instance.owner == saved_profile
+
+    def test_validates_unique_together(self, recipe, rf):
+        request = rf.get("")
+        request.user = recipe.owner.user
+        data = {"name": recipe.name, "final_weight": 1}
+        context = {"request": request}
+        serializer = serializers.RecipeSerializer(data=data, context=context)
+
+        assert not serializer.is_valid()
+
+    def test_doesnt_validate_unique_together_if_name_was_not_changed(self, recipe, rf):
+        request = rf.get("")
+        request.user = recipe.owner.user
+        data = {"name": recipe.name, "final_weight": 1}
+        context = {"request": request}
+        serializer = serializers.RecipeSerializer(
+            instance=recipe, data=data, context=context
+        )
+
+        assert serializer.is_valid()
+
+
+class TestRecipeIngredientSerializer:
+    def test_creates_using_recipe_id_in_context(self, ingredient_1, recipe):
+        data = {"ingredient": ingredient_1.id, "amount": 1}
+        context = {"recipe": recipe.id}
+        serializer = serializers.RecipeIngredientSerializer(data=data, context=context)
+        serializer.is_valid()
+
+        instance = serializer.save()
+
+        assert instance.recipe == recipe
+
+    def test_raises_error_if_creating_with_missing_context(self, ingredient_1):
+        data = {"ingredient": ingredient_1.id, "amount": 1}
+        serializer = serializers.RecipeIngredientSerializer(data=data)
+        serializer.is_valid()
+
+        with pytest.raises(serializers.MissingContextError):
+            serializer.save()
+
+
+class TestMealRecipeSerializer:
+    def test_creates_using_meal_id_in_context(self, recipe, meal):
+        data = {"recipe": recipe.id, "amount": 1}
+        context = {"meal": meal.id}
+        serializer = serializers.MealRecipeSerializer(data=data, context=context)
+        serializer.is_valid()
+
+        instance = serializer.save()
+
+        assert instance.meal == meal
+
+    def test_raises_error_if_creating_with_missing_context(self, recipe):
+        data = {"recipe": recipe.id, "amount": 1}
+        serializer = serializers.MealRecipeSerializer(data=data)
+        serializer.is_valid()
+
+        with pytest.raises(serializers.MissingContextError):
+            serializer.save()
+
+
+class TestIngredientSerializer:
+    def test_get_preview_url_context_target_is_recipe(self, ingredient_1, rf):
+        request = rf.get("", data={"target": "recipe"})
+        context = {"request": request}
+        serializer = serializers.IngredientSerializer(ingredient_1, context=context)
+        expected = reverse("recipe-ingredient-preview", args=(ingredient_1.id,))
+
+        assert serializer.data["preview_url"] == expected
+
+    def test_get_preview_url_no_context_target(self, ingredient_1, rf):
+        request = rf.get("")
+        context = {"request": request}
+        serializer = serializers.IngredientSerializer(ingredient_1, context=context)
+        expected = reverse("meal-ingredient-preview", args=(ingredient_1.id,))
+
+        assert serializer.data["preview_url"] == expected
+
+
+class TestRecipePreviewSerializer:
+    def test_calories_field_returns_calorie_percentages_for_nutrients(
+        self,
+        recipe,
+        ingredient_1,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1,
+        nutrient_2,
+        nutrient_1_energy,
+        recipe_ingredient,
+    ):
+        models.NutrientEnergy.objects.create(nutrient=nutrient_2, amount=0.5)
+        expected = {nutrient_1.name: 75, nutrient_2.name: 25}
+
+        serializer = serializers.RecipePreviewSerializer(recipe)
+        assert serializer.data["calories"] == expected

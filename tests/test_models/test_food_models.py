@@ -10,18 +10,6 @@ from main import models
 from main.models.foods import NutrientTypeHierarchyError, update_compound_nutrients
 
 
-@pytest.fixture
-def component(nutrient_1, nutrient_2):
-    """Component relationship between nutrient_1 and nutrient_2
-
-    target: nutrient_2
-    component: nutrient_1
-    """
-    return models.NutrientComponent.objects.create(
-        target=nutrient_2, component=nutrient_1
-    )
-
-
 class TestIngredient:
     """Tests of the Ingredient model."""
 
@@ -45,7 +33,7 @@ class TestIngredient:
     ):
         # ingredient_nutrient_1_1 amount * nutrient_1_energy amount
         expected = 1.5 * 10
-        assert ingredient_1.calories == {nutrient_1: expected}
+        assert ingredient_1.calories == {nutrient_1.name: expected}
 
     def test_ingredient_calories_results_ordered_alphabetically(
         self,
@@ -58,7 +46,7 @@ class TestIngredient:
     ):
         models.NutrientEnergy.objects.create(nutrient=nutrient_2, amount=2)
 
-        assert list(ingredient_1.calories.keys()) == [nutrient_1, nutrient_2]
+        assert list(ingredient_1.calories.keys()) == [nutrient_1.name, nutrient_2.name]
 
     def test_ingredient_calories_only_returns_nutrients_with_energy(
         self,
@@ -71,8 +59,8 @@ class TestIngredient:
     ):
         result = ingredient_1.calories
 
-        assert nutrient_1 in result
-        assert nutrient_2 not in result
+        assert nutrient_1.name in result
+        assert nutrient_2.name not in result
 
     def test_calories_excludes_component_nutrients(
         self,
@@ -86,7 +74,7 @@ class TestIngredient:
 
         result = ingredient_1.calories
 
-        assert nutrient_1 not in result
+        assert nutrient_1.name not in result
 
     def test_calories_excludes_child_type_nutrients(
         self,
@@ -101,7 +89,7 @@ class TestIngredient:
 
         result = ingredient_1.calories
 
-        assert nutrient_1 not in result
+        assert nutrient_1.name not in result
 
 
 class TestNutrient:

@@ -1,7 +1,8 @@
-"""main app's serializers"""
+"""Main app's serializers"""
 from datetime import timedelta
 
 from django.db.models import Manager
+from django.urls import reverse
 from main import models
 from rest_framework import serializers
 
@@ -41,9 +42,20 @@ class IngredientNutrientSerializer(serializers.ModelSerializer):
 class IngredientSerializer(serializers.HyperlinkedModelSerializer):
     """Serializer for ingredient list view."""
 
+    preview_url = serializers.SerializerMethodField()
+
     class Meta:
         model = models.Ingredient
-        fields = ["id", "url", "name"]
+        fields = ["id", "url", "name", "preview_url"]
+
+    def get_preview_url(self, obj: models.Ingredient):
+        """The url to the correct preview view.
+
+        Depends on the value of the `target` query param."""
+        target = self.context["request"].GET.get("target")
+        if target and target.lower() == "recipe":
+            return reverse("recipe-ingredient-preview", args=(obj.id,))
+        return reverse("meal-ingredient-preview", args=(obj.id,))
 
 
 class IngredientDetailSerializer(serializers.ModelSerializer):
@@ -69,7 +81,24 @@ class IngredientPreviewSerializer(serializers.ModelSerializer):
         """The percentage of energy each nutrient provides."""
         calories = obj.calories
         total = sum(calories.values())
-        return {nutrient.name: val * 100 / total for nutrient, val in calories.items()}
+        return {nutrient: val * 100 / total for nutrient, val in calories.items()}
+
+
+class RecipePreviewSerializer(serializers.ModelSerializer):
+    """Serializer for previewing recipes."""
+
+    calories = serializers.SerializerMethodField()
+    slug = serializers.ReadOnlyField()
+
+    class Meta:
+        model = models.Recipe
+        fields = ["id", "name", "calories", "slug"]
+
+    def get_calories(self, obj: models.Ingredient) -> dict:
+        """The percentage of energy each nutrient provides."""
+        calories = obj.calories
+        total = sum(calories.values())
+        return {nutrient: val * 100 / total for nutrient, val in calories.items()}
 
 
 class CurrentMealSerializer(serializers.ModelSerializer):
@@ -115,17 +144,29 @@ class CurrentMealSerializer(serializers.ModelSerializer):
 
 
 class MealIngredientSerializer(serializers.ModelSerializer):
-    """MealIngredient model serializer."""
+    """MealIngredient model serializer.
 
-    ingredient_name = serializers.ReadOnlyField(source="ingredient.name")
+    When creating an entry, the meal_id must be provided in the context
+    under the `meal` key.
+    """
+
+    component_name = serializers.ReadOnlyField(source="ingredient.name")
+    url = serializers.HyperlinkedIdentityField(view_name="meal-ingredient-detail")
 
     class Meta:
         model = models.MealIngredient
-        fields = ("id", "ingredient", "amount", "ingredient_name")
+        fields = ("id", "url", "ingredient", "amount", "component_name")
 
     # docstr-coverage: inherited
     def create(self, validated_data):
-        validated_data["meal_id"] = self.context["meal_id"]
+        meal_id = self.context.get("meal")
+        if not meal_id:
+            raise MissingContextError(
+                "Creating a meal-ingredient using the MealIngredientSerializer "
+                "requires passing the `meal` in the context."
+            )
+
+        validated_data["meal_id"] = meal_id
         return super().create(validated_data)
 
 
@@ -393,6 +434,91 @@ def _update_context_intakes(context: dict) -> None:
     """
     if "intakes" not in context and "meal" in context:
         context["intakes"] = context["meal"].get_intakes()
+
+
+class RecipeSerializer(serializers.ModelSerializer):
+    """Serializer for the `Recipe` model."""
+
+    preview_url = serializers.HyperlinkedIdentityField(view_name="meal-recipe-preview")
+    url = serializers.HyperlinkedIdentityField(view_name="recipe-detail")
+    slug = serializers.ReadOnlyField()
+
+    class Meta:
+        model = models.Recipe
+        fields = ["id", "name", "final_weight", "preview_url", "url", "slug"]
+
+    # docstr-coverage: inherited
+    def validate(self, data):
+        owner = self.context["request"].user.profile.id
+        # Don't check the unique together constraint if the name wasn't changed.
+        if (
+            self.instance
+            and models.Recipe.objects.get(pk=self.instance.id).name == data["name"]
+        ):
+            return data
+        if models.Recipe.objects.filter(owner=owner, name=data["name"]).exists():
+            raise serializers.ValidationError(
+                f"This profile already has a recipe with the name {data['name']}."
+            )
+        return data
+
+    # docstr-coverage: inherited
+    def create(self, validated_data):
+        validated_data["owner_id"] = self.context["request"].user.profile.id
+        return super().create(validated_data)
+
+
+class RecipeIngredientSerializer(serializers.ModelSerializer):
+    """RecipeIngredient model serializer.
+
+    When creating an entry, the recipe_id must be provided in the
+    context under the `recipe` key.
+    """
+
+    component_name = serializers.ReadOnlyField(source="ingredient.name")
+    url = serializers.HyperlinkedIdentityField(view_name="recipe-ingredient-detail")
+
+    class Meta:
+        model = models.RecipeIngredient
+        fields = ("id", "url", "ingredient", "amount", "component_name")
+
+    # docstr-coverage: inherited
+    def create(self, validated_data):
+        recipe_id = self.context.get("recipe")
+        if not recipe_id:
+            raise MissingContextError(
+                "Creating a recipe-ingredient using the RecipeIngredientSerializer "
+                "requires passing the `recipe` in the context."
+            )
+
+        validated_data["recipe_id"] = recipe_id
+        return super().create(validated_data)
+
+
+class MealRecipeSerializer(serializers.ModelSerializer):
+    """MealIngredient model serializer.
+
+    When creating an entry, the meal_id must be provided in the context
+    under the `meal` key.
+    """
+
+    component_name = serializers.ReadOnlyField(source="recipe.name")
+    url = serializers.HyperlinkedIdentityField(view_name="meal-recipe-detail")
+
+    class Meta:
+        model = models.MealRecipe
+        fields = ("id", "recipe", "amount", "component_name", "url")
+
+    # docstr-coverage: inherited
+    def create(self, validated_data):
+        meal_id = self.context.get("meal")
+        if not meal_id:
+            raise MissingContextError(
+                "Creating a meal-recipe using the MealRecipeSerializer requires "
+                "passing the `meal` in the context."
+            )
+        validated_data["meal_id"] = meal_id
+        return super().create(validated_data)
 
 
 class MissingContextError(ValueError):

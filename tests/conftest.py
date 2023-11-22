@@ -81,6 +81,19 @@ def ingredient_nutrient_1_1(db, ingredient_1, nutrient_1) -> models.IngredientNu
 
 
 @pytest.fixture
+def ingredient_nutrient_1_2(ingredient_1, nutrient_2):
+    """
+    IngredientNutrient associating nutrient_2 with ingredient_1.
+
+    amount: 0.1
+    """
+    amount = 0.1
+    return models.IngredientNutrient.objects.create(
+        nutrient=nutrient_2, ingredient=ingredient_1, amount=amount
+    )
+
+
+@pytest.fixture
 def user(db) -> models.User:
     """
     A sample user record and instance.
@@ -245,7 +258,12 @@ def meal_ingredient(meal, ingredient_1):
 
 
 @pytest.fixture
-def nutrient_1_energy(nutrient_1):
+def nutrient_1_energy(nutrient_1) -> models.NutrientEnergy:
+    """A saved NutrientEnergy instance.
+
+    nutrient: nutrient_1
+    amount: 10
+    """
     return models.NutrientEnergy.objects.create(nutrient=nutrient_1, amount=10)
 
 
@@ -384,3 +402,26 @@ def new_user(db) -> models.User:
     )
     profile.save()
     return user
+
+
+@pytest.fixture
+def recipe(saved_profile):
+    """Recipe record and instance.
+
+    name: test_recipe
+    final_weight: 200
+    """
+    instance = models.Recipe(name="test_recipe", final_weight=200, owner=saved_profile)
+    instance.save()
+    return instance
+
+
+@pytest.fixture
+def recipe_ingredient(recipe, ingredient_1):
+    """A RecipeIngredient entry.
+
+    recipe: recipe
+    ingredient: ingredient_1
+    amount: 100
+    """
+    return recipe.recipeingredient_set.create(ingredient=ingredient_1, amount=100)
