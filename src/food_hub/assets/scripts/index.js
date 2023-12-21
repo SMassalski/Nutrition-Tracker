@@ -7,3 +7,5 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 
 Chart.register(annotationPlugin);
 window.Chart = Chart;
+window.htmx = require('htmx.org');
+require('htmx.org/dist/ext/response-targets.js');

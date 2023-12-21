@@ -1,11 +1,14 @@
 """Models related to profile functionality."""
+from datetime import timedelta
 from warnings import warn
 
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.lookups import LessThanOrEqual
+from django.utils import timezone
 
-__all__ = ["Profile", "IntakeRecommendation"]
+__all__ = ["Profile", "IntakeRecommendation", "WeightMeasurement"]
 
 
 # Estimated Energy Requirement equation constants and coefficients
@@ -96,13 +99,60 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.user}'s profile"
 
-    def save(self, *args, **kwargs):
-        """
+    def save(self, add_measurement=False, recalculate_weight=False, *args, **kwargs):
+        """Save the current instance.
+
         Overriden save method that calculates and updates the energy
-        requirement field.
+        requirement field and creates a `WeightMeasurement`
+        entry if the profile is being created.
+
+        Parameters
+        ----------
+        add_measurement: bool
+            If True, create a new WeightMeasurement entry for the
+            profile with the currently set weight.
+            A new measurement is always added if the entry is being
+            created.
+        recalculate_weight: bool
+            If True, set the weight to the weight based on measurements
+            before saving.
+            This happens after a measurement is created
+            if `add_measurement` is True.
+
+
         """
+        adding = self._state.adding
+        if not adding:
+            if add_measurement:
+                self.weight_measurements.create(value=self.weight)
+            if recalculate_weight:
+                self.weight = self.current_weight
+
         self.energy_requirement = self.calculate_energy()
         super().save(*args, **kwargs)
+
+        if adding:
+            self.weight_measurements.create(value=self.weight)
+
+    def update_weight(self):
+        """Update the profile's weight to match the `current_weight."""
+        self.weight = self.current_weight
+        self.save()
+
+    @property
+    def current_weight(self):
+        """The weight of the person based on measurements.
+
+        The returned value is the average of all profile's weight
+        measurements within a week from the last one.
+        """
+        last_measurement_time = self.weight_measurements.aggregate(models.Max("time"))[
+            "time__max"
+        ]
+
+        return self.weight_measurements.filter(
+            time__gte=last_measurement_time - timedelta(days=7)
+        ).aggregate(models.Avg("value"))["value__avg"]
 
     # TODO: There may be a better way to do this
     def calculate_energy(self):
@@ -343,7 +393,7 @@ class IntakeRecommendation(models.Model):
             return None
 
         if self.dri_type == IntakeRecommendation.AIK:
-            # AIK is Adequate Intake per 1000 kcal
+            # AIK is the Adequate Intake per 1000 kcal
             return amount * profile.energy_requirement / 1000
 
         elif self.dri_type in (IntakeRecommendation.AIKG, IntakeRecommendation.RDAKG):
@@ -368,3 +418,22 @@ class IntakeRecommendation(models.Model):
                 return 0.0
 
         return amount
+
+
+class WeightMeasurement(models.Model):
+    """
+    Represents a weight measurement of a person.
+    """
+
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="weight_measurements"
+    )
+    value = models.IntegerField(validators=(MinValueValidator(1),))
+    time = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                "profile", "time", name="unique_%(app_label)s_%(class)s_profile_time"
+            )
+        ]

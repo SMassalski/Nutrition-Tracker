@@ -21,11 +21,30 @@ urlpatterns = [
         login_required(views.RecipeEditView.as_view()),
         name="recipe-edit",
     ),
+    path(
+        "settings/",
+        TemplateView.as_view(template_name="main/settings.html"),
+        name="settings",
+    ),
     path("profile/", views.profile_view, name="profile"),
     path(
         "profile/done",
         login_required(TemplateView.as_view(template_name="main/profile_done.html")),
         name="profile-done",
+    ),
+    path(
+        "settings/profile/",
+        login_required(
+            TemplateView.as_view(template_name="main/profile_settings.html")
+        ),
+        name="profile-settings",
+    ),
+    path(
+        "settings/profile/weight_measurements",
+        login_required(
+            TemplateView.as_view(template_name="main/weight_measurements.html")
+        ),
+        name="profile-weight-measurements",
     ),
     path(
         "settings/account",

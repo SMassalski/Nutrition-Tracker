@@ -25,9 +25,9 @@
 </div>
 <!-- Modals -->
 {% include "main/modals/personal_info.html" with modal_id="personalInfoModal" %}
-{% include "main/modals/tracked_nutrients.html" with modal_id="trackedNutrientsModal" size="large"%}
+{% include "main/modals/tracked_nutrients.html" with modal_id="trackedNutrientsModal" size="large" %}
 {% include "main/modals/modify_diet.html" with modal_id="modifyDietModal" size="large" %}
-
+{% include "main/modals/add_weight_measurement.html" with modal_id="add-weight-measurement" size="large" %}
 <script>
     $(function () {
         $('[data-toggle="popover"]').popover({

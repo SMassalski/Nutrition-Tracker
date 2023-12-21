@@ -1,10 +1,15 @@
 """Tests of main app's API views"""
 import json
+from datetime import datetime
 
 import pytest
+from main.serializers import WeightMeasurementSerializer
 from main.views import api as views
 from rest_framework import status
 from rest_framework.reverse import reverse
+from rest_framework.status import is_success
+
+from .util import create_api_request
 
 # API root
 
@@ -188,3 +193,178 @@ class TestNutrientDetailView:
         result = set(json.loads(response.content).keys())
         expected = {"name", "unit"}
         assert result == expected
+
+
+class TestWeightMeasurementViewSet:
+
+    view_class = views.WeightMeasurementViewSet
+
+    @pytest.mark.parametrize("method", ("get", "post"))
+    def test_endpoint_ok_list(self, method, logged_in_api_client, saved_profile):
+        url = reverse("weight-measurement-list")
+
+        response = getattr(logged_in_api_client, method)(url, data={"value": 80})
+
+        assert is_success(response.status_code)
+
+    @pytest.mark.parametrize("method", ("get", "patch", "put", "delete"))
+    def test_endpoint_ok_detail(self, method, logged_in_api_client, weight_measurement):
+        url = reverse("weight-measurement-detail", args=(weight_measurement.id,))
+
+        response = getattr(logged_in_api_client, method)(
+            url, data={"value": 81, "time": weight_measurement.time}
+        )
+
+        assert is_success(response.status_code)
+
+    @pytest.mark.parametrize(
+        ("method", "action", "template_param", "expected"),
+        (
+            ("get", "list", None, "main/data/weight_measurement_list.html"),
+            ("get", "retrieve", None, "main/data/weight_measurement_list_row.html"),
+            (
+                "get",
+                "retrieve",
+                "form",
+                "main/data/weight_measurement_list_form_row.html",
+            ),
+            ("post", "create", None, "main/data/weight_measurement_add.html"),
+            ("post", "create", "modal", "main/modals/add_weight_measurement.html"),
+            ("put", "update", None, "main/data/weight_measurement_list_row.html"),
+            (
+                "patch",
+                "partial_update",
+                None,
+                "main/data/weight_measurement_list_row.html",
+            ),
+            ("delete", "destroy", None, "main/data/weight_measurement_list_row.html"),
+        ),
+    )
+    def test_get_template_names(
+        self, method, action, template_param, expected, user, saved_profile
+    ):
+        query_params = {"template": template_param} if template_param else None
+        request = create_api_request(method, user, query_params=query_params)
+        view = self.view_class(action=action)
+        view.setup(request)
+
+        assert view.get_template_names() == [expected]
+
+    @pytest.mark.parametrize("method", ("get", "put", "patch"))
+    def test_datetime_in_template_response_detail(
+        self, method, user, weight_measurement
+    ):
+        request = create_api_request(method, user, {"value": 1})
+        method_map = {"put": "update", "patch": "partial_update", "get": "retrieve"}
+        view = self.view_class.as_view(method_map, detail=True)
+
+        response = view(request, pk=weight_measurement.id)
+
+        assert isinstance(response.data["datetime"], datetime)
+
+    def test_datetime_in_template_response_list_action(self, user, weight_measurement):
+        request = create_api_request("get", user)
+
+        view = self.view_class.as_view({"get": "list"}, detail=False)
+
+        response = view(request)
+
+        assert isinstance(response.data["results"][0]["datetime"], datetime)
+
+    # Create
+
+    def test_create_serializer_in_response_data_valid_request(
+        self, user, saved_profile
+    ):
+        request = create_api_request("post", user, {"value": 1})
+
+        response = self.view_class.as_view({"post": "create"}, detail=False)(request)
+
+        serializer = response.data.get("serializer")
+        assert isinstance(serializer, WeightMeasurementSerializer)
+
+    def test_create_serializer_in_response_data_invalid_request(
+        self, user, saved_profile
+    ):
+        request = create_api_request("post", user, {})
+
+        response = self.view_class.as_view({"post": "create"}, detail=False)(request)
+
+        serializer = response.data.get("serializer")
+        assert isinstance(serializer, WeightMeasurementSerializer)
+
+    def test_create_success_in_response_data_valid_request(self, user, saved_profile):
+        request = create_api_request("post", user, {"value": 1})
+
+        response = self.view_class.as_view({"post": "create"}, detail=False)(request)
+
+        success = response.data.get("success")
+        assert success is True
+
+    def test_create_success_in_response_data_invalid_request(self, user, saved_profile):
+        request = create_api_request("post", user, {})
+
+        response = self.view_class.as_view({"post": "create"}, detail=False)(request)
+
+        success = response.data.get("success")
+        assert success is False
+
+    def test_create_invalid_request_inner_html_reswap_in_response_header(
+        self, user, saved_profile
+    ):
+        request = create_api_request("post", user, {})
+
+        response = self.view_class.as_view({"post": "create"}, detail=False)(request)
+
+        assert response.headers["HX-Reswap"] == "innerHTML"
+
+    def test_create_invalid_request_modal_template_outer_html_reswap_in_response_header(
+        self, user, saved_profile
+    ):
+        request = create_api_request(
+            "post", user, {}, query_params={"template": "modal"}
+        )
+
+        response = self.view_class.as_view({"post": "create"}, detail=False)(request)
+
+        assert response.headers["HX-Reswap"] == "outerHTML"
+
+    def test_create_invalid_request_modal_template_reselect_in_response_header(
+        self, user, saved_profile
+    ):
+        request = create_api_request(
+            "post", user, {}, query_params={"template": "modal"}
+        )
+
+        response = self.view_class.as_view({"post": "create"}, detail=False)(request)
+
+        assert response.headers["HX-Reselect"] == "#add-weight-measurement"
+
+    def test_datetime_in_template_response_create_action(
+        self, user, weight_measurement
+    ):
+        request = create_api_request("post", user, {"value": 1})
+        method_map = {"post": "create"}
+        view = self.view_class.as_view(method_map, detail=False)
+
+        response = view(request)
+
+        assert isinstance(response.data["datetime"], datetime)
+
+    def test_create_json_request_success_not_included_in_response_data(
+        self, user, saved_profile
+    ):
+        request = create_api_request("post", user, {"value": 1}, format="json")
+
+        response = self.view_class.as_view({"post": "create"}, detail=False)(request)
+
+        assert "success" not in response.data
+
+    def test_create_json_request_serializer_not_included_in_response_data(
+        self, user, saved_profile
+    ):
+        request = create_api_request("post", user, {"value": 1}, format="json")
+
+        response = self.view_class.as_view({"post": "create"}, detail=False)(request)
+
+        assert "serializer" not in response.data

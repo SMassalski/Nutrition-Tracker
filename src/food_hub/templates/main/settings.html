@@ -1,15 +1,12 @@
 {% extends "main/single_card_base.html" %}
-{% block title %}Account Settings{% endblock %}
+{% block title %}Settings{% endblock %}
 {% block content-header %}
 <div class="container-fluid">
     <div class="row mb-2">
         <div class="col-sm-12">
             <ol class="breadcrumb float-sm-right">
-                <li class="breadcrumb-item">
-                    <a href="{% url "settings" %}">Settings</a>
-                </li>
                 <li class="breadcrumb-item active" aria-current="page">
-                    Account
+                    Settings
                 </li>
             </ol>
         </div>
@@ -20,15 +17,15 @@
 {% with card_size='medium' %}{{ block.super }}{% endwith %}
 {% endblock card-attrs %}
 
-{% block card-title %}Account Setings{% endblock card-title %}
+{% block card-title %}Settings{% endblock card-title %}
 
 {% block card-content %}
 <ul class="list-unstyled url-list mt-2">
     <li>
-        <a href="{% url 'password-change' %}">Change Password</a>
+        <a href="{% url 'account-settings' %}">Account Settings</a>
     </li>
     <li>
-        <a href="{% url 'password-reset' %}">Reset Password</a>
+        <a href="{% url 'profile-settings' %}">Profile Settings</a>
     </li>
 </ul>
 {% endblock card-content %}

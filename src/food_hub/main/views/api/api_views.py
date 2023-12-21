@@ -1,4 +1,6 @@
 """Main app's api views."""
+from datetime import datetime
+
 from main import models, serializers
 from main.models.foods import Ingredient, Nutrient
 from rest_framework.decorators import api_view, renderer_classes
@@ -11,6 +13,8 @@ from rest_framework.renderers import (
 )
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
+from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from rest_framework.viewsets import ModelViewSet
 
 __all__ = (
     "api_root",
@@ -21,6 +25,7 @@ __all__ = (
     "IngredientPreviewView",
     "MealIngredientPreviewView",
     "MealRecipePreviewView",
+    "WeightMeasurementViewSet",
 )
 
 from main.views.session_util import get_current_meal_id
@@ -136,3 +141,103 @@ class MealRecipePreviewView(MealIngredientPreviewView):
     serializer_class = serializers.RecipePreviewSerializer
     target_pattern = "meal-recipe-list"
     component_field = "recipe"
+
+
+class WeightMeasurementViewSet(ModelViewSet):
+    """Add weight measurements to the user's profile."""
+
+    serializer_class = serializers.WeightMeasurementSerializer
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
+
+    template_query_param = "template"
+    list_template = "main/data/weight_measurement_list.html"
+    row_template = "main/data/weight_measurement_list_row.html"
+    row_form_template = "main/data/weight_measurement_list_form_row.html"
+    modal_template = "main/modals/add_weight_measurement.html"
+    add_template = "main/data/weight_measurement_add.html"
+
+    template_name = row_template
+
+    # docstr-coverage: inherited
+    def get_template_names(self):
+        template_type = self.request.GET.get(self.template_query_param)
+        if self.action == "list":
+            return [self.list_template]
+
+        if self.action == "retrieve":
+            if template_type and template_type.lower() == "form":
+                return [self.row_form_template]
+            else:
+                return [self.row_template]
+
+        if self.action == "create":
+            if template_type and template_type.lower() == "modal":
+                return [self.modal_template]
+            return [self.add_template]
+
+        if self.action in ("update", "partial_update"):
+            return [self.row_template]
+
+        return [self.template_name]
+
+    # docstr-coverage: inherited
+    def get_queryset(self):
+        return models.WeightMeasurement.objects.filter(
+            profile=self.request.user.profile
+        ).order_by("-id")
+
+    # docstr-coverage: inherited
+    def create(self, request, *args, **kwargs):
+        if not isinstance(request.accepted_renderer, TemplateHTMLRenderer):
+            return super().create(request, *args, **kwargs)
+
+        serializer = self.get_serializer(data=request.data)
+        headers = {}
+        data = {"success": False, "serializer": serializer}
+        if serializer.is_valid(raise_exception=False):
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            data["success"] = True
+            data["datetime"] = datetime.fromisoformat(serializer.data["time"])
+            status = HTTP_201_CREATED
+
+        else:
+            template_type = self.request.GET.get(self.template_query_param)
+            if template_type and template_type.lower() == "modal":
+                headers["HX-Reselect"] = "#add-weight-measurement"
+                headers["HX-Reswap"] = "outerHTML"
+            else:
+                headers["HX-Reswap"] = "innerHTML"
+
+            status = HTTP_400_BAD_REQUEST
+
+        data.update(serializer.data)
+        return Response(data, status=status, headers=headers)
+
+    # docstr-coverage: inherited
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+
+        if isinstance(request.accepted_renderer, TemplateHTMLRenderer):
+            for entry in response.data["results"]:
+                entry["datetime"] = datetime.fromisoformat(entry["time"])
+
+        return response
+
+    # docstr-coverage: inherited
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+
+        if isinstance(request.accepted_renderer, TemplateHTMLRenderer):
+            response.data["datetime"] = datetime.fromisoformat(response.data["time"])
+
+        return response
+
+    # docstr-coverage: inherited
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+
+        if isinstance(request.accepted_renderer, TemplateHTMLRenderer):
+            response.data["datetime"] = datetime.fromisoformat(response.data["time"])
+
+        return response

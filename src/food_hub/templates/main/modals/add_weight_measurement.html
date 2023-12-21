@@ -1,0 +1,78 @@
+<div class="modal" id="{{ modal_id }}" tabindex="-1" role="dialog"
+     aria-labelledby="{{ modal_id }}" aria-hidden="true">
+    <div class="modal-dialog{% if size == 'large' %} modal-lg
+    {% elif size == 'small' %} modal-sm
+    {% endif %}"
+    role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Weight Measurement</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form id="add-weight-measurement" hx-post="{% url "weight-measurement-list" %}?template=modal"
+            hx-swap="afterbegin" hx-select=".measurement-alert" hx-ext="response-targets"
+            hx-target-400="this" hx-target="#add-measurement-modal-alerts">
+                <div class="modal-body">
+                    <div id="add-measurement-modal-alerts">
+
+                    </div>
+                    {% if id %}
+                    <div class="alert alert-success alert-dismissible fade show measurement-alert" role="alert" id="success-alert-{{ id }}">
+                        Measurement added successfully!
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="form-group row">
+                        <label for="weight-input" class="col col-form-label">Weight (kg)</label>
+                        <div class="col">
+                            <input class="form-control {% if serializer.value.errors %}is-invalid{% endif %}"
+                            name="value" type="number" id="weight-input" min="1" step="1"
+                            {% if serializer.value.value is not None %}value="{{ serializer.value.value }}"{% endif %}
+                            required>
+                            {% if serializer.value.errors %}
+                                {% for error in serializer.value.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            {% if serializer.errors %}
+                            <div class="invalid-feedback">{{ serializer.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-2">
+                            <select name="unit" id="weight-unit-select" class="select custom-select">
+                                <option value="KG" selected>kg</option>
+                                <option value="LBS">lbs</option>
+                            </select>
+                        </div>
+                    </div>
+                    {% if with_time_input %}
+                    <div class="form-group row">
+                        <label for="time-input" class="col col-form-label">Time</label>
+                        <div class="col">
+                            <input class="form-control {% if serializer.time.errors %}is-invalid{% endif %}"
+                            name="time" type="datetime-local" id="time-input"
+                            {% if serializer.time.value is not None %}
+                            value="{{ serializer.time.value }}"
+                            {% endif %}
+                            required>
+                            {% if serializer.time.errors %}
+                                {% for error in serializer.time.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Add Measurement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

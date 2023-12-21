@@ -1,0 +1,73 @@
+{% extends "main/single_card_base.html" %}
+{% block title %}Weight Measurements{% endblock %}
+{% block content-header %}
+<div class="container-fluid">
+    <div class="row mb-2">
+
+        <div class="col-sm-12">
+            <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item">
+                    <a href="{% url "settings" %}">Settings</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url "profile-settings" %}">Profile</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    Weight Measurements
+                </li>
+            </ol>
+        </div>
+    </div>
+</div>
+{% endblock content-header %}
+{% block card-attrs %}
+{% with card_size='large' %}{{ block.super }}{% endwith %}
+{% endblock card-attrs %}
+
+{% block card-title %}Weight Measurements{% endblock card-title%}
+{% block card-content %}
+<div class="row-md">
+    <div class="col-md-12 table-responsive bordered" style="min-height: 180px; max-height: 350px">
+        <table class="table table-hover table-head-fixed weight-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th style="min-width: 100px">Value</th>
+                    <th style="width: 100px"></th> {# Use colspan="2" in regular view #}
+                </tr>
+            </thead>
+            <tbody id="weight-list" hx-get="{% url "weight-measurement-list" %}" hx-trigger="load" hx-ext="response-targets">
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="row-md mt-3">
+    <form id="add-weight-measurement" hx-post="{% url "weight-measurement-list" %}"
+            hx-swap="afterbegin" hx-target="#weight-list"
+            hx-ext="response-targets" hx-target-400="this">
+
+            <div class="form-group row">
+                <label for="weight-input" class="col col-form-label">Weight (kg)</label>
+                <div class="col-4">
+                    <input class="form-control" name="value" type="number" id="weight-input" min="1" step="1" required>
+
+                </div>
+                <div class="col-2">
+                    <select name="unit" id="weight-unit-select" class="select custom-select">
+                        <option value="KG" selected>kg</option>
+                        <option value="LBS">lbs</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="time-input" class="col col-form-label">Time</label>
+                <div class="col">
+                    <input class="form-control" name="time" type="datetime-local" id="time-input" required>
+                </div>
+            </div>
+            <button class="btn btn-primary" style="width: 100%;">
+                Add Weight Measurement
+            </button>
+        </form>
+</div>
+{% endblock card-content %}

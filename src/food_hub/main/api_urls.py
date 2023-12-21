@@ -79,6 +79,9 @@ urlpatterns = [
 ]
 router = SimpleRouter()
 router.register("recipes", views.RecipeViewSet, "recipe")
+router.register(
+    "weight-measurements", views.WeightMeasurementViewSet, "weight-measurement"
+)
 urlpatterns += router.urls
 
 collection_router = ModelCollectionRouter()

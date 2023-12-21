@@ -1,0 +1,10 @@
+{% for obj in results %}
+    {% with datetime=obj.datetime value=obj.value id=obj.id url=obj.url%}
+        {% include "main/data/weight_measurement_list_row.html" %}
+    {% endwith %}
+{% endfor %}
+{% if next %}
+<tr hx-get="{{ next }}" hx-swap="outerHTML" hx-trigger="intersect once">
+    <td colspan="3"></td>
+</tr>
+{% endif %}

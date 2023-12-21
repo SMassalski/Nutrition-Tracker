@@ -1,10 +1,11 @@
 """Main app's serializers"""
 from datetime import timedelta
 
-from django.db.models import Manager
+from django.db.models import Manager, Q
 from django.urls import reverse
 from main import models
 from rest_framework import serializers
+from util import pounds_to_kilograms
 
 
 class NutrientSerializer(serializers.HyperlinkedModelSerializer):
@@ -525,3 +526,72 @@ class MissingContextError(ValueError):
     """
     Raised when a required value is missing from a serializer's context.
     """
+
+
+class WeightMeasurementSerializer(serializers.ModelSerializer):
+    """Serializer for the `WeightMeasurement` model.
+
+    The 'request' needs to be included in the context for validation and
+    entry creation.
+    """
+
+    POUNDS = "LBS"
+    KILOGRAMS = "KG"
+    unit_choices = [(POUNDS, "lbs"), (KILOGRAMS, "kg")]
+
+    # Python 3.8 datetime.fromisoformat() doesn't fully support the
+    # default 'iso-8601' format from DRF (the timezone specifier).
+    # HTML input with type="datetime local" doesn't support microseconds
+    # and requires the 'T' separator.
+    time_format = "%Y-%m-%dT%H:%M:%S"
+    time = serializers.DateTimeField(format=time_format, required=False)
+
+    url = serializers.HyperlinkedIdentityField(view_name="weight-measurement-detail")
+    unit = serializers.ChoiceField(
+        choices=unit_choices, write_only=True, required=False
+    )
+
+    class Meta:
+        model = models.WeightMeasurement
+        fields = ("id", "url", "time", "value", "unit")
+
+    def create(self, validated_data):
+        """Create an instance and DB entry from validated data.
+
+        If the `profile` is not in `validated_data`, the method uses
+        the profile from the request.
+        """
+        if "profile" not in validated_data:
+            validated_data["profile"] = self.context["request"].user.profile
+
+        return models.WeightMeasurement.objects.create(**validated_data)
+
+    # docstr-coverage: inherited
+    def validate_time(self, value):
+
+        profile = self.context["request"].user.profile
+        queryset = models.WeightMeasurement.objects.filter(profile=profile, time=value)
+
+        # On update check only entries other than that of `instance`.
+        if self.instance is not None:
+            queryset = queryset.filter(~Q(id=self.instance.id))
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Weight measurement for the specified time already exists."
+            )
+
+        return value
+
+    # docstr-coverage: inherited
+    def to_internal_value(self, data):
+        ret = super().to_internal_value(data)
+
+        # Unit conversion
+        unit = ret.get("unit")
+        if unit == WeightMeasurementSerializer.POUNDS:
+            ret["value"] = pounds_to_kilograms(ret["value"])
+
+        ret.pop("unit", None)  # To avoid unexpected keyword arg error when saving.
+
+        return ret

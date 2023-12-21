@@ -753,3 +753,92 @@ class TestRecipePreviewSerializer:
 
         serializer = serializers.RecipePreviewSerializer(recipe)
         assert serializer.data["calories"] == expected
+
+
+class TestWeightMeasurementSerializer:
+    def test_create_uses_profile_from_request_in_context(self, rf, user, saved_profile):
+        request = rf.get("")
+        request.user = user
+        serializer = serializers.WeightMeasurementSerializer(
+            data={"value": 80}, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        instance = serializer.save()
+
+        assert instance.profile == saved_profile
+
+    def test_create_save_method_profile_kwarg_overrides_request_profile(
+        self, rf, saved_profile, new_user
+    ):
+        request = rf.get("")
+        request.user = new_user
+        serializer = serializers.WeightMeasurementSerializer(
+            data={"value": 80}, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        instance = serializer.save(profile=saved_profile)
+
+        assert instance.profile == saved_profile
+
+    def test_validate_time_profile_unique_together_create(
+        self, rf, saved_profile, user, weight_measurement
+    ):
+        request = rf.get("")
+        request.user = user
+        serializer = serializers.WeightMeasurementSerializer(
+            data={"value": 80, "time": weight_measurement.time},
+            context={"request": request},
+        )
+
+        assert not serializer.is_valid()
+
+    def test_validate_time_profile_unique_together_checks_entries_other_than_updated(
+        self, rf, saved_profile, user, weight_measurement
+    ):
+        request = rf.get("")
+        request.user = user
+        serializer = serializers.WeightMeasurementSerializer(
+            weight_measurement,
+            data={"value": 90, "time": weight_measurement.time},
+            context={"request": request},
+        )
+
+        assert serializer.is_valid()
+
+        new_instance = models.WeightMeasurement.objects.create(
+            profile=saved_profile, value=80
+        )
+
+        serializer = serializers.WeightMeasurementSerializer(
+            weight_measurement,
+            data={"value": 90, "time": new_instance.time},
+            context={"request": request},
+        )
+
+        assert not serializer.is_valid()
+
+    def test_create_pound_units(self, rf, user, saved_profile):
+        request = rf.get("")
+        request.user = user
+        serializer = serializers.WeightMeasurementSerializer(
+            data={"value": 100, "unit": "LBS"}, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        instance = serializer.save()
+
+        assert instance.value == 45
+
+    def test_create_kilogram_units(self, rf, user, saved_profile):
+        request = rf.get("")
+        request.user = user
+        serializer = serializers.WeightMeasurementSerializer(
+            data={"value": 100, "unit": "KG"}, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        instance = serializer.save()
+
+        assert instance.value == 100

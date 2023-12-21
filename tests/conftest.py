@@ -1,5 +1,5 @@
 """Global test fixtures."""
-from datetime import date
+from datetime import date, datetime
 from typing import List
 
 import pytest
@@ -425,3 +425,16 @@ def recipe_ingredient(recipe, ingredient_1):
     amount: 100
     """
     return recipe.recipeingredient_set.create(ingredient=ingredient_1, amount=100)
+
+
+@pytest.fixture
+def weight_measurement(saved_profile):
+    """A WeightMeasurement entry.
+
+    profile: saved_profile
+    value: 80
+    time: 2022-01-01
+    """
+    return models.WeightMeasurement.objects.create(
+        profile=saved_profile, value=80, time=datetime(year=2022, month=1, day=1)
+    )

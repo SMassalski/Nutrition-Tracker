@@ -1,13 +1,34 @@
 {% extends "main/single_card_base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}Profile{% endblock %}
+{% block title %}Profile Information{% endblock %}
+
+{% block content-header %}
+<div class="container-fluid">
+    <div class="row mb-2">
+
+        <div class="col-sm-12">
+            <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item">
+                    <a href="{% url "settings" %}">Settings</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url "profile-settings" %}">Profile</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    Profile Information
+                </li>
+            </ol>
+        </div>
+    </div>
+</div>
+{% endblock content-header %}
 
 {% block card-attrs %}
 {% with card_size='medium' %}{{ block.super }}{% endwith %}
 {% endblock card-attrs %}
 
-{% block card-title %}Profile{% endblock card-title %}
+{% block card-title %}Profile Information{% endblock card-title %}
 
 {% block card-tools %}
 {% if from_registration %}

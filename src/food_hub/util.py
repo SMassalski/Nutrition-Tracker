@@ -104,3 +104,8 @@ def get_conversion_factor(from_unit: str, to_unit: str, name: str = None) -> flo
         raise ValueError(f"Unit {to_unit} was not recognized.")
 
     return f2g / g2t
+
+
+def pounds_to_kilograms(weight: int) -> int:
+    """Convert the given weight in pounds to kilograms."""
+    return round(weight * 0.454)

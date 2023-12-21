@@ -5,6 +5,7 @@ from crispy_forms import bootstrap, layout
 from crispy_forms.helper import FormHelper
 from django import forms
 from main.models import Profile
+from util import pounds_to_kilograms
 
 
 class ProfileForm(forms.ModelForm):
@@ -114,11 +115,6 @@ class ProfileForm(forms.ModelForm):
         )
 
         return _layout
-
-
-def pounds_to_kilograms(weight: int) -> int:
-    """Convert the given weight in pounds to kilograms."""
-    return round(weight * 0.454)
 
 
 def centimeters_to_feet_and_inches(centimeters: int) -> Tuple[int, int]:
