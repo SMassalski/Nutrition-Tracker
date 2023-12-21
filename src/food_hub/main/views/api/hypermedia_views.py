@@ -6,9 +6,7 @@ from rest_framework.views import APIView
 
 __all__ = ("MealComponentTabView",)
 
-# TODO:  There is a problem with combining hx-trigger "changed" and
-#  "from" modifiers (issue #1571). Update HTMX to >= 1.9.4 for
-#  the bugfix.
+
 class MealComponentTabView(APIView):
     """
     View for rendering object type selection tabs in the component

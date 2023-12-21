@@ -8,11 +8,6 @@
     </a>
 </li>
 {% endfor %}
-{% comment %}
-problem with combining hx-trigger "changed" and "from" modifiers fixed
-in HTMX v1.9.4 (issue #1571)
-
-{% endcomment %}
 <div hx-get={{url}} hx-target="#component-search-results"
 hx-trigger="keyup[target.value.length > 2] delay:500ms from:#component-searchbar, keydown[key=='Enter'] from:#component-searchbar, load"
 hx-include="#component-searchbar">

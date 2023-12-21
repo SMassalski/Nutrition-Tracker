@@ -100,8 +100,6 @@ class RecipeViewSet(ModelViewSet):
             return response
         except ValidationError as e:
             errors = e.detail
-            # TODO: Update HTMX >= 1.9.3.
-            #   HX-Reselect won't work without it
             headers = {
                 "HX-Reselect": "#recipe-update-errors",
                 "HX-Retarget": "#recipe-update-errors",
