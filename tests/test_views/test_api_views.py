@@ -7,7 +7,7 @@ from main.serializers import WeightMeasurementSerializer
 from main.views import api as views
 from rest_framework import status
 from rest_framework.reverse import reverse
-from rest_framework.status import is_success
+from rest_framework.status import HTTP_404_NOT_FOUND, is_success
 
 from .util import create_api_request
 
@@ -368,3 +368,147 @@ class TestWeightMeasurementViewSet:
         response = self.view_class.as_view({"post": "create"}, detail=False)(request)
 
         assert "serializer" not in response.data
+
+
+class TestProfileView:
+
+    view_class = views.ProfileApiView
+
+    @pytest.fixture
+    def data(self):
+        """Default request data."""
+        return {
+            "age": 20,
+            "height": 180,
+            "weight": 100,
+            "sex": "M",
+            "activity_level": "S",
+        }
+
+    @pytest.mark.parametrize("method", ("get", "post"))
+    def test_endpoint_ok(self, logged_in_api_client, method, data):
+        url = reverse("profile")
+
+        response = getattr(logged_in_api_client, method)(url, data=data)
+
+        assert is_success(response.status_code)
+
+    def test_endpoint_ok_patch(self, logged_in_api_client, saved_profile):
+        url = reverse("profile")
+        data = {
+            "age": 20,
+            "height": 180,
+        }
+
+        response = logged_in_api_client.patch(url, data=data)
+
+        assert is_success(response.status_code)
+
+    # GET method
+
+    def test_get_passes_next_query_param_to_data(self, user):
+        request = create_api_request("get", user, query_params={"next": "/"})
+        view = self.view_class.as_view()
+
+        response = view(request)
+
+        assert response.data["next"] == "/"
+
+    def test_get_no_next_query_param(self, user):
+        request = create_api_request("get", user)
+        view = self.view_class.as_view()
+
+        response = view(request)
+
+        assert "next" not in response.data
+
+    def test_get_json_format_404_response_without_profile(self, user):
+        request = create_api_request("get", user, format="json")
+        view = self.view_class.as_view()
+
+        response = view(request)
+
+        assert response.status_code == HTTP_404_NOT_FOUND
+
+    def test_get_no_profile_template_response_ok_and_empty(self, user):
+        request = create_api_request("get", user)
+        view = self.view_class.as_view()
+
+        response = view(request)
+
+        assert is_success(response.status_code)
+        assert response.data == {}
+
+    def test_get_with_profile_retrieves_users_profile(self, user, saved_profile):
+        request = create_api_request("get", user)
+        view = self.view_class.as_view()
+
+        response = view(request)
+
+        assert response.data["id"] == saved_profile.id
+
+    # POST method
+
+    def test_post_with_next_param_redirects_on_success(self, data, user):
+        request = create_api_request("post", user, data, query_params={"next": "/"})
+        view = self.view_class.as_view()
+
+        response = view(request)
+
+        assert response.headers["HX-Redirect"] == "/"
+
+    def test_post_with_next_param_does_not_redirect_on_fail(self, data, user):
+        del data["age"]  # missing data to make the request invalid
+        request = create_api_request("post", user, data, query_params={"next": "/"})
+        view = self.view_class.as_view()
+
+        response = view(request)
+
+        assert "HX-Redirect" not in response.headers
+
+    def test_post_valid_request_has_success_var_in_data(self, user, data):
+        request = create_api_request("post", user, data)
+        view = self.view_class.as_view()
+
+        response = view(request)
+
+        assert response.data["success"] is True
+
+    def test_post_invalid_request_doesnt_have_success_var_in_data(self, user, data):
+        data["age"] = 0.1
+        request = create_api_request("post", user, data)
+        view = self.view_class.as_view()
+
+        response = view(request)
+
+        assert "success" not in response.data
+
+    def test_post_json_format_ok(self, user, data):
+        request = create_api_request("post", user, data, format="json")
+        view = self.view_class.as_view()
+
+        response = view(request)
+        assert is_success(response.status_code)
+
+    # PATCH method
+
+    def test_patch_valid_request_has_success_var_in_data(
+        self, user, data, saved_profile
+    ):
+        request = create_api_request("patch", user, data)
+        view = self.view_class.as_view()
+
+        response = view(request)
+
+        assert response.data["success"] is True
+
+    def test_patch_invalid_request_doesnt_have_success_var_in_data(
+        self, user, data, saved_profile
+    ):
+        data["age"] = -20
+        request = create_api_request("patch", user, data)
+        view = self.view_class.as_view()
+
+        response = view(request)
+
+        assert "success" not in response.data

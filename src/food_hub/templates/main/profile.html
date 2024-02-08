@@ -37,39 +37,10 @@
 {% endblock card-tools %}
 
 {% block card-content %}
-{% if from_registration %}
-<div class="form-descriptor row p-3 m-1 mb-3 bordered">
-    <p class="mb-0">
-        This information helps us personalize intake recommendations.<br/> You can provide this information
-        later or not provide it at all.
-    </p>
-</div>
-{% endif %}
-{% crispy form %}
+<div hx-get="{% url "profile" %}{% if next %}?next={{ next }}{% endif %}" hx-trigger="load"></div>
 {% endblock card-content %}
 {% block tooltip-script %}
     {% with use_tooltips=True %}
         {{ block.super }}
     {% endwith %}
 {% endblock tooltip-script %}
-{% block scripts %}
-<script>
-
-    // Height unit conversion
-    let cm_field = $("#id_height");
-    let ft_field = $("#id_feet");
-    let in_field = $("#id_inches");
-
-
-    cm_field.change(function() {
-        ft_field.val(Math.floor($(this).val() / 30.48));
-        in_field.val(Math.round(($(this).val() / 30.48 - ft_field.val()) * 12));
-    });
-    ft_field.change(function() {
-        cm_field.val(Math.round((parseInt(ft_field.val()) + parseInt(in_field.val()) / 12) * 30.48));
-    });
-    in_field.change(function() {
-        cm_field.val(Math.round((parseInt(ft_field.val()) + parseInt(in_field.val()) / 12) * 30.48));
-    });
-</script>
-{% endblock scripts %}

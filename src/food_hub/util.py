@@ -1,7 +1,7 @@
 """General utility functions."""
 import io
 import os
-from typing import List, Union
+from typing import List, Tuple, Union
 
 
 def weighted_dict_sum(dicts: List[dict], weights: List[float]) -> dict:
@@ -109,3 +109,10 @@ def get_conversion_factor(from_unit: str, to_unit: str, name: str = None) -> flo
 def pounds_to_kilograms(weight: int) -> int:
     """Convert the given weight in pounds to kilograms."""
     return round(weight * 0.454)
+
+
+def centimeters_to_feet_and_inches(centimeters: int) -> Tuple[int, int]:
+    """Convert the given length in feet and inches to centimeters."""
+    feet = int(centimeters // 30.48)
+    inches = round((centimeters / 30.48 - feet) * 12)
+    return feet, inches

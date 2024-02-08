@@ -13,69 +13,21 @@ from .util import add_session, add_session_and_meal
 class TestProfileView:
     """Tests of the profile view."""
 
-    url = reverse("profile")
-    default_data = {
-        "age": 20,
-        "sex": "M",
-        "activity_level": "A",
-        "height": 178,
-        "weight": 75,
-    }
-
-    def test_post_request_creates_a_profile_record(self, user, logged_in_client):
-        """
-        A correct POST request to profile_view creates a new profile
-        record for a logged-in user.
-        """
-        logged_in_client.post(
-            self.url,
-            data=self.default_data,
-        )
-
-        assert hasattr(user, "profile")
-
-    def test_post_request_updates_a_profile_record(
-        self, user, logged_in_client, saved_profile
-    ):
-        """
-        A correct POST request to profile_view updates user's profile
-        record for a logged-in user.
-        """
-        logged_in_client.post(
-            self.url,
-            data=self.default_data,
-        )
-
-        saved_profile.refresh_from_db()
-        assert saved_profile.activity_level == "A"
-
-    def test_get_detects_redirect_from_registration(self, logged_in_client):
-        """
-        Profile view passes to context a boolean indicating the url
-        contained the query param 'from` = `registration'.
-        """
-        url = f"{self.url}?from=registration"
-
+    def test_endpoint_ok(self, logged_in_client):
+        url = reverse("profile")
         response = logged_in_client.get(url)
 
-        assert response.context.get("from_registration") is True
+        assert is_success(response.status_code)
 
-    def test_invalid_post_request(self, logged_in_client, user):
-        """
-        Profile view post request with invalid data does not save the user's
-        profile.
-        """
-        logged_in_client.post(
-            self.url,
-            data={
-                "age": 20,
-                "sex": 4,
-                "activity_level": "A",
-                "height": 178,
-            },
-        )
+    def test_passes_get_param_to_data(self, rf, user):
+        request = rf.get("/?next=/")
+        request.user = user
+        view = views.ProfileView()
+        view.setup(request)
 
-        assert not hasattr(user, "profile")
+        data = view.get_context_data()
+
+        assert data["next"] == "/"
 
 
 class TestMealView:

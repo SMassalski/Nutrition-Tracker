@@ -1,42 +1,29 @@
 """Main app's regular views"""
-from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.generic import TemplateView
 from main import models
-from main.forms import ProfileForm
 
 from .session_util import is_meal_expired, ping_meal_interact
 
 
-@login_required
-def profile_view(request):
+class ProfileView(TemplateView):
     """
     View for setting up a user profile for intake recommendation
     calculations.
+    Passes the 'next' query param value to the response data.
+    The query param field name can be changed by setting the
+    `redirect_url_field` attribute.
     """
-    instance = getattr(request.user, "profile", None)
-    from_registration = request.GET.get("from") == "registration"
-    if request.method == "POST":
-        form = ProfileForm(request.POST, instance=instance)
 
-        if form.is_valid():
-            profile = form.save(commit=False)
-            profile.user = request.user
-            profile.save()
-            return redirect("profile-done")
-    else:
-        form = ProfileForm(instance=instance)
+    redirect_url_field = "next"
+    template_name = "main/profile.html"
 
-    return render(
-        request,
-        "main/profile.html",
-        {
-            "form": form,
-            "from_registration": from_registration,
-        },
-    )
+    # docstr-coverage: inherited
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data["next"] = self.request.GET.get(self.redirect_url_field)
+        return data
 
 
 class MealView(TemplateView):

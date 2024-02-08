@@ -842,3 +842,74 @@ class TestWeightMeasurementSerializer:
         instance = serializer.save()
 
         assert instance.value == 100
+
+
+class TestProfileSerializer:
+    @pytest.fixture
+    def data(self):
+        """Default profile data."""
+        return {
+            "age": 20,
+            "height": 180,
+            "weight": 100,
+            "sex": "M",
+            "activity_level": "S",
+        }
+
+    def test_create_pound_weight_units(self, user, data):
+        data["weight_unit"] = "LBS"
+        serializer = serializers.ProfileSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+        instance = serializer.save(user=user)
+
+        assert instance.weight == 45
+
+    def test_create_kilogram_weight_units(self, user, data):
+        data["weight_unit"] = "KG"
+        serializer = serializers.ProfileSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+        instance = serializer.save(user=user)
+
+        assert instance.weight == 100
+
+    def test_update_pound_weight_units(self, user, saved_profile):
+        data = {"weight": 100, "weight_unit": "LBS"}
+        serializer = serializers.ProfileSerializer(
+            instance=saved_profile, data=data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+
+        instance = serializer.save(user=user)
+
+        assert instance.weight == 45
+
+    def test_update_kilogram_weight_units(self, user, saved_profile):
+        data = {"weight": 100, "weight_unit": "KG"}
+        serializer = serializers.ProfileSerializer(
+            instance=saved_profile, data=data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+
+        instance = serializer.save(user=user)
+
+        assert instance.weight == 100
+
+    def test_update_pound_weight_units_no_weight_in_data(self, user, saved_profile):
+        data = {"weight_unit": "LBS"}
+        serializer = serializers.ProfileSerializer(
+            instance=saved_profile, data=data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+
+        instance = serializer.save(user=user)
+
+        assert instance.weight == 80  # No unit conversion, uses val from fixture.
+
+    @pytest.mark.parametrize("field", ("age", "height", "weight"))
+    def test_positive_integer_field_validation(self, field, data):
+        data[field] = -1
+        serializer = serializers.ProfileSerializer(data=data)
+
+        assert not serializer.is_valid()

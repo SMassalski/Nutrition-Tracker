@@ -76,6 +76,7 @@ urlpatterns = [
         views.MealComponentTabView.as_view(),
         name="add-meal-component-tabs",
     ),
+    path("profile/", views.ProfileApiView.as_view(), name="profile"),
 ]
 router = SimpleRouter()
 router.register("recipes", views.RecipeViewSet, "recipe")

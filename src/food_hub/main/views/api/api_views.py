@@ -1,11 +1,14 @@
 """Main app's api views."""
 from datetime import datetime
 
+from django.http import Http404
 from main import models, serializers
 from main.models.foods import Ingredient, Nutrient
+from main.views.session_util import get_current_meal_id
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.filters import SearchFilter
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.renderers import (
     BrowsableAPIRenderer,
     JSONRenderer,
@@ -26,9 +29,8 @@ __all__ = (
     "MealIngredientPreviewView",
     "MealRecipePreviewView",
     "WeightMeasurementViewSet",
+    "ProfileApiView",
 )
-
-from main.views.session_util import get_current_meal_id
 
 
 # TODO: Remove unused views
@@ -240,4 +242,77 @@ class WeightMeasurementViewSet(ModelViewSet):
         if isinstance(request.accepted_renderer, TemplateHTMLRenderer):
             response.data["datetime"] = datetime.fromisoformat(response.data["time"])
 
+        return response
+
+
+class ProfileApiView(
+    CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericAPIView
+):
+    """
+    View allowing users to perform create, update and retrieve
+    operations on the `Profile` model.
+    """
+
+    serializer_class = serializers.ProfileSerializer
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
+    template_name = "main/data/profile_information_form.html"
+
+    redirect_url_field = "next"
+
+    # docstr-coverage: inherited
+    def get_object(self):
+        return self.request.user.profile
+
+    # docstr-coverage: inherited
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get(self, request, *args, **kwargs):
+        """Retrieve the current user's profile data."""
+        try:
+            response = super().retrieve(request, *args, **kwargs)
+        except models.Profile.DoesNotExist:
+            if not isinstance(request.accepted_renderer, TemplateHTMLRenderer):
+                raise Http404
+            response = Response({})
+
+        redirect_url = request.GET.get(self.redirect_url_field)
+        if redirect_url:
+            response.data["next"] = redirect_url
+        return response
+
+    def post(self, request, *args, **kwargs):
+        """Create the current user's profile.
+
+        Supports redirect after success if the `next` query param is
+        provided.
+        The query param name can be changed by setting the
+        view's `redirect_url_field` attribute.
+        """
+        if not isinstance(request.accepted_renderer, TemplateHTMLRenderer):
+            return super().create(request, *args, **kwargs)
+
+        headers = {}
+        data = {}
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            status = HTTP_201_CREATED
+            data["success"] = True
+
+            redirect_url = request.GET.get(self.redirect_url_field)
+            if redirect_url:
+                headers["HX-Redirect"] = redirect_url
+
+        else:
+            status = HTTP_400_BAD_REQUEST
+
+        data.update(serializer.data)
+        return Response(data, status=status, headers=headers)
+
+    def patch(self, request, *args, **kwargs):
+        """Update the current user's profile."""
+        response = super().partial_update(request, *args, **kwargs)
+        response.data["success"] = True
         return response

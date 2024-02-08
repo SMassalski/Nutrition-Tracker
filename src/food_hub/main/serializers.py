@@ -595,3 +595,44 @@ class WeightMeasurementSerializer(serializers.ModelSerializer):
         ret.pop("unit", None)  # To avoid unexpected keyword arg error when saving.
 
         return ret
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """Serializer for the `Profile` model."""
+
+    POUNDS = "LBS"
+    KILOGRAMS = "KG"
+    unit_choices = [(POUNDS, "lbs"), (KILOGRAMS, "kg")]
+    weight_unit = serializers.ChoiceField(
+        choices=unit_choices, write_only=True, required=False
+    )
+
+    # DRF does not apply min value validators to PositiveIntegerFields.
+    age = serializers.IntegerField(min_value=0)
+    height = serializers.IntegerField(min_value=0)
+    weight = serializers.IntegerField(min_value=0)
+
+    class Meta:
+        model = models.Profile
+        fields = (
+            "id",
+            "age",
+            "height",
+            "weight",
+            "weight_unit",
+            "activity_level",
+            "sex",
+        )
+
+    # docstr-coverage: inherited
+    def to_internal_value(self, data):
+        ret = super().to_internal_value(data)
+
+        # Unit conversion
+        unit = ret.get("weight_unit")
+        if "weight" in ret and unit == WeightMeasurementSerializer.POUNDS:
+            ret["weight"] = pounds_to_kilograms(ret["weight"])
+
+        # To avoid unexpected keyword arg error when saving.
+        ret.pop("weight_unit", None)
+        return ret
