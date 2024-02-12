@@ -87,18 +87,6 @@ tomli = {version = "*", optional = true, markers = "python_full_version <= \"3.1
 toml = ["tomli"]
 
 [[package]]
-name = "crispy-bootstrap4"
-version = "2022.1"
-description = "Bootstrap4 template pack for django-crispy-forms"
-category = "main"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-django = ">=3.2"
-django-crispy-forms = ">=1.14.0"
-
-[[package]]
 name = "distlib"
 version = "0.3.6"
 description = "Distribution utilities"
@@ -123,17 +111,6 @@ tzdata = {version = "*", markers = "sys_platform == \"win32\""}
 [package.extras]
 argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
-
-[[package]]
-name = "django-crispy-forms"
-version = "2.0"
-description = "Best way to have Django DRY forms"
-category = "main"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-django = ">=3.2"
 
 [[package]]
 name = "django-debug-toolbar"
@@ -467,7 +444,7 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.3)", "coverage-enable-subprocess
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "97417046b181c417708311d78d9d04f9d6a0746d113fa1e36d16be71abeafe38"
+content-hash = "60d53ad292e49c96ea354538b263c38cc8abbdc198b420d01d88e88c4c38a77c"
 
 [metadata.files]
 asgiref = [
@@ -580,10 +557,6 @@ coverage = [
     {file = "coverage-7.2.7-pp37.pp38.pp39-none-any.whl", hash = "sha256:b7b4c971f05e6ae490fef852c218b0e79d4e52f79ef0c8475566584a8fb3e01d"},
     {file = "coverage-7.2.7.tar.gz", hash = "sha256:924d94291ca674905fe9481f12294eb11f2d3d3fd1adb20314ba89e94f44ed59"},
 ]
-crispy-bootstrap4 = [
-    {file = "crispy-bootstrap4-2022.1.tar.gz", hash = "sha256:f18386c4d96180c1bb1212487d6e8f5a3dd1a9bb58d3032183973d4d130b55f9"},
-    {file = "crispy_bootstrap4-2022.1-py3-none-any.whl", hash = "sha256:5241ab1dc2188c95560aa786439bcbedec7416e6b0f5a52dded82380810367ec"},
-]
 distlib = [
     {file = "distlib-0.3.6-py2.py3-none-any.whl", hash = "sha256:f35c4b692542ca110de7ef0bea44d73981caeb34ca0b9b6b2e6d7790dda8f80e"},
     {file = "distlib-0.3.6.tar.gz", hash = "sha256:14bad2d9b04d3a36127ac97f30b12a19268f211063d8f8ee4f47108896e11b46"},
@@ -591,10 +564,6 @@ distlib = [
 django = [
     {file = "Django-4.2.2-py3-none-any.whl", hash = "sha256:672b3fa81e1f853bb58be1b51754108ab4ffa12a77c06db86aa8df9ed0c46fe5"},
     {file = "Django-4.2.2.tar.gz", hash = "sha256:2a6b6fbff5b59dd07bef10bcb019bee2ea97a30b2a656d51346596724324badf"},
-]
-django-crispy-forms = [
-    {file = "django-crispy-forms-2.0.tar.gz", hash = "sha256:90193b068bf948d9c68449bc8260afed1a8e2afe11ee0bac8c4ebfaeb175b322"},
-    {file = "django_crispy_forms-2.0-py3-none-any.whl", hash = "sha256:d1d4e585929058a9ab3b797666ea5b69320b9ba7937f9d146d32173246a6fd13"},
 ]
 django-debug-toolbar = [
     {file = "django_debug_toolbar-3.8.1-py3-none-any.whl", hash = "sha256:879f8a4672d41621c06a4d322dcffa630fc4df056cada6e417ed01db0e5e0478"},
