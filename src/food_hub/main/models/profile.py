@@ -5,11 +5,13 @@ from warnings import warn
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import Case, F, OuterRef, Subquery, Sum, When
 from django.db.models.lookups import LessThanOrEqual
 from django.utils import timezone
 
 __all__ = ["Profile", "IntakeRecommendation", "WeightMeasurement"]
 
+from main.models.meals import Recipe
 
 # Estimated Energy Requirement equation constants and coefficients
 # dependent on age and sex. The physical activity coefficient is
@@ -95,6 +97,9 @@ class Profile(models.Model):
     sex = models.CharField(max_length=1, choices=sex_choices)
     energy_requirement = models.PositiveIntegerField()
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    tracked_nutrients = models.ManyToManyField(
+        "main.Nutrient", related_name="tracking_profiles"
+    )
 
     def __str__(self):
         return f"{self.user}'s profile"
@@ -212,6 +217,137 @@ class Profile(models.Model):
         )
 
         return round(result)
+
+    def intakes_by_date(self, nutrient_id, date_min=None, date_max=None):
+        """Get the intakes of a nutrient by date.
+
+        Parameters
+        ----------
+        nutrient_id: int
+            The id of the nutrient.
+        date_min: datetime.date
+            The lower limit (inclusive) for dates that will be included
+            in the results
+        date_max: datetime.date
+            The upper limit (inclusive) for dates that will be included
+            in the results
+
+        Returns
+        -------
+        dict[datetime.date, float]
+        """
+        recipe = self.intakes_from_recipes(nutrient_id, date_min, date_max)
+        ingredient = self.intakes_from_ingredients(nutrient_id, date_min, date_max)
+
+        # sum of values by key
+        return {
+            key: recipe.get(key, 0) + ingredient.get(key, 0)
+            for key in {*recipe.keys(), *ingredient.keys()}
+        }
+
+    def intakes_from_ingredients(self, nutrient_id, date_min=None, date_max=None):
+        """Get the intakes of a nutrient from ingredients, by date.
+
+        Parameters
+        ----------
+        nutrient_id: int
+            The id of the nutrient.
+        date_min: datetime.date
+            The lower limit (inclusive) for dates that will be included
+            in the results
+        date_max: datetime.date
+            The upper limit (inclusive) for dates that will be included
+            in the results
+
+        Returns
+        -------
+        dict[datetime.date, float]
+        """
+        queryset = self.meal_set
+
+        # Date filtering
+        if date_min is not None:
+            queryset = queryset.filter(date__gte=date_min)
+        if date_max is not None:
+            queryset = queryset.filter(date__lte=date_max)
+
+        # Core queryset
+        queryset = (
+            queryset.annotate(
+                nutrient_id=F(
+                    "mealingredient__ingredient__ingredientnutrient__nutrient"
+                )
+            )
+            .filter(nutrient_id=nutrient_id)
+            .alias(
+                amount=F("mealingredient__amount")
+                * F("mealingredient__ingredient__ingredientnutrient__amount")
+            )
+            .annotate(intake=Sum("amount"))
+            .values("date", "intake")
+        )
+
+        return {meal["date"]: meal["intake"] for meal in queryset}
+
+    def intakes_from_recipes(self, nutrient_id, date_min=None, date_max=None):
+        """Get the intakes of a nutrient from recipes, by date.
+
+        Parameters
+        ----------
+        nutrient_id: int
+            The id of the nutrient.
+        date_min: datetime.date
+            The lower limit (inclusive) for dates that will be included
+            in the results
+        date_max: datetime.date
+            The upper limit (inclusive) for dates that will be included
+            in the results
+
+        Returns
+        -------
+        dict[datetime.date, float]
+        """
+        queryset = self.meal_set
+
+        # Date filtering
+        if date_min is not None:
+            queryset = queryset.filter(date__gte=date_min)
+        if date_max is not None:
+            queryset = queryset.filter(date__lte=date_max)
+
+        subquery = Recipe.objects.filter(meal=OuterRef("mealrecipe__meal")).annotate(
+            weight=Case(
+                When(
+                    final_weight__isnull=True,
+                    then=Sum("recipeingredient__amount"),
+                ),
+                When(
+                    final_weight__isnull=False,
+                    then=F("final_weight"),
+                ),
+            )
+        )
+        queryset = (
+            queryset.annotate(
+                nutrient_id=F(
+                    "mealrecipe__recipe__ingredients__ingredientnutrient__nutrient"
+                )
+            )
+            .filter(nutrient_id=nutrient_id)
+            .alias(recipe_weight=Subquery(subquery.values("weight")))
+            .alias(
+                nutrient_amount=F("mealrecipe__amount")
+                * F("mealrecipe__recipe__recipeingredient__amount")
+                * F(
+                    "mealrecipe__recipe__recipeingredient__ingredient__ingredientnutrient__amount"
+                )
+                / F("recipe_weight")
+            )
+            .annotate(amount=Sum("nutrient_amount"))
+            .values("date", "amount")
+        )
+
+        return {meal["date"]: meal["amount"] for meal in queryset}
 
 
 class RecommendationQuerySet(models.QuerySet):

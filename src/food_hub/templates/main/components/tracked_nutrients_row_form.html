@@ -1,0 +1,20 @@
+<tr class="table-form" id="tracked-nutrient-form">
+    <form>
+        <td>
+            {# Nutrient selection #}
+            <select name="nutrient" class="form-control">
+                {% for obj in nutrients %}
+                <option value="{{ obj.id }}">{{ obj.name }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td class="table-actions">
+            <a href="#" hx-post="{% url "tracked-nutrient-list" %}" hx-target="#tracked-nutrient-form" hx-swap="outerHTML" hx-include="#tracked-nutrient-form">
+                <i class="fa-solid fa-check"></i>
+            </a>
+            <a href="#" hx-get="{% url "tracked-nutrient-form" %}?template=add" hx-target="#tracked-nutrient-form" hx-swap="outerHTML">
+                <i class="fa-solid fa-xmark"></i>
+            </a>
+        </td>
+    </form>
+</tr>

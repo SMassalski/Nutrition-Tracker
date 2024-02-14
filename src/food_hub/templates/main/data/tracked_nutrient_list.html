@@ -1,0 +1,9 @@
+
+{% for obj in results %}
+{% include "main/data/tracked_nutrient_list_row.html" with id=obj.id name=obj.name skip_add=True %}
+{% endfor %}
+<tr hx-get="{% url "tracked-nutrient-form" %}" hx-swap="outerHTML">
+    <td colspan="3" class="table-append">
+        <i class="fa-solid fa-circle-plus"></i>
+    </td>
+</tr>

@@ -209,16 +209,6 @@ class TestMeal:
 
         return a, b
 
-    @pytest.fixture
-    def meal_recipe(self, meal, recipe):
-        """A RecipeAmount entry.
-
-        meal: meal
-        recipe: recipe
-        amount: 100
-        """
-        meal.mealrecipe_set.create(amount=100, recipe=recipe)
-
     def test_ingredient_intake_no_ingredients(self, meal):
         """
         Meal.ingredient_intakes() returns an empty dict if the meal doesn't

@@ -77,12 +77,18 @@ urlpatterns = [
         name="add-meal-component-tabs",
     ),
     path("profile/", views.ProfileApiView.as_view(), name="profile"),
+    path(
+        "nutrients/<int:pk>/intakes",
+        views.LastMonthIntakeView.as_view(),
+        name="last-month-intake",
+    ),
 ]
 router = SimpleRouter()
 router.register("recipes", views.RecipeViewSet, "recipe")
 router.register(
     "weight-measurements", views.WeightMeasurementViewSet, "weight-measurement"
 )
+router.register("tracked-nutrients", views.TrackedNutrientViewSet, "tracked-nutrient")
 urlpatterns += router.urls
 
 collection_router = ModelCollectionRouter()

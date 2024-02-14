@@ -98,3 +98,143 @@ const lineChart = function({elementId, data, target, title}) {
         options: options
     });
 }
+
+
+/**
+ * Draw a chart.js line chart in a canvas element
+ * @param {string} elementId - The id of the canvas.
+ * @param {Object} data - Mapping in the format of {<label>: <value>}.
+ */
+const monthIntakeChart = function({elementId, data, target_min, target_max, avg, title}) {
+
+    const ctx = document.getElementById(elementId);
+    const values = Object.values(data);
+    // Max of the array of values and targets + 10
+    const yMax = Math.max(values.reduce((a, b) => Math.max(a, b), -Infinity), target_min || 0, target_max || 0) + 10
+
+    const options = {
+        responsive: true,
+
+        //Scales
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: yMax
+            }
+        },
+
+        // Title
+        plugins: {
+            legend: false,
+            title: {
+                display: !!(title),
+                text: title
+            }
+        }
+
+    }
+
+    // Annotations
+    annotations = {}
+
+    if (target_min !== null ) {
+        annotations.min_target = {
+            type: 'line',
+            yMin: target_min,
+            yMax: target_min,
+            borderColor: annotation_color,
+            borderWidth: 1,
+            label: {
+                content: "Min: " + target_min.toFixed(1),
+                display: true,
+                backgroundColor: 'rgba(0, 0, 0, 0)',
+                color: annotation_color,
+                yAdjust: -10,
+            },
+        }
+    }
+
+    if (target_max !== null ) {
+        annotations.max_target = {
+            type: 'line',
+            yMin: target_max,
+            yMax: target_max,
+            borderColor: annotation_color,
+            borderWidth: 1,
+            label: {
+                content: "Max: " + target_max.toFixed(1),
+                display: true,
+                backgroundColor: 'rgba(0, 0, 0, 0)',
+                color: annotation_color,
+                yAdjust: 700 / yMax, // Empirically determined value
+            },
+        }
+    }
+
+    if (avg !== null ) {
+        annotations.average = {
+            type: 'line',
+            yMin: avg,
+            yMax: avg,
+            borderColor: primary,
+            borderWidth: 1,
+            borderDash: [5, 5],
+            label: {
+                content: "Avg: " + avg.toFixed(1),
+                display: true,
+                backgroundColor: 'rgba(0, 0, 0, 0)',
+                color: primary,
+                position: "start",
+                yAdjust: -10,
+            },
+        }
+    }
+
+    if( Object.keys(annotations).length != 0 ) {
+        options.plugins.annotation = {
+            annotations: annotations
+        }
+    }
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Object.keys(data),
+            datasets: [
+                {
+                    data: values,
+                    backgroundColor: primary
+                }
+            ]
+        },
+        options: options
+    });
+}
+
+
+const fetchLastMonthIntake = function (url, chartId) {
+    $.get(url, function(data) {
+        amount_min = null;
+        amount_max = null;
+        for (let i=0; i < data.recommendations.length; i++) {
+
+            // Recommendation selection
+            if (data.recommendations[i].dri_type == "AMDR") {
+                amount_min = data.recommendations[i].amount_min;
+                amount_max = data.recommendations[i].amount_max;
+                break;
+            }
+            amount_min = data.recommendations[i].amount_min;
+            amount_max = data.recommendations[i].amount_max;
+        };
+
+        monthIntakeChart({
+            elementId: chartId,
+            data: data.intakes,
+            target_min: amount_min,
+            target_max: amount_max,
+            avg: data.avg,
+            title: data.name
+        });
+    });
+}

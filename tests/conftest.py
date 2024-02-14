@@ -241,7 +241,7 @@ def meal(saved_profile) -> models.Meal:
     """A saved Meal instance.
 
     date: 2020-6-15
-    profile: saved_profile (fixture)
+    owner: saved_profile (fixture)
     """
     return models.Meal.objects.create(owner=saved_profile, date=date(2020, 6, 15))
 
@@ -438,3 +438,33 @@ def weight_measurement(saved_profile):
     return models.WeightMeasurement.objects.create(
         profile=saved_profile, value=80, time=datetime(year=2022, month=1, day=1)
     )
+
+
+@pytest.fixture
+def meal_recipe(meal, recipe) -> models.MealRecipe:
+    """A MealRecipe entry.
+
+    meal: meal
+    recipe: recipe
+    amount: 100
+    """
+    return meal.mealrecipe_set.create(amount=100, recipe=recipe)
+
+
+@pytest.fixture
+def meal_2(ingredient_1, saved_profile):
+    """Another Meal instance.
+
+    owner: saved_profile
+    date: 2020-06-01
+
+    MealIngredient:
+    ingredient: ingredient_1
+    amount: 20
+    """
+    instance = models.Meal.objects.create(date=date(2020, 6, 1), owner=saved_profile)
+    models.MealIngredient.objects.create(
+        meal=instance, ingredient=ingredient_1, amount=20
+    )
+
+    return instance

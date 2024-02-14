@@ -1,5 +1,6 @@
 """Main app's serializers"""
 from datetime import timedelta
+from typing import Dict
 
 from django.db.models import Manager, Q
 from django.urls import reverse
@@ -636,3 +637,150 @@ class ProfileSerializer(serializers.ModelSerializer):
         # To avoid unexpected keyword arg error when saving.
         ret.pop("weight_unit", None)
         return ret
+
+
+class SimpleRecommendationSerializer(serializers.ModelSerializer):
+    """
+    A simple serializer for the IntakeRecommendation model.
+
+    Requires a `request` in the context.
+    The request must be authenticated for a user with a profile.
+    """
+
+    amount_min = serializers.SerializerMethodField()
+    amount_max = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.IntakeRecommendation
+        fields = ("id", "dri_type", "amount_min", "amount_max")
+
+    def get_amount_min(self, obj: models.IntakeRecommendation) -> float:
+        """Get the amount min adjusted for the profile."""
+        profile = self.context["request"].user.profile
+        return obj.profile_amount_min(profile)
+
+    def get_amount_max(self, obj: models.IntakeRecommendation) -> float:
+        """Get the amount min adjusted for the profile."""
+        profile = self.context["request"].user.profile
+        return obj.profile_amount_max(profile)
+
+
+class ByDateIntakeSerializer(serializers.ModelSerializer):
+    """Nutrient serializer that displays its intakes by date.
+
+    Includes recommendations for the nutrient.
+    """
+
+    intakes = serializers.SerializerMethodField()
+    recommendations = SimpleRecommendationSerializer(many=True)
+    unit = serializers.CharField(source="pretty_unit")
+    avg = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Nutrient
+        fields = ("id", "name", "unit", "intakes", "recommendations", "avg")
+
+    def get_intakes(self, obj: models.Nutrient) -> Dict[str, float]:
+        """Get the intakes of the nutrient grouped by date.
+
+        Requires a `request` in the context.
+        The request must be authenticated for a user with a profile.
+
+        Context Params
+        --------------
+        date_min: date
+            The lower limit (inclusive) of dates to be included in the
+            results.
+        date_max: date
+            The upper limit (inclusive) of dates to be included in the
+            results.
+        """
+        profile = self.context["request"].user.profile
+        date_min = self.context.get("date_min")
+        date_max = self.context.get("date_max")
+
+        intakes = profile.intakes_by_date(obj.id, date_min, date_max)
+
+        # Don't fill the intakes if the range cannot be determined.
+        if len(intakes) == 0 and (date_min is None or date_max is None):
+            return {}
+
+        # Fill empty dates in the date range.
+        date_min = date_min or min(intakes)
+        date_max = date_max or max(intakes)
+
+        result = {
+            date_min + timedelta(days=i): None
+            for i in range((date_max - date_min).days + 1)
+        }
+        result.update(intakes)
+
+        # Change dates to strings in the format
+        #   <Month locale's abbreviated name> <zero-padded day of the month>.
+        # Round the values to the first decimal place.
+        return {
+            d.strftime("%b %d"): round(result[d], 1) if result[d] is not None else None
+            for d in result
+        }
+
+    def get_avg(self, obj: models.Nutrient) -> float:
+        """Get the average intake of the nutrient.
+
+        Requires a `request` in the context.
+        The request must be authenticated for a user with a profile.
+
+        Context Params
+        --------------
+        date_min: date
+            The lower limit (inclusive) of dates to be included in the
+            calculation.
+        date_max: date
+            The upper limit (inclusive) of dates to be included in the
+            calculation.
+        """
+        profile = self.context["request"].user.profile
+        date_min = self.context.get("date_min")
+        date_max = self.context.get("date_max")
+        intakes = profile.intakes_by_date(obj.id, date_min, date_max)
+
+        return round(sum(intakes.values()) / (len(intakes) or 1), 1)
+
+
+class TrackedNutrientSerializer(serializers.ModelSerializer):
+    """Serializer for the `Profile.tracked_nutrients` through model.
+
+    Uses the request in the context during validation.
+    When saving a profile needs to be provided.
+    """
+
+    name = serializers.CharField(source="nutrient.name", read_only=True)
+    chart_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Profile.tracked_nutrients.through
+        fields = ["id", "nutrient", "name", "chart_id"]
+
+    def get_chart_id(self, obj: models.Profile.tracked_nutrients.through) -> str:
+        """The HTML id to be used for the chart in the template."""
+        return (
+            obj.nutrient.name.lower().replace(" ", "-").replace("_", "-") + "-tracked"
+        )
+
+    # docstr-coverage: inherited
+    def validate_nutrient(self, value):
+
+        profile = self.context["request"].user.profile
+        queryset = models.Profile.tracked_nutrients.through.objects.filter(
+            profile=profile, nutrient=value
+        )
+
+        # On update check only entries other than that of `instance`.
+        if self.instance is not None:
+            queryset = queryset.filter(~Q(id=self.instance.id))
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Nutrient is already tracked by the profile."
+            )
+
+        return value

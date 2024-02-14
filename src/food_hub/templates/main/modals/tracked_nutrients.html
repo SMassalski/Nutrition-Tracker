@@ -5,11 +5,62 @@
 
 {% block body %}
 <div class="container-fluid">
+    {% comment %} <div class="row">
+        <div class="col-md-12">
+            <div class="input-group">
+                <input type="search" class="form-control"
+                placeholder="Search for nutrients"
+                name="search" id="nutrient-searchbar"
+                hx-get="{% url "nutrient-list" %}?not_tracked=true" hx-target="#nutrient-search-results"
+                hx-trigger="keyup[target.value.length > 2] delay:500ms , keydown[key=='Enter']">
+            </div>
+        </div>
+    </div>
+    {# Search results #}
+    <div class="row-md mt-3">
+        <div class="col-md-12" style="padding: 0;">
+
+            <div class="table-responsive bordered" style="height: 300px;">
+
+                <table class="table table-hover table-head-fixed">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nutrient-search-results">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row-md mt-3">
+        <div class="col-md-12" style="padding: 0;">
+
+            <div class="table-responsive bordered" style="height: 300px;">
+
+                <table class="table table-hover table-head-fixed">
+                    <thead>
+                        <tr>
+                            <th>Tracked Nutrients</th>
+                            <th>{# Actions #}</th>
+                        </tr>
+
+                    </thead>
+                    <tbody id="tracked-nutrients-list"
+                    hx-get="{% url "tracked-nutrient-list" %}?template=list"
+                    hx-trigger="load">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div> {% endcomment %}
     <div class="row-md mt-3">
         <!-- Currently tracked nutrients -->
         {# TODO: From diet modifications sections #}
         <div class="col-md-12 table-responsive bordered" style="min-height: 100px;">
-            <table class="table table-hover" style="margin-bottom: 0;" id="weight-training-tracked">
+            {% comment %} <table class="table table-hover" style="margin-bottom: 0;" id="weight-training-tracked">
                 <thead>
                     <tr>
                         <th>From weight training modification</th>
@@ -20,48 +71,17 @@
                         <td>Protein</td>
                     </tr>
                 </tbody>
-            </table>
+            </table> {% endcomment %}
             <table class="table table-hover" style="margin-bottom: 0;">
                 <thead>
                     <tr>
-                        <th colspan="2">Added</th>
+                        <th>Added</th>
+                        <th style="width:100px"></th>
                     </tr>
                 </thead>
-                <tbody id="tracked-nutrients">
-                    <tr>
-                        <td>Iron (Fe)</td>
-                        <td class="table-actions">
-                            <a href="#"><i class="fa-solid fa-trash"></i></a>
-                        </td>
-                    </tr>
-                    <!-- Add tracked nutrient -->
-                    {% comment %}
-                    Form and append switch places. After confirmation append appears
-                    below the form and the form is replaced with the new record.
-                    {% endcomment %}
-                    <tr class="table-form">
-                        <form>
-                            <td>
-                                <select class="form-control">
-                                    {# Nutrient selection #}
-                                    <option>Fiber</option>
-                                    <option>Vitamin A</option>
-                                    <option>Vitamin K</option>
-                                    <option>Iron (Fe)</option>
-                                    <option>Phosphorus (P)</option>
-                                </select>
-                            </td>
-                            <td class="table-actions">
-                                <a href="#"><i class="fa-solid fa-check"></i></a>
-                                <a href="#"><i class="fa-solid fa-xmark"></i></i></a>
-                            </td>
-                        </form>
-                    </tr>
-                    <tr>
-                        <td colspan="3" class="table-append">
-                            <i class="fa-solid fa-circle-plus"></i>
-                        </td>
-                    </tr>
+                <tbody id="tracked-nutrients-list"
+                    hx-get="{% url "tracked-nutrient-list" %}?template=list"
+                    hx-trigger="load">
                 </tbody>
             </table>
         </div>

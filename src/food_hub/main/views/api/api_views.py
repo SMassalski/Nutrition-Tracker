@@ -1,14 +1,23 @@
 """Main app's api views."""
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
+from django.db.models import Prefetch
+from django.db.models.functions import Lower
 from django.http import Http404
 from main import models, serializers
+from main.mixins import HTMXEventMixin
 from main.models.foods import Ingredient, Nutrient
 from main.views.session_util import get_current_meal_id
-from rest_framework.decorators import api_view, renderer_classes
+from rest_framework.decorators import action, api_view, renderer_classes
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin
+from rest_framework.mixins import (
+    CreateModelMixin,
+    DestroyModelMixin,
+    ListModelMixin,
+    RetrieveModelMixin,
+    UpdateModelMixin,
+)
 from rest_framework.renderers import (
     BrowsableAPIRenderer,
     JSONRenderer,
@@ -17,7 +26,7 @@ from rest_framework.renderers import (
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
 __all__ = (
     "api_root",
@@ -30,6 +39,8 @@ __all__ = (
     "MealRecipePreviewView",
     "WeightMeasurementViewSet",
     "ProfileApiView",
+    "LastMonthIntakeView",
+    "TrackedNutrientViewSet",
 )
 
 
@@ -316,3 +327,93 @@ class ProfileApiView(
         response = super().partial_update(request, *args, **kwargs)
         response.data["success"] = True
         return response
+
+
+class LastMonthIntakeView(RetrieveAPIView):
+    """
+    List intakes of a nutrient by date from the last 30 days.
+    """
+
+    serializer_class = serializers.ByDateIntakeSerializer
+    renderer_classes = (BrowsableAPIRenderer, JSONRenderer)
+
+    # docstr-coverage: inherited
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["date_min"] = date.today() - timedelta(days=30)
+        ctx["date_max"] = date.today()
+        return ctx
+
+    # docstr-coverage: inherited
+    def get_queryset(self):
+        return models.Nutrient.objects.prefetch_related(
+            Prefetch(
+                "recommendations",
+                queryset=models.IntakeRecommendation.objects.for_profile(
+                    self.request.user.profile
+                ),
+            )
+        )
+
+
+class TrackedNutrientViewSet(
+    HTMXEventMixin, ListModelMixin, CreateModelMixin, DestroyModelMixin, GenericViewSet
+):
+    """View set for operations on the profile's tracked nutrients."""
+
+    renderer_classes = (TemplateHTMLRenderer, JSONRenderer)
+    serializer_class = serializers.TrackedNutrientSerializer
+    template_name = "main/data/tracked_nutrients_card.html"
+    pagination_class = None
+    htmx_events = ["trackedNutrientsChanged"]
+
+    # docstr-coverage: inherited
+    def get_queryset(self):
+        profile = self.request.user.profile
+        queryset = models.Profile.tracked_nutrients.through.objects.filter(
+            profile=profile
+        ).select_related("nutrient")
+        return queryset
+
+    # docstr-coverage: inherited
+    def perform_create(self, serializer):
+        profile = self.request.user.profile
+        serializer.save(profile=profile)
+
+    # docstr-coverage: inherited
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response.data = {"results": response.data}
+        return response
+
+    # docstr-coverage: inherited
+    def get_template_names(self):
+
+        query_template = self.request.GET.get("template")
+
+        if self.action == "create":
+            return ["main/data/tracked_nutrient_list_row.html"]
+
+        if self.action == "list":
+            if query_template == "list":
+                return ["main/data/tracked_nutrient_list.html"]
+            return [self.template_name]
+
+        if self.action == "form":
+            if query_template == "add":
+                return ["main/data/tracked_nutrient_list.html"]
+            return ["main/components/tracked_nutrients_row_form.html"]
+
+        return [self.template_name]
+
+    @action(detail=False, methods=["get"], renderer_classes=[TemplateHTMLRenderer])
+    def form(self, request, *args, **kwargs):
+        """Display the 'add tracked nutrient' row form."""
+        if self.request.GET.get("template") == "add":
+            # Without `results` the template is just the 'add button' row
+            return Response()
+
+        nutrients = models.Nutrient.objects.exclude(
+            tracking_profiles=self.request.user.profile
+        ).order_by(Lower("name"))
+        return Response({"nutrients": nutrients})

@@ -20,6 +20,18 @@ def ingredient_nutrient_1_1(ingredient_nutrient_1_1) -> models.IngredientNutrien
     return ingredient_nutrient_1_1
 
 
+@pytest.fixture
+def context(rf, user, saved_profile):
+    """Default context for a serializer.
+
+    Includes a request authenticated by a user with a profile
+    (saved_profile fixture).
+    """
+    request = rf.get("")
+    request.user = user
+    return {"request": request}
+
+
 class TestMealIngredientSerializer:
     """Tests of the MealIngredientSerializer class."""
 
@@ -913,3 +925,235 @@ class TestProfileSerializer:
         serializer = serializers.ProfileSerializer(data=data)
 
         assert not serializer.is_valid()
+
+
+class TestSimpleRecommendationSerializer:
+    @pytest.fixture
+    def recommendation(self, recommendation):
+        """An unsaved IntakeRecommendation instance.
+
+        dri_type: "RDAKG"
+        amount_min: 5.0
+        amount_max: 5.0
+        age_min: 0
+        sex: B
+        nutrient: nutrient_1
+        """
+        recommendation.dri_type = models.IntakeRecommendation.RDAKG
+        return recommendation
+
+    def test_get_amount_min(self, context, recommendation):
+        serializer = serializers.SimpleRecommendationSerializer(
+            recommendation, context=context
+        )
+
+        assert serializer.get_amount_min(recommendation) == 400
+
+    def test_get_amount_max(self, context, recommendation):
+        serializer = serializers.SimpleRecommendationSerializer(
+            recommendation, context=context
+        )
+
+        assert serializer.get_amount_max(recommendation) == 400
+
+
+class TestByDateIntakeSerializer:
+    def test_get_intakes_date_min(
+        self,
+        meal,
+        meal_2,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        nutrient_1,
+        context,
+    ):
+        context["date_min"] = datetime.date(2020, 6, 2)
+        serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
+        expected = 3  # from `meal`
+
+        results = serializer.get_intakes(nutrient_1)
+        assert results["Jun 15"] == expected
+
+    def test_get_intakes_date_max(
+        self,
+        meal,
+        meal_2,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        nutrient_1,
+        context,
+    ):
+        context["date_max"] = datetime.date(2020, 6, 2)
+        serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
+        expected = 0.3  # from `meal_2`
+
+        results = serializer.get_intakes(nutrient_1)
+        assert results["Jun 01"] == expected
+
+    def test_get_intakes_empty_intakes_and_no_date_min_empty_results(
+        self, context, nutrient_1
+    ):
+        context["date_max"] = datetime.date(2020, 6, 2)
+        serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
+
+        assert serializer.get_intakes(nutrient_1) == {}
+
+    def test_get_intakes_empty_intakes_and_no_date_max_empty_results(
+        self, context, nutrient_1
+    ):
+        context["date_min"] = datetime.date(2020, 6, 2)
+        serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
+
+        assert serializer.get_intakes(nutrient_1) == {}
+
+    def test_get_intakes_empty_intakes(self, context, nutrient_1):
+        context["date_min"] = datetime.date(2020, 6, 2)
+        context["date_max"] = datetime.date(2020, 6, 10)
+        serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
+        expected = {f"Jun {2+i:02}": None for i in range(9)}
+
+        assert serializer.get_intakes(nutrient_1) == expected
+
+    def test_get_intakes_fills_empty_dates_with_none(
+        self,
+        meal,
+        meal_2,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        nutrient_1,
+        context,
+    ):
+        context["date_min"] = datetime.date(2020, 6, 1)
+        context["date_max"] = datetime.date(2020, 6, 10)
+        serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
+        expected = {f"Jun {2+i:02}": None for i in range(9)}
+
+        results = serializer.get_intakes(nutrient_1)
+
+        del results["Jun 01"]
+        assert results == expected
+
+    def test_get_intakes_values_are_rounded(
+        self,
+        meal,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        nutrient_1,
+        context,
+    ):
+        meal_ingredient.amount = 10
+        meal_ingredient.save()
+        serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
+
+        results = serializer.get_intakes(nutrient_1)
+
+        assert results["Jun 15"] == 0.1  # 0.15 without rounding
+
+    def test_get_intakes_date_string_format(
+        self,
+        meal,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        nutrient_1,
+        context,
+    ):
+        serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
+
+        results = serializer.get_intakes(nutrient_1)
+
+        assert "Jun 15" in results
+
+    def test_get_intakes_results_are_sorted_chronologically(
+        self,
+        meal,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        nutrient_1,
+        context,
+    ):
+        context["date_min"] = datetime.date(2020, 6, 1)
+        serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
+        expected = [f"Jun {1+i:02}" for i in range(15)]
+
+        results = serializer.get_intakes(nutrient_1)
+
+        assert list(results.keys()) == expected
+
+    def test_get_avg_no_intakes_doesnt_cause_division_by_zero(
+        self, nutrient_1, context
+    ):
+        serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
+
+        try:
+            serializer.get_avg(nutrient_1)
+        except ZeroDivisionError:
+            pytest.fail("ByDateIntakeSerializer.get_avg() caused a ZeroDivisionError.")
+
+    def test_get_avg_returns_the_average_intake_of_the_nutrient(
+        self,
+        meal,
+        meal_2,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        nutrient_1,
+        context,
+    ):
+        ingredient_nutrient_1_1.amount = 1
+        ingredient_nutrient_1_1.save()
+        serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
+
+        assert serializer.get_avg(nutrient_1) == 110
+
+    def test_get_avg_result_is_rounded_to_first_decimal_place(
+        self,
+        meal,
+        meal_2,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        nutrient_1,
+        context,
+    ):
+        serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
+
+        assert serializer.get_avg(nutrient_1) == 1.6  # 1.65 without rounding
+
+    def test_get_avg_date_min(
+        self,
+        meal,
+        meal_2,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        nutrient_1,
+        context,
+    ):
+        context["date_min"] = datetime.date(2020, 6, 2)
+        serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
+
+        assert serializer.get_avg(nutrient_1) == 3
+
+    def test_get_avg_date_max(
+        self,
+        meal,
+        meal_2,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        nutrient_1,
+        context,
+    ):
+        context["date_max"] = datetime.date(2020, 6, 2)
+        serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
+
+        assert serializer.get_avg(nutrient_1) == 0.3
+
+
+class TestTrackedNutrientSerializer:
+    def test_get_chart_id(self, saved_profile, nutrient_1):
+        instance = models.Profile.tracked_nutrients.through.objects.create(
+            profile=saved_profile, nutrient=nutrient_1
+        )
+        serializer = serializers.TrackedNutrientSerializer(instance)
+        expected = "test-nutrient-tracked"
+
+        actual = serializer.get_chart_id(instance)
+
+        assert actual == expected

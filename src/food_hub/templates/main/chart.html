@@ -1,0 +1,10 @@
+<div class="chart-container" style="position: relative;">
+    <canvas
+        id="{{ name|slugify }}-chart"
+        style="min-height: 250px; max-width: 100%;">
+    </canvas>
+</div>
+<script>
+   fetchLastMonthIntake("{% url "last-month-intake" pk=id format='json'%}", "{{ name|slugify }}-chart");
+
+</script>

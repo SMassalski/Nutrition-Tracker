@@ -1,8 +1,9 @@
 """Tests of main app's API views"""
 import json
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 import pytest
+from main import models
 from main.serializers import WeightMeasurementSerializer
 from main.views import api as views
 from rest_framework import status
@@ -512,3 +513,158 @@ class TestProfileView:
         response = view(request)
 
         assert "success" not in response.data
+
+
+class TestLastMonthIntakeByView:
+    def test_endpoint_ok(self, logged_in_api_client, nutrient_1, saved_profile):
+        url = reverse("last-month-intake", args=(nutrient_1.id,))
+        response = logged_in_api_client.get(url)
+
+        assert is_success(response.status_code)
+
+    def test_only_retrieves_intakes_from_last_30_days(
+        self,
+        meal,
+        meal_2,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        nutrient_1,
+        user,
+        saved_profile,
+    ):
+        meal.date = date.today() - timedelta(days=15)
+        meal.save()
+        meal_2.date = date.today() - timedelta(days=40)
+        meal_2.save()
+        request = create_api_request("get", user)
+        view = views.LastMonthIntakeView.as_view()
+        date_str = meal.date.strftime("%b %d")
+        expected = {
+            (date.today() - timedelta(days=30 - i)).strftime("%b %d"): None
+            for i in range(31)
+        }
+        expected[date_str] = 300.0
+
+        response = view(request, pk=nutrient_1.id)
+
+        assert response.data["intakes"] == expected
+
+    def test_only_retrieves_recommendations_for_users_profile(
+        self,
+        meal,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        nutrient_1,
+        user,
+        saved_profile,
+        recommendation,
+    ):
+        meal.date = date.today() - timedelta(days=15)
+        meal.save()
+        recommendation.dri_type = recommendation.RDAKG
+        recommendation.save()
+        request = create_api_request("get", user)
+        view = views.LastMonthIntakeView.as_view()
+
+        response = view(request, pk=nutrient_1.id)
+
+        assert response.data["recommendations"][0]["amount_min"] == 400
+        assert response.data["recommendations"][0]["amount_max"] == 400
+
+
+class TestTrackedNutrientViewSet:
+    @pytest.mark.parametrize("method", ("get", "post"))
+    def test_endpoint_ok_list(
+        self, logged_in_api_client, saved_profile, method, nutrient_1
+    ):
+        url = reverse("tracked-nutrient-list")
+        response = getattr(logged_in_api_client, method)(
+            url, data={"nutrient": nutrient_1.id}
+        )
+
+        assert is_success(response.status_code)
+
+    def test_endpoint_ok_get_list_template(
+        self, logged_in_api_client, saved_profile, nutrient_1
+    ):
+        url = reverse("tracked-nutrient-list") + "?template=list"
+        response = logged_in_api_client.get(url)
+
+        assert is_success(response.status_code)
+
+    def test_endpoint_ok_detail(self, logged_in_api_client, saved_profile, nutrient_1):
+        instance = models.Profile.tracked_nutrients.through.objects.create(
+            profile=saved_profile, nutrient=nutrient_1
+        )
+        url = reverse("tracked-nutrient-detail", args=(instance.id,))
+        response = logged_in_api_client.delete(url)
+
+        assert is_success(response.status_code)
+
+    @pytest.mark.parametrize("template", ("add", None))
+    def test_endpoint_ok_form(
+        self, logged_in_api_client, saved_profile, nutrient_1, template
+    ):
+        query_str = f"?template={template}" if template else ""
+        url = reverse("tracked-nutrient-form") + query_str
+        response = logged_in_api_client.get(url)
+
+        assert is_success(response.status_code)
+
+    @pytest.mark.parametrize(
+        ("action", "template_qp", "expected"),  # Template query param
+        (
+            ("list", None, "main/data/tracked_nutrients_card.html"),
+            ("list", "list", "main/data/tracked_nutrient_list.html"),
+            ("create", None, "main/data/tracked_nutrient_list_row.html"),
+            ("form", None, "main/components/tracked_nutrients_row_form.html"),
+            ("form", "add", "main/data/tracked_nutrient_list.html"),
+        ),
+    )
+    def test_get_template(self, action, template_qp, expected):
+        view = views.TrackedNutrientViewSet(action=action)
+
+        query_params = {"template": template_qp} if template_qp else None
+        request = create_api_request("get", query_params=query_params)
+        view.setup(request)
+
+        actual = view.get_template_names()[0]
+
+        assert expected == actual
+
+    def test_list_wraps_data_in_dict(self, user, saved_profile):
+        request = create_api_request("get", user)
+        view = views.TrackedNutrientViewSet.as_view({"get": "list"})
+
+        response = view(request)
+
+        assert list(response.data.keys()) == ["results"]
+
+    def test_create_uses_profile_from_the_request(
+        self, user, saved_profile, nutrient_1
+    ):
+        request = create_api_request("post", user, data={"nutrient": nutrient_1.id})
+        view = views.TrackedNutrientViewSet.as_view({"post": "create"})
+
+        view(request)
+
+        assert nutrient_1 in saved_profile.tracked_nutrients.all()
+
+    def test_create_response_has_event_header(self, user, saved_profile, nutrient_1):
+        request = create_api_request("post", user, data={"nutrient": nutrient_1.id})
+        view = views.TrackedNutrientViewSet.as_view({"post": "create"})
+        expected = "trackedNutrientsChanged"
+
+        actual = view(request).headers["HX-Trigger"]
+
+        assert expected == actual
+
+    def test_delete_response_has_event_header(self, user, saved_profile, nutrient_1):
+        saved_profile.tracked_nutrients.add(nutrient_1)
+        request = create_api_request("delete", user)
+        view = views.TrackedNutrientViewSet.as_view({"delete": "destroy"})
+        expected = "trackedNutrientsChanged"
+
+        actual = view(request, pk=nutrient_1.id).headers["HX-Trigger"]
+
+        assert expected == actual

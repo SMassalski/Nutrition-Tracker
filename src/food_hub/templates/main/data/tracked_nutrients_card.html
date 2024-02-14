@@ -1,0 +1,22 @@
+{% if results %}
+<div class="row" hx-get="{% url "tracked-nutrient-list" %}" hx-swap="outerHTML" hx-trigger="trackedNutrientsChanged from:body">
+    <div class="col">
+        <div class="card card-outline card-primary">
+            <div class="card-header">
+                <h3 class="card-title">Tracked Nutrients</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for obj in results %}
+                    <div class="col-md-6 mt-2">
+                        {% include "main/chart.html" with id=obj.nutrient name=obj.chart_id %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div hx-get="{% url "tracked-nutrient-list" %}" hx-swap="outerHTML" hx-trigger="trackedNutrientsChanged from:body"></div>
+{% endif %}
