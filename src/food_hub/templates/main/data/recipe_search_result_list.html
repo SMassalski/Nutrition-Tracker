@@ -1,9 +1,9 @@
 {% if results %}
 {% for obj in results %}
-<tr hx-get='{{ obj.preview_url }}' hx-target='#component-preview'>
+<tr>
     <td>{{ obj.name }}</td>
     <td class="recipe-actions">
-        <a href={% url "recipe-edit" obj.slug %}>
+        <a href="{% url "recipe-edit" obj.slug %}">
         <i class="fa-solid fa-arrow-right"></i></i>
         </a>
     </td>
