@@ -41,11 +41,6 @@ urlpatterns = [
         name="profile-information",
     ),
     path(
-        "profile/done",
-        login_required(TemplateView.as_view(template_name="main/profile_done.html")),
-        name="profile-done",
-    ),
-    path(
         "settings/profile/",
         login_required(
             TemplateView.as_view(template_name="main/profile_settings.html")
