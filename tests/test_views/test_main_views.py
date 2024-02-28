@@ -130,3 +130,12 @@ class TestRecipeEditView:
         data = view.get_context_data()
 
         assert data["recipe"] == recipe
+
+
+class TestProfileInformationView:
+    def test_endpoint_ok(self, logged_in_client):
+        url = reverse("profile-information")
+
+        response = logged_in_client.get(url)
+
+        assert is_success(response.status_code)
