@@ -42,14 +42,16 @@
                             </table>
                         </div>
                         {# HTMX lazy load #}
-                        <div hx-get="{% url 'current-meal-ingredients' %}"
+                        <div id="meal-ing-lazy-load"
+                             hx-get="{% url 'current-meal-ingredients' %}"
                              hx-trigger="currentMealChanged from:body, load"
                              hx-target="#component-list"
-                             hx-swap="beforeend"></div>
+                             hx-swap="innerHTML"></div>
                         <div hx-get="{% url 'current-meal-recipes' %}"
                              hx-trigger="currentMealChanged from:body, load"
                              hx-target="#component-list"
-                             hx-swap="beforeend"></div>
+                             hx-swap="beforeend"
+                             hx-sync="#meal-ing-lazy-load, queue"></div>
                     </div>
                 </div>
             </div>
