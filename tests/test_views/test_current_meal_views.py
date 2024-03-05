@@ -63,6 +63,16 @@ class TestCurrentMealView:
             owner=user.profile, date=expected_date
         ).exists()
 
+    def test_updates_session_meal_with_the_created_meal(self, user):
+        date_str = "2020-06-21"
+        expected_date = date.fromisoformat(date_str)
+        data = {"date": date_str}
+        request = create_api_request("post", user, data, use_session=True)
+
+        response = self.view.as_view()(request)
+
+        assert request.session["meal_id"] == response.data["obj"].id
+
     # General
 
     @pytest.mark.parametrize("method", ("get", "post"))
@@ -79,43 +89,6 @@ class TestCurrentMealView:
 
         assert is_success(response.status_code)
 
-    @pytest.mark.parametrize("method", ("get", "post"))
-    def test_context_contains_meal_date_date_obj_if_template_renderer_used(
-        self, user, meal, method
-    ):
-        """
-        The CurrentMealView response context contains the current meal
-        date under the key `meal_date` if the `TemplateHTMLRenderer`
-        was used.
-        """
-        date_str = "2020-06-15"  # match meal's date for simplicity
-        expected = date.fromisoformat(date_str)
-        data = {"date": date_str}
-        request = create_api_request(method, user, data, use_session=True)
-        request.session["meal_id"] = meal.id
-
-        response = self.view.as_view()(request)
-
-        assert response.data.get("date_obj") == expected
-
-    @pytest.mark.parametrize("method", ("get", "post"))
-    def test_context_doesnt_contain_meal_date_date_obj_if_template_renderer_wasnt_used(
-        self, user, meal, method
-    ):
-        data = {"date": "2020-06-21"}
-        request = create_api_request(
-            method,
-            user=user,
-            data=data,
-            format="json",
-            use_session=True,
-        )
-        request.session["meal_id"] = meal.id
-
-        response = self.view.as_view()(request)
-
-        assert "date_obj" not in response.data
-
     def test_updates_last_meal_interact(self, user, meal, saved_profile):
         data = {"date": "2020-06-21"}
         request = create_api_request("post", user, data, use_session=True)
@@ -123,6 +96,38 @@ class TestCurrentMealView:
         self.view.as_view()(request)
 
         assert request.session.get("last_meal_interact")
+
+    def test_get_response_data_yesterday_date_string(self, user, meal, saved_profile):
+        request = create_api_request("get", user, use_session=True)
+        request.session["meal_id"] = meal.id
+
+        response = self.view.as_view()(request)
+
+        assert response.data["yesterday"] == "2020-06-14"
+
+    def test_get_response_data_tomorrow_date_string(self, user, meal, saved_profile):
+        request = create_api_request("get", user, use_session=True)
+        request.session["meal_id"] = meal.id
+
+        response = self.view.as_view()(request)
+
+        assert response.data["tomorrow"] == "2020-06-16"
+
+    def test_post_response_data_yesterday_date_string(self, user, saved_profile):
+        data = {"date": "2020-06-21"}
+        request = create_api_request("post", user, data, use_session=True)
+
+        response = self.view.as_view()(request)
+
+        assert response.data["yesterday"] == "2020-06-20"
+
+    def test_post_response_data_tomorrow_date_string(self, user, saved_profile):
+        data = {"date": "2020-06-21"}
+        request = create_api_request("post", user, data, use_session=True)
+
+        response = self.view.as_view()(request)
+
+        assert response.data["tomorrow"] == "2020-06-22"
 
 
 class TestCurrentMealRedirectView:

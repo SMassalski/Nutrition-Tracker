@@ -1,15 +1,15 @@
 """Views for operations related to session 'current meal' functionality.
 """
-from datetime import date
+from datetime import timedelta
 
 from django.shortcuts import get_object_or_404
 from django.views.generic import RedirectView
 from main import models, serializers
-from main.views.mixins import MealInteractionMixin
+from main.views.generics import CreateAPIView
+from main.views.mixins import HTMXEventMixin, MealInteractionMixin, RetrieveModelMixin
 from main.views.session_util import get_current_meal_id
-from rest_framework.generics import CreateAPIView
-from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
+from rest_framework.status import is_success
 
 __all__ = ("CurrentMealRedirectView", "CurrentMealView")
 
@@ -24,7 +24,9 @@ class CurrentMealRedirectView(RedirectView):
         return super().get_redirect_url(*args, **kwargs)
 
 
-class CurrentMealView(MealInteractionMixin, RetrieveModelMixin, CreateAPIView):
+class CurrentMealView(
+    HTMXEventMixin, MealInteractionMixin, RetrieveModelMixin, CreateAPIView
+):
     """View allowing the user to change the current meal.
 
     The current meal selection effects the information displayed and
@@ -34,6 +36,7 @@ class CurrentMealView(MealInteractionMixin, RetrieveModelMixin, CreateAPIView):
     renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
     serializer_class = serializers.CurrentMealSerializer
     template_name = "main/data/current_meal.html"
+    htmx_events = ["currentMealChanged"]
 
     # docstr-coverage: inherited
     def get_serializer_context(self):
@@ -46,25 +49,26 @@ class CurrentMealView(MealInteractionMixin, RetrieveModelMixin, CreateAPIView):
         meal_id = get_current_meal_id(self.request, True)
         return get_object_or_404(models.Meal, pk=meal_id)
 
+    # docstr-coverage: inherited
+    def get_template_context(self, data):
+        ret = {}
+        if "obj" in data:
+            date = data["obj"].date
+            ret["yesterday"] = str(date - timedelta(days=1))
+            ret["tomorrow"] = str(date + timedelta(days=1))
+
+        return ret
+
     def get(self, request, *args, **kwargs):
         """Get the current meal's data."""
-        response = self.retrieve(request, *args, **kwargs)
-
-        if isinstance(request.accepted_renderer, TemplateHTMLRenderer):
-            response.data["date_obj"] = date.fromisoformat(response.data.get("date"))
-
-        return response
+        return self.retrieve(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         """Set the current meal by date."""
         response = super().post(request, *args, **kwargs)
 
-        if isinstance(request.accepted_renderer, TemplateHTMLRenderer):
-            response.data["date_obj"] = date.fromisoformat(response.data.get("date"))
-
         # Session update
-        request.session["meal_id"] = response.data.get("id")
-
-        response.headers["HX-Trigger"] = "currentMealChanged"
+        if is_success(response.status_code):
+            request.session["meal_id"] = response.data["obj"].id
 
         return response
