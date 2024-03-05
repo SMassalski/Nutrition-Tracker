@@ -3,7 +3,7 @@ from django.db.models import Prefetch, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from main import models, permissions, serializers
-from main.mixins import HTMXEventMixin
+from main.views.mixins import HTMXEventMixin
 from rest_framework.generics import ListAPIView
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.status import HTTP_200_OK

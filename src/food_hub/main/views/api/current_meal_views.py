@@ -5,7 +5,7 @@ from datetime import date
 from django.shortcuts import get_object_or_404
 from django.views.generic import RedirectView
 from main import models, serializers
-from main.mixins import MealInteractionMixin
+from main.views.mixins import MealInteractionMixin
 from main.views.session_util import get_current_meal_id
 from rest_framework.generics import CreateAPIView
 from rest_framework.mixins import RetrieveModelMixin

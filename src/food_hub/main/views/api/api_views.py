@@ -5,8 +5,8 @@ from django.db.models import Prefetch
 from django.db.models.functions import Lower
 from django.http import Http404
 from main import models, serializers
-from main.mixins import HTMXEventMixin
 from main.models.foods import Ingredient, Nutrient
+from main.views.mixins import HTMXEventMixin
 from main.views.session_util import get_current_meal_id
 from rest_framework.decorators import action, api_view, renderer_classes
 from rest_framework.filters import SearchFilter

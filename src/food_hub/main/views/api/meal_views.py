@@ -1,7 +1,7 @@
 """API views associated with the `Meal` model."""
 from main import models, serializers
-from main.mixins import MealInteractionMixin
 from main.views.api.base_views import ComponentCollectionViewSet, NutrientIntakeView
+from main.views.mixins import MealInteractionMixin
 
 __all__ = ("MealIngredientViewSet", "MealRecipeViewSet", "MealNutrientIntakeView")
 

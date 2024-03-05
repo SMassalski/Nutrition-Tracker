@@ -1,5 +1,5 @@
 """Tests of main app's mixins."""
-from main import mixins
+from main.views import mixins
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
