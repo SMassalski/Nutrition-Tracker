@@ -1,23 +1,29 @@
 """Main app's api views."""
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from django.db.models import Prefetch
 from django.db.models.functions import Lower
 from django.http import Http404
 from main import models, serializers
 from main.models.foods import Ingredient, Nutrient
-from main.views.mixins import HTMXEventMixin
-from main.views.session_util import get_current_meal_id
-from rest_framework.decorators import action, api_view, renderer_classes
-from rest_framework.filters import SearchFilter
-from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
-from rest_framework.mixins import (
+from main.views.generics import (
+    GenericView,
+    GenericViewSet,
+    ListAPIView,
+    ModelViewSet,
+    RetrieveAPIView,
+)
+from main.views.mixins import (
     CreateModelMixin,
-    DestroyModelMixin,
+    HTMXEventMixin,
     ListModelMixin,
     RetrieveModelMixin,
     UpdateModelMixin,
 )
+from main.views.session_util import get_current_meal_id
+from rest_framework.decorators import action, api_view, renderer_classes
+from rest_framework.filters import SearchFilter
+from rest_framework.mixins import DestroyModelMixin
 from rest_framework.renderers import (
     BrowsableAPIRenderer,
     JSONRenderer,
@@ -25,8 +31,6 @@ from rest_framework.renderers import (
 )
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
-from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
-from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
 __all__ = (
     "api_root",
@@ -71,11 +75,15 @@ class IngredientView(ListAPIView):
     renderer_classes = [TemplateHTMLRenderer, JSONRenderer, BrowsableAPIRenderer]
     template_name = "main/data/component_search_result_list.html"
 
-    def get(self, *args, **kwargs):
-        """List ingredients."""
-        response = super().get(*args, **kwargs)
-        response.data["obj_type"] = "ingredients"
-        return response
+    # docstr-coverage: inherited
+    def get_template_context(self, data):
+        target = self.request.GET.get("target", "").lower()
+        preview_url_name = (
+            "recipe-ingredient-preview"
+            if target == "recipe"
+            else "meal-ingredient-preview"
+        )
+        return {"obj_type": "ingredients", "preview_url_name": preview_url_name}
 
 
 class IngredientDetailView(RetrieveAPIView):
@@ -83,7 +91,7 @@ class IngredientDetailView(RetrieveAPIView):
 
     queryset = Ingredient.objects.all()
     serializer_class = serializers.IngredientDetailSerializer
-    renderer_classes = [BrowsableAPIRenderer, JSONRenderer, TemplateHTMLRenderer]
+    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
 
 
 class NutrientView(ListAPIView):
@@ -111,15 +119,13 @@ class IngredientPreviewView(RetrieveAPIView):
     refresh_event = None
     component_field = "ingredient"
 
-    def get(self, request, *args, **kwargs):
-        """Retrieve ingredient preview data."""
-        response = super().get(request, *args, **kwargs)
+    # docstr-coverage: inherited
+    def get_template_context(self, data):
+        calories = data["obj"].calories
+        total = sum(calories.values())
+        calories = {nutrient: val * 100 / total for nutrient, val in calories.items()}
 
-        if isinstance(request.accepted_renderer, TemplateHTMLRenderer):
-
-            response.data["component_field"] = self.component_field
-
-        return response
+        return {"component_field": self.component_field, "calories": calories}
 
 
 class MealIngredientPreviewView(IngredientPreviewView):
@@ -133,18 +139,17 @@ class MealIngredientPreviewView(IngredientPreviewView):
     refresh_event = "currentMealChanged"
 
     # docstr-coverage: inherited
-    def get(self, request, *args, **kwargs):
-        response = super().get(request, *args, **kwargs)
-        if isinstance(request.accepted_renderer, TemplateHTMLRenderer):
-            meal_id = get_current_meal_id(self.request, True)
-            response.data["target_url"] = (
-                reverse(self.target_pattern, args=(meal_id,))
-                if self.target_pattern
-                else None
-            )
-            response.data["refresh_event"] = self.refresh_event
+    def get_template_context(self, data):
+        ret = super().get_template_context(data)
+        ret["refresh_event"] = self.refresh_event
 
-        return response
+        meal_id = get_current_meal_id(self.request, True)
+        ret["target_url"] = (
+            reverse(self.target_pattern, args=(meal_id,))
+            if self.target_pattern
+            else None
+        )
+        return ret
 
 
 class MealRecipePreviewView(MealIngredientPreviewView):
@@ -162,7 +167,6 @@ class WeightMeasurementViewSet(ModelViewSet):
     serializer_class = serializers.WeightMeasurementSerializer
     renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
 
-    template_query_param = "template"
     list_template = "main/data/weight_measurement_list.html"
     row_template = "main/data/weight_measurement_list_row.html"
     row_form_template = "main/data/weight_measurement_list_form_row.html"
@@ -171,27 +175,14 @@ class WeightMeasurementViewSet(ModelViewSet):
 
     template_name = row_template
 
-    # docstr-coverage: inherited
-    def get_template_names(self):
-        template_type = self.request.GET.get(self.template_query_param)
-        if self.action == "list":
-            return [self.list_template]
-
-        if self.action == "retrieve":
-            if template_type and template_type.lower() == "form":
-                return [self.row_form_template]
-            else:
-                return [self.row_template]
-
-        if self.action == "create":
-            if template_type and template_type.lower() == "modal":
-                return [self.modal_template]
-            return [self.add_template]
-
-        if self.action in ("update", "partial_update"):
-            return [self.row_template]
-
-        return [self.template_name]
+    template_map = {
+        "list": list_template,
+        "retrieve": {"form": row_form_template, "default": row_template},
+        "create": {"modal": modal_template, "default": add_template},
+        "update": row_template,
+        "partial_update": row_template,
+        "destroy": "main/blank.html",
+    }
 
     # docstr-coverage: inherited
     def get_queryset(self):
@@ -200,64 +191,28 @@ class WeightMeasurementViewSet(ModelViewSet):
         ).order_by("-id")
 
     # docstr-coverage: inherited
-    def create(self, request, *args, **kwargs):
-        if not isinstance(request.accepted_renderer, TemplateHTMLRenderer):
-            return super().create(request, *args, **kwargs)
+    def get_fail_headers(self, data):
+        headers = super().get_success_headers(data)
 
-        serializer = self.get_serializer(data=request.data)
-        headers = {}
-        data = {"success": False, "serializer": serializer}
-        if serializer.is_valid(raise_exception=False):
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            data["success"] = True
-            data["datetime"] = datetime.fromisoformat(serializer.data["time"])
-            status = HTTP_201_CREATED
-
-        else:
-            template_type = self.request.GET.get(self.template_query_param)
-            if template_type and template_type.lower() == "modal":
+        if self.action == "create":
+            if self.template == "modal":
                 headers["HX-Reselect"] = "#add-weight-measurement"
                 headers["HX-Reswap"] = "outerHTML"
             else:
                 headers["HX-Reswap"] = "innerHTML"
 
-            status = HTTP_400_BAD_REQUEST
-
-        data.update(serializer.data)
-        return Response(data, status=status, headers=headers)
+        return headers
 
     # docstr-coverage: inherited
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-
-        if isinstance(request.accepted_renderer, TemplateHTMLRenderer):
-            for entry in response.data["results"]:
-                entry["datetime"] = datetime.fromisoformat(entry["time"])
-
-        return response
-
-    # docstr-coverage: inherited
-    def retrieve(self, request, *args, **kwargs):
-        response = super().retrieve(request, *args, **kwargs)
-
-        if isinstance(request.accepted_renderer, TemplateHTMLRenderer):
-            response.data["datetime"] = datetime.fromisoformat(response.data["time"])
-
-        return response
-
-    # docstr-coverage: inherited
-    def update(self, request, *args, **kwargs):
-        response = super().update(request, *args, **kwargs)
-
-        if isinstance(request.accepted_renderer, TemplateHTMLRenderer):
-            response.data["datetime"] = datetime.fromisoformat(response.data["time"])
-
-        return response
+    def get_template_context(self, data):
+        ret = {}
+        if self.action == "create":
+            ret["success"] = data["serializer"].is_valid()
+        return ret
 
 
 class ProfileApiView(
-    CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericAPIView
+    CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericView
 ):
     """
     View allowing users to perform create, update and retrieve
@@ -278,18 +233,39 @@ class ProfileApiView(
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+    # docstr-coverage: inherited
+    def get_template_context(self, data):
+        method = self.request.method.lower()
+        ret_data = {}
+        if method == "get":
+            redirect_url = self.request.GET.get(self.redirect_url_field)
+            if redirect_url:
+                ret_data["next"] = redirect_url
+
+        elif method in ("post", "patch"):
+            ret_data["success"] = data["serializer"].is_valid()
+
+        return ret_data
+
+    # docstr-coverage: inherited
+    def get_success_headers(self, data):
+        ret = super().get_success_headers(data)
+
+        redirect_url = self.request.GET.get(self.redirect_url_field)
+        if self.request.method.lower() == "post" and redirect_url:
+            ret.update({"HX-Redirect": redirect_url})
+
+        return ret
+
     def get(self, request, *args, **kwargs):
         """Retrieve the current user's profile data."""
         try:
             response = super().retrieve(request, *args, **kwargs)
         except models.Profile.DoesNotExist:
-            if not isinstance(request.accepted_renderer, TemplateHTMLRenderer):
+            if not self.uses_template_renderer:
                 raise Http404
-            response = Response({})
+            response = Response(self.get_template_context({}))
 
-        redirect_url = request.GET.get(self.redirect_url_field)
-        if redirect_url:
-            response.data["next"] = redirect_url
         return response
 
     def post(self, request, *args, **kwargs):
@@ -300,33 +276,11 @@ class ProfileApiView(
         The query param name can be changed by setting the
         view's `redirect_url_field` attribute.
         """
-        if not isinstance(request.accepted_renderer, TemplateHTMLRenderer):
-            return super().create(request, *args, **kwargs)
-
-        headers = {}
-        data = {}
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            status = HTTP_201_CREATED
-            data["success"] = True
-
-            redirect_url = request.GET.get(self.redirect_url_field)
-            if redirect_url:
-                headers["HX-Redirect"] = redirect_url
-
-        else:
-            status = HTTP_400_BAD_REQUEST
-
-        data.update(serializer.data)
-        return Response(data, status=status, headers=headers)
+        return self.create(request, *args, **kwargs)
 
     def patch(self, request, *args, **kwargs):
         """Update the current user's profile."""
-        response = super().partial_update(request, *args, **kwargs)
-        response.data["success"] = True
-        return response
+        return self.partial_update(request, *args, **kwargs)
 
 
 class LastMonthIntakeView(RetrieveAPIView):
@@ -367,6 +321,15 @@ class TrackedNutrientViewSet(
     pagination_class = None
     htmx_events = ["trackedNutrientsChanged"]
 
+    template_map = {
+        "create": "main/data/tracked_nutrient_list_row.html",
+        "list": {"list": "main/data/tracked_nutrient_list.html"},
+        "form": {
+            "add": "main/data/tracked_nutrient_list.html",
+            "default": "main/components/tracked_nutrients_row_form.html",
+        },
+    }
+
     # docstr-coverage: inherited
     def get_queryset(self):
         profile = self.request.user.profile
@@ -380,36 +343,10 @@ class TrackedNutrientViewSet(
         profile = self.request.user.profile
         serializer.save(profile=profile)
 
-    # docstr-coverage: inherited
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-        response.data = {"results": response.data}
-        return response
-
-    # docstr-coverage: inherited
-    def get_template_names(self):
-
-        query_template = self.request.GET.get("template")
-
-        if self.action == "create":
-            return ["main/data/tracked_nutrient_list_row.html"]
-
-        if self.action == "list":
-            if query_template == "list":
-                return ["main/data/tracked_nutrient_list.html"]
-            return [self.template_name]
-
-        if self.action == "form":
-            if query_template == "add":
-                return ["main/data/tracked_nutrient_list.html"]
-            return ["main/components/tracked_nutrients_row_form.html"]
-
-        return [self.template_name]
-
     @action(detail=False, methods=["get"], renderer_classes=[TemplateHTMLRenderer])
     def form(self, request, *args, **kwargs):
         """Display the 'add tracked nutrient' row form."""
-        if self.request.GET.get("template") == "add":
+        if self.template == "add":
             # Without `results` the template is just the 'add button' row
             return Response()
 

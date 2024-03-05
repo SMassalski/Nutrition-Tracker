@@ -256,8 +256,15 @@ class TestRecipeViewSet:
 
         assert view.get_template_names()[0] == template
 
-    @pytest.mark.parametrize("method", ("get", "patch", "delete"))
-    def test_get_templates_detail(self, recipe, user, method):
+    @pytest.mark.parametrize(
+        ("method", "expected"),
+        (
+            ("get", "main/data/recipe_detail_form.html"),
+            ("patch", "main/data/recipe_detail_form.html"),
+            ("delete", "main/blank.html"),
+        ),
+    )
+    def test_get_templates_detail(self, recipe, user, method, expected):
         request = create_api_request(method, user)
         view = RecipeViewSet(
             detail=True,
@@ -269,7 +276,7 @@ class TestRecipeViewSet:
         )
         view.setup(request)
 
-        assert view.get_template_names()[0] == "main/data/recipe_detail_form.html"
+        assert view.get_template_names()[0] == expected
 
     # List
 
@@ -283,7 +290,7 @@ class TestRecipeViewSet:
 
         response = view(request)
 
-        ids = [recipe["id"] for recipe in response.data["results"]]
+        ids = [recipe.id for recipe in response.data["results"]]
         assert ids == [new_recipe.id]
 
     def test_list_data_contains_object_type(self, user, saved_profile):
@@ -308,16 +315,6 @@ class TestRecipeViewSet:
 
         assert response.headers["HX-Redirect"] == reverse("recipe-edit", ("name-1",))
 
-    def test_create_invalid_request_contains_error_data(self, user, saved_profile):
-        data = {"name": "name", "final_weight": "a"}
-
-        request = create_api_request("post", user, data)
-        view = RecipeViewSet.as_view(detail=False, actions={"post": "create"})
-
-        response = view(request)
-
-        assert "final_weight" in response.data["errors"]
-
     # Update
 
     def test_update_valid_request_has_the_hx_location_header(self, user, recipe):
@@ -329,16 +326,6 @@ class TestRecipeViewSet:
         response = view(request, pk=recipe.id)
 
         assert response.headers["HX-Location"] == reverse("recipe-edit", ("name-1",))
-
-    def test_update_invalid_request_contains_error_data(self, user, recipe):
-        data = {"name": "name", "final_weight": "a"}
-
-        request = create_api_request("patch", user, data)
-        view = RecipeViewSet.as_view(detail=True, actions={"patch": "partial_update"})
-
-        response = view(request, pk=recipe.id)
-
-        assert "final_weight" in response.data["errors"]
 
     def test_update_invalid_request_has_htmx_retarget_headers(self, user, recipe):
         data = {"name": "name", "final_weight": "a"}

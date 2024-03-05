@@ -76,15 +76,6 @@ class TestIngredientListView:
         expected = {ingredient_1.name, ingredient_2.name}
         assert result == expected
 
-    def test_fields(self, db, ingredient_1):
-        """IngredientView response entry contains the correct fields."""
-        response = views.IngredientView.as_view()(self.request, format="json")
-        response.render()
-
-        result = set(json.loads(response.content)["results"][0].keys())
-        expected = {"id", "name", "url", "preview_url"}
-        assert result == expected
-
     def test_html_format_uses_the_correct_template(
         self, ingredient_1, logged_in_client
     ):
@@ -238,7 +229,7 @@ class TestWeightMeasurementViewSet:
                 None,
                 "main/data/weight_measurement_list_row.html",
             ),
-            ("delete", "destroy", None, "main/data/weight_measurement_list_row.html"),
+            ("delete", "destroy", None, "main/blank.html"),
         ),
     )
     def test_get_template_names(
@@ -250,27 +241,6 @@ class TestWeightMeasurementViewSet:
         view.setup(request)
 
         assert view.get_template_names() == [expected]
-
-    @pytest.mark.parametrize("method", ("get", "put", "patch"))
-    def test_datetime_in_template_response_detail(
-        self, method, user, weight_measurement
-    ):
-        request = create_api_request(method, user, {"value": 1})
-        method_map = {"put": "update", "patch": "partial_update", "get": "retrieve"}
-        view = self.view_class.as_view(method_map, detail=True)
-
-        response = view(request, pk=weight_measurement.id)
-
-        assert isinstance(response.data["datetime"], datetime)
-
-    def test_datetime_in_template_response_list_action(self, user, weight_measurement):
-        request = create_api_request("get", user)
-
-        view = self.view_class.as_view({"get": "list"}, detail=False)
-
-        response = view(request)
-
-        assert isinstance(response.data["results"][0]["datetime"], datetime)
 
     # Create
 
@@ -341,17 +311,6 @@ class TestWeightMeasurementViewSet:
 
         assert response.headers["HX-Reselect"] == "#add-weight-measurement"
 
-    def test_datetime_in_template_response_create_action(
-        self, user, weight_measurement
-    ):
-        request = create_api_request("post", user, {"value": 1})
-        method_map = {"post": "create"}
-        view = self.view_class.as_view(method_map, detail=False)
-
-        response = view(request)
-
-        assert isinstance(response.data["datetime"], datetime)
-
     def test_create_json_request_success_not_included_in_response_data(
         self, user, saved_profile
     ):
@@ -371,7 +330,7 @@ class TestWeightMeasurementViewSet:
         assert "serializer" not in response.data
 
 
-class TestProfileView:
+class TestProfileAPIView:
 
     view_class = views.ProfileApiView
 
@@ -446,7 +405,7 @@ class TestProfileView:
 
         response = view(request)
 
-        assert response.data["id"] == saved_profile.id
+        assert response.data["obj"] == saved_profile
 
     # POST method
 
@@ -475,14 +434,14 @@ class TestProfileView:
 
         assert response.data["success"] is True
 
-    def test_post_invalid_request_doesnt_have_success_var_in_data(self, user, data):
+    def test_post_invalid_request_data_success_false(self, user, data):
         data["age"] = 0.1
         request = create_api_request("post", user, data)
         view = self.view_class.as_view()
 
         response = view(request)
 
-        assert "success" not in response.data
+        assert response.data["success"] is False
 
     def test_post_json_format_ok(self, user, data):
         request = create_api_request("post", user, data, format="json")
@@ -503,16 +462,14 @@ class TestProfileView:
 
         assert response.data["success"] is True
 
-    def test_patch_invalid_request_doesnt_have_success_var_in_data(
-        self, user, data, saved_profile
-    ):
+    def test_patch_invalid_request_data_success_false(self, user, data, saved_profile):
         data["age"] = -20
         request = create_api_request("patch", user, data)
         view = self.view_class.as_view()
 
         response = view(request)
 
-        assert "success" not in response.data
+        assert response.data["success"] is False
 
 
 class TestLastMonthIntakeByView:

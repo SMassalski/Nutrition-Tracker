@@ -1,11 +1,14 @@
-<tr id="weight-list-row-{{ id }}" class="table-form">
-    <td id="data-time-{{ id }}">
-        <input class="form-control" value="{{ time }}" type="datetime-local" name="time" id="time-field" required>
+<tr id="weight-list-row-{{ obj.id }}" class="table-form">
+    <td id="data-time-{{ obj.id }}">
+        <input class="form-control" value="{{ obj.time|date:"Y-m-d\TH:i:s" }}"
+        type="datetime-local" name="time" id="time-field" required>
     </td>
-    <td id="data-weight-{{ id }}">
+    <td id="data-weight-{{ obj.id }}">
         <div class="row">
             <div class="col">
-                <input class="form-control" value="{{ value }}" type="number" min="1" step="1" name="value" id="value-field" placeholder="Value (kg)" required>
+                <input class="form-control" value="{{ obj.value }}"
+                type="number" min="1" step="1" name="value" id="value-field"
+                placeholder="Value (kg)" required>
             </div>
             <div class="col-3">
                 <select name="unit" id="weight-unit-select" class="select custom-select">
@@ -18,21 +21,21 @@
     <td class="table-actions">
         {# actions #}
         <a
-            hx-patch="{{ url }}"
-            hx-include="#weight-list-row-{{ id }}"
+            hx-patch="{% url "weight-measurement-detail" obj.id %}"
+            hx-include="#weight-list-row-{{ obj.id }}"
             hx-swap="outerHTML"
-            hx-target="#weight-list-row-{{ id }}">
+            hx-target="#weight-list-row-{{ obj.id }}">
             <i class="fa-solid fa-check"></i>
         </a>
-        <a hx-get="{{ url }}?template=regular"
+        <a hx-get="{% url "weight-measurement-detail" obj.id %}?template=regular"
             hx-swap="outerHTML"
-            hx-target="#weight-list-row-{{ id }}">
+            hx-target="#weight-list-row-{{ obj.id }}">
             <i class="fa-solid fa-xmark"></i></i>
         </a>
         <a
-            hx-delete="{{ url }}"
-            hx-target="#weight-list-row-{{ id }}"
-            hx-target-204="#weight-list-row-{{ id }}"
+            hx-delete="{% url "weight-measurement-detail" obj.id %}"
+            hx-target="#weight-list-row-{{ obj.id }}"
+            hx-target-204="#weight-list-row-{{ obj.id }}"
             hx-swap="delete">
             <i class="fa-solid fa-trash"></i>
         </a>

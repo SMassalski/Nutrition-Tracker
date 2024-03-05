@@ -28,13 +28,13 @@
                         <div class="col-md-6 mb-2">
                             <div class="d-flex flex-column align-items-end h-100">
                                 <!-- Other details -->
-                                <h5 style="margin-right: auto;">{{ name }}</h5>
+                                <h5 style="margin-right: auto;">{{ obj.name }}</h5>
                                 <div>
                                     {# Badges / tags #}
                                 </div>
                                 <!-- Add component form inputs -->
                                 <div class="d-flex justify-content-end w-100 p-2 mt-auto">
-                                    <input type="hidden" name="{{ component_field }}" value="{{ id }}">
+                                    <input type="hidden" name="{{ component_field }}" value="{{ obj.id }}">
                                     <input class="w-100" type="number" min="0.1" step="0.1" name="amount" id="amount-field" placeholder="Amount (g)" required>
                                 </div>
                             </div>

@@ -1,13 +1,10 @@
 """API views associated with the `Recipe` model."""
 from main import models, serializers
 from main.views.api.base_views import ComponentCollectionViewSet, NutrientIntakeView
-from rest_framework.exceptions import ValidationError
+from main.views.generics import ModelViewSet
 from rest_framework.filters import SearchFilter
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
-from rest_framework.response import Response
 from rest_framework.reverse import reverse
-from rest_framework.status import HTTP_201_CREATED
-from rest_framework.viewsets import ModelViewSet
 
 __all__ = ("RecipeIngredientViewSet", "RecipeViewSet", "RecipeIntakeView")
 
@@ -46,6 +43,15 @@ class RecipeViewSet(ModelViewSet):
     filter_backends = [SearchFilter]
     search_fields = ["name"]
 
+    template_map = {
+        "create": modal_form_template,
+        "retrieve": recipe_edit_form_template,
+        "update": recipe_edit_form_template,
+        "partial_update": recipe_edit_form_template,
+        "destroy": "main/blank.html",
+        "default": component_list_template_name,
+    }
+
     # docstr-coverage: inherited
     def get_queryset(self):
         owner = self.request.user.profile
@@ -53,62 +59,23 @@ class RecipeViewSet(ModelViewSet):
 
     # docstr-coverage: inherited
     def get_template_names(self):
-        if self.detail:
-            return [self.recipe_edit_form_template]
-        elif self.action == "create":
-            return [self.modal_form_template]
-        elif self.action == "list" and self.request.GET.get("target") == "edit":
+        if self.action == "list" and self.request.GET.get("target") == "edit":
             return [self.list_template_name]
-        return [self.component_list_template_name]
+        return super().get_template_names()
 
     # docstr-coverage: inherited
-    def list(self, *args, **kwargs):
-        response = super().list(*args, **kwargs)
-        response.data["obj_type"] = "recipes"
-        return response
+    def get_template_context(self, data):
+        return {"obj_type": "recipes", "preview_url_name": "meal-recipe-preview"}
 
     # docstr-coverage: inherited
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-        except ValidationError as e:
-            data = {
-                "name": request.data.get("name"),
-                "final_weight": request.data.get("final_weight"),
-                "errors": e.detail,
-            }
-            # TODO: Currently uses 200 status code because core HTMX wont
-            #  swap with a different code. The 'response-target` HTMX plugin
-            #  can be a solution
-            return Response(data, template_name=self.modal_form_template)
-        instance = serializer.save()
-        headers = self.get_success_headers(serializer.data)
-        redirect = self.request.GET.get("redirect")
-        if redirect and redirect.lower() == "true":
-            headers["HX-Redirect"] = reverse("recipe-edit", args=(instance.slug,))
+    def get_success_headers(self, data):
+        redirect = self.request.GET.get("redirect", "").lower() == "true"
+        headers = super().get_success_headers(data)
+        if self.action == "create" and redirect:
+            headers["HX-Redirect"] = reverse("recipe-edit", args=(data["obj"].slug,))
+        elif self.action in ("update", "partial_update"):
+            headers["HX-Location"] = reverse("recipe-edit", args=(data["obj"].slug,))
+        elif self.action == "destroy":
+            headers["HX-Redirect"] = reverse("recipe")
 
-        return Response(serializer.data, status=HTTP_201_CREATED, headers=headers)
-
-    # docstr-coverage: inherited
-    def update(self, request, *args, **kwargs):
-        try:
-            response = super().update(request, *args, **kwargs)
-            response.headers["HX-Location"] = reverse(
-                "recipe-edit", args=(response.data["slug"],)
-            )
-            return response
-        except ValidationError as e:
-            errors = e.detail
-            headers = {
-                "HX-Reselect": "#recipe-update-errors",
-                "HX-Retarget": "#recipe-update-errors",
-                "HX-Reswap": "outerHTML",
-            }
-            return Response({"errors": errors}, headers=headers)
-
-    # docstr-coverage: inherited
-    def destroy(self, request, *args, **kwargs):
-        response = super().destroy(request, *args, **kwargs)
-        response.headers["HX-Redirect"] = reverse("recipe")
-        return response
+        return headers

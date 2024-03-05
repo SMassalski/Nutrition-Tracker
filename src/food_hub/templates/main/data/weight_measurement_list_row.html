@@ -1,4 +1,4 @@
-<tr hx-swap="outerHTML" hx-get="{{ url }}?template=form">
-    <td>{{ datetime|date:"H:i, d F Y" }}</td>
-    <td colspan="2">{{ value }} kg</td>
+<tr hx-swap="outerHTML" hx-get="{% url "weight-measurement-detail" obj.id %}?template=form">
+    <td>{{ obj.time|date:"H:i, d F Y" }}</td>
+    <td colspan="2">{{ obj.value }} kg</td>
 </tr>

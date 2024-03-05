@@ -1,10 +1,10 @@
-{# Uses 'response targets' htmx extension #}
-<tr id="tracked-nutrient-row-{{ id }}">
-    <td>{{ name }}</td>
+{# This template uses 'response targets' htmx extension #}
+<tr id="tracked-nutrient-row-{{ obj.id }}">
+    <td>{{ obj.nutrient.name }}</td>
     <td>
-        <a hx-delete="{% url "tracked-nutrient-detail" id %}"
-        hx-target="#tracked-nutrient-row-{{ id }}"
-        hx-target-2*="#tracked-nutrient-row-{{ id }}"
+        <a hx-delete="{% url "tracked-nutrient-detail" obj.id %}"
+        hx-target="#tracked-nutrient-row-{{ obj.id }}"
+        hx-target-2*="#tracked-nutrient-row-{{ obj.id }}" {# Needed for a 204 response #}
         hx-swap="delete">
         <i class="fa-solid fa-xmark"></i></i>
         </a>
