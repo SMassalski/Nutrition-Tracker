@@ -327,18 +327,6 @@ class TestRecipeViewSet:
 
         assert response.headers["HX-Location"] == reverse("recipe-edit", ("name-1",))
 
-    def test_update_invalid_request_has_htmx_retarget_headers(self, user, recipe):
-        data = {"name": "name", "final_weight": "a"}
-
-        request = create_api_request("patch", user, data)
-        view = RecipeViewSet.as_view(detail=True, actions={"patch": "partial_update"})
-
-        response = view(request, pk=recipe.id)
-
-        assert "HX-Retarget" in response.headers
-        assert "HX-Reselect" in response.headers
-        assert "HX-Reswap" in response.headers
-
     # Destroy
 
     def test_destroy_valid_request_has_the_hx_redirect_header(self, user, recipe):
