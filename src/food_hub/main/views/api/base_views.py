@@ -1,13 +1,11 @@
 """API views intended for use only through inheritance."""
-from django.db.models import Prefetch, Q
-from django.http import HttpResponse
+from django.db.models import F, Prefetch, Q
 from django.shortcuts import get_object_or_404
 from main import models, permissions, serializers
+from main.views.generics import ModelViewSet
 from main.views.mixins import HTMXEventMixin
 from rest_framework.generics import ListAPIView
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
-from rest_framework.status import HTTP_200_OK
-from rest_framework.viewsets import ModelViewSet
 
 __all__ = ("ComponentCollectionViewSet", "NutrientIntakeView")
 
@@ -50,6 +48,12 @@ class ComponentCollectionViewSet(HTMXEventMixin, ModelViewSet):
     collection_model = None
     component_field_name = None
 
+    template_map = {
+        "list": list_template_name,
+        "retrieve": {"form": list_row_form_template_name},
+        "destroy": "main/blank.html",
+    }
+
     @classmethod
     def _get_collection_field(cls):
         """The m2m field indicated by the `component_field_name`."""
@@ -74,23 +78,18 @@ class ComponentCollectionViewSet(HTMXEventMixin, ModelViewSet):
         """
         return cls._get_collection_field().m2m_reverse_field_name()
 
-    def get_template_names(self):
-        """Select the template to be used.
-
-        The selection is based on the request method and the
-        `template_query_param`.
-
-        Returns
-        -------
-        List[str]
-        """
-        if self.action == "list":
-            return [self.list_template_name]
-        elif self.action == "retrieve":
-            template_type = self.request.GET.get(self.template_query_param)
-            if template_type and template_type.lower() == "form":
-                return [self.list_row_form_template_name]
-        return [self.template_name]
+    # docstr-coverage: inherited
+    def get_template_context(self, data):
+        url = (
+            f"{self.through_collection_field_name()}-"
+            f"{self.through_component_field_name()}-detail"
+        )
+        ret = {"url_name": url}
+        if "obj" in data:
+            ret["component_name"] = getattr(
+                data["obj"], self.through_component_field_name()
+            ).name
+        return ret
 
     # docstr-coverage: inherited
     def get_permissions(self):
@@ -130,19 +129,10 @@ class ComponentCollectionViewSet(HTMXEventMixin, ModelViewSet):
         return (
             self.through_model()
             ._default_manager.filter(**lookup)
+            .annotate(component_name=F(f"{self.through_component_field_name()}__name"))
             .select_related(self.through_component_field_name())
             .order_by("-id")
         )
-
-    # docstr-coverage: inherited
-    def destroy(self, request, *args, **kwargs):
-        super().destroy(self, *args, **kwargs)
-        # HTMX does not perform a swap when the response has a
-        # no content (204) status.
-        # NOTE: Using the usual rest_framework.response.Response
-        #   caused a NoReverseMatch exception (for some reason arguments
-        #   are removed).
-        return HttpResponse(status=HTTP_200_OK)
 
 
 class NutrientIntakeView(ListAPIView):

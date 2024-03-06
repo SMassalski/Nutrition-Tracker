@@ -1,7 +1,5 @@
 {% for obj in results %}
-    {% with component_name=obj.component_name amount=obj.amount id=obj.id url=obj.url%}
-        {% include "main/data/collection_component_list_table_row.html" %}
-    {% endwith %}
+    {% include "main/data/collection_component_list_table_row.html" %}
 {% endfor %}
 {% if next %}
 <tr hx-get="{{ next }}" hx-swap="outerHTML" hx-trigger="intersect once">

@@ -1,4 +1,4 @@
-<tr hx-swap="outerHTML" hx-get="{{ url }}?template=form">
-    <td>{{ component_name }}</td>
-    <td colspan="2">{{ amount }} g</td>
+<tr hx-swap="outerHTML" hx-get="{% url url_name obj.id %}?template=form">
+    <td>{% firstof component_name obj.component_name %}</td>
+    <td colspan="2">{{ obj.amount }} g</td>
 </tr>

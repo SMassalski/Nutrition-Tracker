@@ -1,25 +1,27 @@
-<tr id="comp-list-row-{{ id }}" class="table-form">
-    <td>{{ component_name }}</td>
-    <td id="data-comp-{{ id }}">
-        <input class="form-control" value="{{ amount }}" type="number" min="0.1" step="0.1" name="amount" id="amount-field" placeholder="Amount (g)" required>
+{# Uses 'response-targets' HTMX extension #}
+<tr id="comp-list-row-{{ obj.id }}" class="table-form">
+    <td>{% firstof component_name obj.component_name %}</td>
+    <td id="data-comp-{{ obj.id }}">
+        <input class="form-control" value="{{ obj.amount }}" type="number" min="0.1" step="0.1" name="amount" id="amount-field" placeholder="Amount (g)" required>
     </td>
     <td class="table-actions">
         {# actions #}
         <a
-            hx-patch="{{ url }}"
-            hx-include="#data-comp-{{ id }}"
+            hx-patch="{% url url_name obj.id %}"
+            hx-include="#data-comp-{{ obj.id }}"
             hx-swap="outerHTML"
-            hx-target="#comp-list-row-{{ id }}">
+            hx-target="#comp-list-row-{{ obj.id }}">
             <i class="fa-solid fa-check"></i>
         </a>
-        <a hx-get="{{ url }}?template=regular"
+        <a hx-get="{% url url_name obj.id %}?template=regular"
             hx-swap="outerHTML"
-            hx-target="#comp-list-row-{{ id }}">
+            hx-target="#comp-list-row-{{ obj.id }}">
             <i class="fa-solid fa-xmark"></i></i>
         </a>
         <a
-            hx-delete="{{ url }}"
-            hx-target="#comp-list-row-{{ id }}"
+            hx-delete="{% url url_name obj.id %}"
+            hx-target="#comp-list-row-{{ obj.id }}"
+            hx-target-204="#comp-list-row-{{ obj.id }}"
             hx-swap="delete">
             <i class="fa-solid fa-trash"></i>
         </a>

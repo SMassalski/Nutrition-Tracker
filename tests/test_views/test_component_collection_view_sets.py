@@ -3,12 +3,7 @@ import pytest
 from main.views.api.meal_views import MealIngredientViewSet, MealRecipeViewSet
 from main.views.api.recipe_views import RecipeIngredientViewSet
 from rest_framework.reverse import reverse
-from rest_framework.status import (
-    HTTP_200_OK,
-    HTTP_400_BAD_REQUEST,
-    HTTP_403_FORBIDDEN,
-    is_success,
-)
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, is_success
 
 from tests.test_views.util import create_api_request
 
@@ -86,6 +81,57 @@ class BaseModelCollectionViewsetTests:
         )
 
         assert is_success(response.status_code)
+
+    @pytest.mark.parametrize("method", ("get", "post"))
+    def test_list_template_context_url_name(self, user, collection, component, method):
+        data = {"amount": 5, self.component_field: component.id}
+        request = create_api_request(method, user, data)
+        view = self.view_class.as_view(self.list_method_map, detail=False)
+        lookup = {self.list_lookup: collection.pk}
+
+        response = view(request, **lookup)
+
+        assert response.data["url_name"] == self.get_pattern_name(True)
+
+    @pytest.mark.parametrize("method", ("get", "put", "patch"))
+    def test_detail_template_context_url_name(self, user, instance, method):
+        data = {
+            "amount": 5,
+            self.component_field: getattr(instance, self.component_field).id,
+        }
+        request = create_api_request(method, user, data)
+
+        response = self.view_class.as_view(self.detail_method_map, detail=True)(
+            request, pk=instance.pk
+        )
+
+        assert response.data["url_name"] == self.get_pattern_name(True)
+
+    def test_create_template_context_component_name(self, user, collection, component):
+        data = {"amount": 5, self.component_field: component.id}
+        request = create_api_request("post", user, data)
+        view = self.view_class.as_view(self.list_method_map, detail=False)
+        lookup = {self.list_lookup: collection.pk}
+
+        response = view(request, **lookup)
+
+        assert response.data["component_name"] == component.name
+
+    @pytest.mark.parametrize("method", ("get", "put", "patch"))
+    def test_detail_template_context_component_name(
+        self, user, instance, component, method
+    ):
+        data = {
+            "amount": 5,
+            self.component_field: getattr(instance, self.component_field).id,
+        }
+        request = create_api_request(method, user, data)
+
+        response = self.view_class.as_view(self.detail_method_map, detail=True)(
+            request, pk=instance.pk
+        )
+
+        assert response.data["component_name"] == component.name
 
     # HTMX Event Trigger Headers
 
@@ -191,7 +237,7 @@ class BaseModelCollectionViewsetTests:
 
         assert view.get_template_names()[0] == template
 
-    @pytest.mark.parametrize("method", ("put", "patch", "delete"))
+    @pytest.mark.parametrize("method", ("put", "patch"))
     def test_detail_get_template_names_non_get_http_methods(
         self, user, instance, method
     ):
@@ -206,6 +252,19 @@ class BaseModelCollectionViewsetTests:
 
         template = view.get_template_names()[0]
         assert template == "main/data/collection_component_list_table_row.html"
+
+    def test_delete_get_template_names_non_get_http_methods(
+        self,
+        user,
+        instance,
+    ):
+        view = self.view_class(action=self.detail_method_map["delete"], detail=True)
+
+        request = create_api_request("delete", user)
+        view.setup(request, pk=instance.id)
+
+        template = view.get_template_names()[0]
+        assert template == "main/blank.html"
 
     @pytest.mark.parametrize(
         ("template", "expected"),
@@ -249,9 +308,32 @@ class BaseModelCollectionViewsetTests:
 
         response = view(request, **lookup)
 
-        ids = sorted([entry["id"] for entry in response.data["results"]])
+        ids = sorted([entry.id for entry in response.data["results"]])
         expected = sorted([i.id for i in instances])
         assert ids == expected
+
+    def test_list_get_annotates_queryset_with_component_name(
+        self, user, collection, component
+    ):
+        """
+        A GET request to the view renders the template with a list of
+        the meal's ingredients in the context.
+        """
+        create_kwargs = {
+            self.list_lookup: collection,
+            self.component_field: component,
+        }
+        instance = self.model._default_manager.create(**create_kwargs, amount=1)
+
+        request = create_api_request("get", user)
+        view = self.view_class.as_view(self.list_method_map, detail=False)
+        lookup = {self.list_lookup: collection.pk}
+
+        response = view(request, **lookup)
+
+        actual = response.data["results"][0].component_name
+        expected = getattr(instance, self.component_field).name
+        assert actual == expected
 
         # POST method
 
@@ -316,22 +398,6 @@ class BaseModelCollectionViewsetTests:
         assert instance.amount == new_amount
 
     # DELETE method
-
-    def test_delete_request_200_code(self, instance, user):
-        """
-        A DELETE request to the view returns an empty response
-        with a 200 code.
-
-        HTMX does not perform swaps when the response has a 204
-        response.
-        """
-        request = create_api_request("delete", user)
-
-        response = self.view_class.as_view(self.detail_method_map, detail=True)(
-            request, pk=instance.pk
-        )
-
-        assert response.status_code == HTTP_200_OK
 
     def test_delete_request_deletes_model_entry(self, user, instance):
         request = create_api_request("delete", user)
