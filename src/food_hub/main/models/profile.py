@@ -470,6 +470,96 @@ class IntakeRecommendation(models.Model):
             f" [{self.sex}] ({self.dri_type})"
         )
 
+    # docstr-coverage: inherited
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._profile = None
+        self._intake = None
+
+    def set_up(self, profile, intake=None):
+        """Set the profile and intake of the recommendation instance.
+
+        Setting the profile allows access to some properties instead of
+        accessing the values using a method with the profile and intake
+        as a parameter.
+
+        Parameters
+        ----------
+        profile: Profile
+        intake: float
+        """
+        self._profile = profile
+        self._intake = intake
+
+    @property
+    def displayed_amount(self) -> float:
+        """The displayed amount for a recommendation.
+
+        The field used differs between dri_types.
+        """
+        if self._profile is None:
+            raise AttributeError(
+                "You must set the recommendation's profile to use the "
+                "`displayed_amount` property. The profile can be set "
+                "using the `set_up()` method"
+            )
+
+        if self.dri_type == IntakeRecommendation.ALAP:
+            return None
+        elif self.dri_type == IntakeRecommendation.UL:
+            amount = self.profile_amount_max(self._profile)
+        else:
+            amount = self.profile_amount_min(self._profile)
+
+        return amount
+
+    @property
+    def over_limit(self) -> bool:
+        """
+        Whether the nutrient's intake is higher than or equal to the
+        recommended upper limit.
+
+        Returns `False` if intake was not provided.
+        """
+        if self._profile is None:
+            raise AttributeError(
+                "You must set the recommendation's profile to use"
+                " the `over_limit` property. The profile can be set "
+                "using the `set_up()` method"
+            )
+
+        limit = self.profile_amount_max(self._profile) or float("inf")
+
+        if self._intake is None:
+            return False
+        return self._intake >= limit
+
+    @property
+    def progress(self) -> int:
+        """
+        The ratio of the nutrient intake to the recommended nutrient
+        intake in percent.
+
+        Returns `None` if intake was not provided.
+        """
+        if self._profile is None:
+            raise AttributeError(
+                "You must set the recommendation's profile to use"
+                " the `progress` property. The profile can be set "
+                "using the `set_up()` method"
+            )
+
+        target = self.profile_amount_min(self._profile)
+
+        try:
+            progress = min(round(100 * self._intake / target), 100)
+        except (TypeError, ZeroDivisionError):
+            # Recommendation's amount min is 0 or the intake is None
+            # because no meal was provided in the context.
+            progress = None
+
+        return progress
+
     def profile_amount_min(self, profile: Profile) -> float:
         """The `amount_min` taking into account the `profile` attributes.
 

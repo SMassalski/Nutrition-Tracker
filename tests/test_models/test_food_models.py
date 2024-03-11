@@ -527,6 +527,123 @@ class TestIntakeRecommendation:
                 nutrient=nutrient_1, sex="B", dri_type="ALAP", age_min=0, age_max=None
             )
 
+    def test_displayed_amount_property_alap(self, profile, recommendation):
+        recommendation.dri_type = models.IntakeRecommendation.ALAP
+        recommendation.set_up(profile)
+
+        assert recommendation.displayed_amount is None
+
+    def test_displayed_amount_property_ul(self, profile, recommendation):
+        recommendation.amount_min = 0
+        recommendation.dri_type = models.IntakeRecommendation.UL
+        recommendation.set_up(profile)
+
+        assert recommendation.displayed_amount == 5
+
+    @pytest.mark.parametrize(
+        ("dri_type", "expected"),
+        (
+            (models.IntakeRecommendation.AI, 10),
+            (models.IntakeRecommendation.AIK, 20),
+            (models.IntakeRecommendation.AMDR, 20),
+            (models.IntakeRecommendation.RDA, 10),
+            (models.IntakeRecommendation.RDAKG, 800),
+        ),
+    )
+    def test_displayed_amount_property_other(
+        self, profile, recommendation, dri_type, expected, nutrient_1_energy
+    ):
+        recommendation.amount_min = 10
+        recommendation.amount_max = 20
+        recommendation.dri_type = dri_type
+        recommendation.set_up(profile)
+
+        assert recommendation.displayed_amount == expected
+
+    def test_displayed_amount_property_not_set_up_raises_error(
+        self, profile, recommendation
+    ):
+
+        with pytest.raises(AttributeError):
+            _ = recommendation.displayed_amount
+
+    def test_progress_property_is_the_percentage_ratio_of_intake_to_profile_amount_min(
+        self, profile, recommendation
+    ):
+        recommendation.dri_type = models.IntakeRecommendation.RDAKG
+        recommendation.amount_min = 10
+        recommendation.amount_max = 20
+        recommendation.set_up(profile, 400)
+
+        assert recommendation.progress == 50
+
+    def test_progress_property_returns_none_intake_not_set_up(
+        self, profile, recommendation
+    ):
+        recommendation.dri_type = models.IntakeRecommendation.RDAKG
+        recommendation.amount_min = 10
+        recommendation.amount_max = 20
+        recommendation.set_up(profile)
+
+        assert recommendation.progress is None
+
+    def test_progress_property_returns_none_amount_min_zero(
+        self, profile, recommendation
+    ):
+        recommendation.dri_type = models.IntakeRecommendation.RDAKG
+        recommendation.amount_min = 0
+        recommendation.set_up(profile)
+
+        assert recommendation.progress is None
+
+    def test_progress_property_profile_not_set_up_raises_error(
+        self, profile, recommendation
+    ):
+        with pytest.raises(AttributeError):
+            _ = recommendation.progress
+
+    def test_over_limit_property_false_if_intake_below_amount_max(
+        self, profile, recommendation
+    ):
+        recommendation.dri_type = models.IntakeRecommendation.RDAKG
+        recommendation.amount_max = 10
+        recommendation.set_up(profile, 10)
+
+        assert recommendation.over_limit is False
+
+    def test_over_limit_property_true_if_intake_equal_amount_max(
+        self, profile, recommendation
+    ):
+        recommendation.dri_type = models.IntakeRecommendation.RDAKG
+        recommendation.amount_max = 10
+        recommendation.set_up(profile, 800)
+
+        assert recommendation.over_limit is True
+
+    def test_over_limit_property_true_if_intake_above_amount_max(
+        self, profile, recommendation
+    ):
+        recommendation.dri_type = models.IntakeRecommendation.RDAKG
+        recommendation.amount_max = 10
+        recommendation.set_up(profile, 801)
+
+        assert recommendation.over_limit is True
+
+    def test_over_limit_property_false_if_intake_not_set_up(
+        self, profile, recommendation
+    ):
+        recommendation.dri_type = models.IntakeRecommendation.RDAKG
+        recommendation.amount_max = 10
+        recommendation.set_up(profile)
+
+        assert recommendation.over_limit is False
+
+    def test_over_limit_property_raises_error_if_profile_not_set_up(
+        self, profile, recommendation
+    ):
+        with pytest.raises(AttributeError):
+            _ = recommendation.over_limit
+
 
 class TestIntakeRecommendationManager:
     """Tests of IntakeRecommendation's custom manager."""
