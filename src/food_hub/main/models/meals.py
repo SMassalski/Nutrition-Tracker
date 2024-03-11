@@ -4,7 +4,7 @@ from typing import Dict
 
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Case, F, OuterRef, Q, Subquery, Sum, When
+from django.db.models import F, OuterRef, Q, Subquery, Sum
 from django.utils import timezone
 from django.utils.text import slugify
 from main.models import Nutrient
@@ -60,36 +60,33 @@ class Meal(models.Model):
 
     def recipe_intakes(self):
         """Get nutrient intakes from recipes."""
-        subquery = Recipe.objects.filter(meal=OuterRef("meal")).annotate(
-            weight=Case(
-                When(
-                    final_weight__isnull=True,
-                    then=Sum("recipeingredient__amount"),
-                ),
-                When(
-                    final_weight__isnull=False,
-                    then=F("final_weight"),
-                ),
-            )
-        )
+
         queryset = (
             self.mealrecipe_set.annotate(
-                nutrient_id=F("recipe__ingredients__ingredientnutrient__nutrient")
+                nutrient=F(
+                    "recipe__recipeingredient__ingredient__ingredientnutrient__nutrient"
+                )
             )
-            .alias(recipe_weight=Subquery(subquery.values("weight")))
-            .alias(
+            .annotate(
                 nutrient_amount=F("amount")
                 * F("recipe__recipeingredient__amount")
                 * F("recipe__recipeingredient__ingredient__ingredientnutrient__amount")
-                / F("recipe_weight")
             )
-            .values("nutrient_id")
-            # skip if ingredients don't have nutrients
-            .filter(nutrient_id__isnull=False)
-            .annotate(amount=Sum("nutrient_amount"))
+            .values("nutrient", "recipe_id")
+            .exclude(nutrient=None)
+            .annotate(total=Sum("nutrient_amount"))
         )
+        if not queryset:
+            return {}
 
-        return {nutrient["nutrient_id"]: nutrient["amount"] for nutrient in queryset}
+        recipes = {rec.id: rec for rec in Recipe.objects.filter(meal=self)}
+        ret = {}
+        for val in queryset:
+            recipe_weight = recipes[val["recipe_id"]].weight
+            amount = val["total"] / recipe_weight
+            ret[val["nutrient"]] = ret.get(val["nutrient"], 0) + amount
+
+        return ret
 
     def ingredient_intakes(self):
         """Get nutrient intakes from individual ingredients."""
