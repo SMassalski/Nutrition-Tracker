@@ -106,6 +106,99 @@ class Meal(models.Model):
 
         return {nutrient["nutrient_id"]: nutrient["amount"] for nutrient in queryset}
 
+    @property
+    def calorie_ratio(self) -> Dict[str, float]:
+        """
+        The percent ratio of calories by nutrient in the meal.
+
+        Does not include nutrients that have a parent in either
+        a NutrientType or NutrientComponent relationship.
+        """
+        ret = self.calories
+        total = sum(ret.values())
+        return {k: round(v / total * 100, 1) for k, v in ret.items()}
+
+    @property
+    def calories(self):
+        """Calorie contribution of nutrients
+
+        Does not include nutrients that have a parent in either
+        a NutrientType or NutrientComponent relationship.
+        """
+        recipe = self.recipe_calories
+        ingredient = self.ingredient_calories
+
+        # sum of values by key
+        return {
+            key: recipe.get(key, 0) + ingredient.get(key, 0)
+            for key in {*recipe.keys(), *ingredient.keys()}
+        }
+
+    @property
+    def recipe_calories(self):
+        """Calorie contribution of nutrients from recipes."""
+
+        nutrients = Nutrient.objects.filter(
+            ~Q(types__parent_nutrient__isnull=False),
+            compounds=None,
+            energy__isnull=False,
+        ).select_related("energy")
+        nutrients = {nut.id: nut for nut in nutrients}
+
+        queryset = (
+            self.mealrecipe_set.annotate(
+                nutrient=F(
+                    "recipe__recipeingredient__ingredient__ingredientnutrient__nutrient"
+                )
+            )
+            .filter(nutrient__in=nutrients)
+            .annotate(
+                nutrient_amount=F("amount")
+                * F("recipe__recipeingredient__amount")
+                * F("recipe__recipeingredient__ingredient__ingredientnutrient__amount")
+            )
+            .values("nutrient", "recipe_id")
+            .annotate(total=Sum("nutrient_amount"))
+        )
+        if not queryset:
+            return {}
+
+        recipes = {rec.id: rec for rec in Recipe.objects.filter(meal=self)}
+        ret = {}
+        for val in queryset:
+            nutrient = nutrients[val["nutrient"]]
+            recipe_weight = recipes[val["recipe_id"]].weight
+            energy = val["total"] / recipe_weight * nutrient.energy.amount
+            ret[nutrient.name] = ret.get(nutrient.name, 0) + energy
+
+        return ret
+
+    @property
+    def ingredient_calories(self):
+        """Calorie contribution of nutrients from ingredients."""
+        subquery = Nutrient.objects.filter(
+            ~Q(types__parent_nutrient__isnull=False),
+            compounds=None,
+            ingredient=OuterRef("ingredient"),
+        )
+
+        queryset = (
+            self.mealingredient_set.filter(
+                ingredient__nutrients__energy__amount__isnull=False,
+                ingredient__nutrients__in=Subquery(subquery.values("pk")),
+            )
+            .annotate(
+                energy=F("ingredient__nutrients__energy__amount")
+                * F("amount")
+                * F("ingredient__ingredientnutrient__amount"),
+                nutrient=F("ingredient__nutrients__name"),
+            )
+            .values("nutrient")
+            .annotate(calories=Sum("energy"))
+            .order_by("calories")
+        )
+        return {nutrient["nutrient"]: nutrient["calories"] for nutrient in queryset}
+
 
 class MealIngredient(models.Model):
     """Represents the amount (in grams) of an Ingredient in a Meal."""

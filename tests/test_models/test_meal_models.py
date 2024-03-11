@@ -405,3 +405,228 @@ class TestMeal:
     ):
         with django_assert_num_queries(3):
             meal.get_intakes()
+
+    def test_ingredient_calories(
+        self,
+        meal,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        meal_ingredients,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        # nutrient_1: 0.015 * 2 * 10
+        # nutrient_2: 0.1 * 4 * (2 + 3)
+        expected = {nutrient_1.name: 0.3, nutrient_2.name: 2}
+
+        actual = meal.ingredient_calories
+
+        assert actual == expected
+
+    def test_ingredient_calories_num_queries(
+        self,
+        meal,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        meal_ingredients,
+        nutrient_1_energy,
+        nutrient_2_energy,
+        django_assert_num_queries,
+    ):
+        with django_assert_num_queries(1):
+            _ = meal.ingredient_calories
+
+    def test_ingredient_calories_no_ingredients(self, meal):
+        expected = {}
+
+        actual = meal.ingredient_calories
+
+        assert actual == expected
+
+    def test_recipe_calories(
+        self,
+        meal,
+        recipe,
+        meal_recipe,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+
+        # nutrient_1: 100 * 100 * 0.015 * 10 / 200
+        # nutrient_2: 100 * 100 * 0.2  * 4 / 200
+        expected = {nutrient_1.name: 7.5, nutrient_2.name: 40}
+
+        actual = meal.recipe_calories
+
+        assert actual == expected
+
+    def test_recipe_calories_multiple_recipes(
+        self,
+        meal,
+        recipe,
+        recipe_2,
+        meal_recipe,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        # nutrient_1: 100 * 100 * 0.015 * 10 / 200  (first recipe)
+        #           + 100 * 50 * 0.015 * 10 / 50  (second recipe)
+        # nutrient_2: 100 * 100 * 0.2 * 4 / 200  (first recipe)
+        #           + 100 * 50 * 0.1 * 4 / 50  (second recipe)
+        expected = {nutrient_1.name: 22.5, nutrient_2.name: 80}
+
+        actual = meal.recipe_calories
+
+        assert actual == expected
+
+    def test_recipe_calories_no_recipes(self, meal):
+        expected = {}
+
+        actual = meal.recipe_calories
+
+        assert actual == expected
+
+    def test_calories_only_returns_nutrients_with_energy(
+        self,
+        meal,
+        meal_recipe,
+        meal_ingredients,
+        ingredient_1,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1_energy,
+    ):
+        result = meal.calories
+
+        assert nutrient_1.name in result
+        assert nutrient_2.name not in result
+
+    def test_calories_excludes_component_nutrients(
+        self,
+        meal,
+        meal_recipe,
+        meal_ingredients,
+        ingredient_1,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1_energy,
+        component,
+    ):
+
+        result = meal.calories
+
+        assert nutrient_1.name not in result
+
+    def test_recipe_calories_excludes_child_type_nutrients(
+        self,
+        meal,
+        meal_recipe,
+        meal_ingredients,
+        ingredient_1,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1_energy,
+    ):
+        type_ = models.NutrientType.objects.create(parent_nutrient=nutrient_2)
+        nutrient_1.types.add(type_)
+
+        result = meal.calories
+
+        assert nutrient_1.name not in result
+
+    def test_recipe_calories_uses_sum_of_ingredient_amounts_if_final_weight_is_null(
+        self,
+        ingredient_1,
+        nutrient_1,
+        ingredient_nutrient_1_1,
+        nutrient_1_energy,
+        meal,
+        meal_recipe,
+        recipe,
+    ):
+        recipe.final_weight = None
+        recipe.save()
+
+        expected = 0.015 * 10 * 0.5 * 100
+        assert meal.calories == {nutrient_1.name: expected}
+
+    def test_recipe_calories_num_queries(
+        self,
+        meal,
+        recipe,
+        meal_recipe,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+        django_assert_num_queries,
+    ):
+        with django_assert_num_queries(3):
+            _ = meal.recipe_calories
+
+    def test_calories_property(
+        self,
+        meal,
+        recipe,
+        recipe_2,
+        meal_recipe,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        meal_ingredients,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = {nutrient_1.name: 22.8, nutrient_2.name: 82}
+
+        actual = meal.calories
+
+        assert actual == expected
+
+    def test_calorie_ratio_property(
+        self,
+        meal,
+        recipe,
+        recipe_2,
+        meal_recipe,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        meal_ingredients,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = {nutrient_1.name: 21.8, nutrient_2.name: 78.2}
+
+        actual = meal.calorie_ratio
+
+        assert actual == expected
