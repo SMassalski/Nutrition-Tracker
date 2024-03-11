@@ -468,3 +468,13 @@ def meal_2(ingredient_1, saved_profile):
     )
 
     return instance
+
+
+@pytest.fixture
+def nutrient_2_energy(nutrient_2):
+    """NutrientEnergy instance for nutrient_2
+
+    nutrient: nutrient_2
+    amount: 4
+    """
+    return models.NutrientEnergy.objects.create(nutrient=nutrient_2, amount=4)

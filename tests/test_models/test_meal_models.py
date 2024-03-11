@@ -98,10 +98,9 @@ class TestRecipe:
         nutrient_2,
         ingredient_nutrient_1_2,
         nutrient_1_energy,
+        nutrient_2_energy,
         recipe,
     ):
-        models.NutrientEnergy.objects.create(nutrient=nutrient_2, amount=2)
-
         assert list(recipe.calories.keys()) == [nutrient_1.name, nutrient_2.name]
 
     def test_calories_only_returns_nutrients_with_energy(
@@ -165,6 +164,24 @@ class TestRecipe:
         # * amount of ingredient in the recipe / recipe weight
         expected = 0.015 * 10 * 0.5
         assert recipe.calories == {nutrient_1.name: expected}
+
+    def test_calorie_ratio_property(
+        self,
+        ingredient_1,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+        recipe,
+    ):
+        expected = {nutrient_1.name: 15.8, nutrient_2.name: 84.2}
+
+        actual = recipe.calorie_ratio
+
+        assert actual == expected
 
     def test_get_slug_unique_name(self, recipe):
         recipe.name = "Test Recipe"

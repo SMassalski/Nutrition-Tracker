@@ -243,8 +243,19 @@ class Recipe(models.Model):
             .order_by("nutrient")
             .annotate(calories=Sum("energy") / self.weight)
         )
-
         return {nutrient["nutrient"]: nutrient["calories"] for nutrient in queryset}
+
+    @property
+    def calorie_ratio(self) -> Dict[str, float]:
+        """
+        The percent ratio of calories by nutrient in the recipe.
+
+        Does not include nutrients that have a parent in either
+        a NutrientType or NutrientComponent relationship.
+        """
+        ret = self.calories
+        total = sum(ret.values())
+        return {k: round(v / total * 100, 1) for k, v in ret.items()}
 
 
 class RecipeIngredient(models.Model):
