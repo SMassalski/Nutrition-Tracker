@@ -349,6 +349,13 @@ class Profile(models.Model):
 
         return {meal["date"]: meal["amount"] for meal in queryset}
 
+    def energy_progress(self, intake):
+        """
+        The % ratio of the caloric intake to the recommended intake.
+        """
+
+        return min(round(100 * intake / self.energy_requirement), 100)
+
 
 class RecommendationQuerySet(models.QuerySet):
     """Manager class for intake recommendations."""

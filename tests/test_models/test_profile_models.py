@@ -452,6 +452,15 @@ class TestProfile:
 
         assert result == expected
 
+    def test_energy_progress_property_is_the_ratio_of_energy_intake_to_recommendation(
+        self, profile
+    ):
+        expected = 9
+
+        actual = profile.energy_progress(180)
+
+        assert actual == expected
+
 
 class TestWeightMeasurement:
     """Tests of the `WeightMeasurement` model."""
