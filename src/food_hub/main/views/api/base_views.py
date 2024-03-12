@@ -1,10 +1,12 @@
 """API views intended for use only through inheritance."""
-from django.db.models import F, Prefetch, Q
+from functools import cached_property
+
+from django.db.models import F, Prefetch
 from django.shortcuts import get_object_or_404
+from django.utils.text import slugify
 from main import models, permissions, serializers
-from main.views.generics import ModelViewSet
+from main.views.generics import ListAPIView, ModelViewSet
 from main.views.mixins import HTMXEventMixin
-from rest_framework.generics import ListAPIView
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 
 __all__ = ("ComponentCollectionViewSet", "NutrientIntakeView")
@@ -138,98 +140,111 @@ class ComponentCollectionViewSet(HTMXEventMixin, ModelViewSet):
 class NutrientIntakeView(ListAPIView):
     """View for displaying dietary intakes.
 
-    Attributes
-    ----------
-    display_order: Iterable[str]
-        The names of NutrientTypes to be included in the `nutrient_data`
-        context var (in that order). Default: ("Vitamin", "Mineral",
-        "Fatty acid type", "Amino acid")
-    no_recommendations: Iterable[str]
-        The names of Nutrients to display even if they don't have
-        a recommendation. Default: ['Polyunsaturated fatty acids',
-        'Monounsaturated fatty acids']
-    skip_amdr: Iterable[str]
-        The names of Nutrients for which to skip recommendation entries
-        that have an 'AMDR' `dri_type`. Default: ["Linoleic acid",
-        "alpha-Linolenic acid"]
-    collection_model: django.db.models.Model
-        The model of the object the nutrient intakes are retrieved from.
-        If the model does not have a `get_intakes()` method,
-        the view's `get_intakes()` method must be overridden.
+    Displays the dietary intakes from a collection of ingredients
+    (and recipes).
     """
 
-    serializer_class = serializers.NutrientIntakeSerializer
+    collection_model = models.Meal
+    lookup_url_kwarg = "pk"
     renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
     pagination_class = None
     template_name = "main/data/nutrient_tables.html"
     permission_classes = [permissions.IsOwnerPermission]
+    serializer_class = serializers.NutrientIntakeSerializer
 
-    display_order = (
-        "Vitamin",
-        "Mineral",
-        "Fatty acid type",
-        "Amino acid",
-    )
+    @cached_property
+    def obj(self):
+        """The collection object."""
+        return get_object_or_404(
+            self.collection_model, pk=self.kwargs.get(self.lookup_url_kwarg)
+        )
 
-    no_recommendations = [
-        "Polyunsaturated fatty acids",
-        "Monounsaturated fatty acids",
-    ]
-
-    skip_amdr = ["Linoleic acid", "alpha-Linolenic acid"]
-
-    collection_model = None
-
-    # docstr-coverage: inherited
-    def __init__(self, *args, **kwargs):
-        self._obj = None
-        super().__init__(*args, **kwargs)
-
-    def get_intakes(self):
-        """Get the nutrient intakes displayed by the view."""
-        return self._obj.get_intakes()
-
-    # docstr-coverage: inherited
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context["intakes"] = self.get_intakes()
-        context["display_order"] = self.display_order
-
-        return context
+    @cached_property
+    def intakes(self):
+        """Nutrient intake in the selected collection."""
+        self.check_object_permissions(self.request, self.obj)
+        return self.obj.get_intakes()
 
     # docstr-coverage: inherited
     def get_queryset(self):
-        queryset = (
-            models.Nutrient.objects.exclude(
-                ~Q(name__in=self.no_recommendations), recommendations=None
-            )
-            .select_related("energy", "child_type")
+        return (
+            models.Nutrient.objects.select_related("energy", "child_type")
             .prefetch_related(
                 "types",
                 Prefetch(
                     "recommendations",
                     queryset=models.IntakeRecommendation.objects.for_profile(
                         self.request.user.profile
-                    ).exclude(
-                        dri_type=models.IntakeRecommendation.AMDR,
-                        nutrient__name__in=self.skip_amdr,
                     ),
                 ),
             )
+            .order_by("name")
         )
-        return queryset
 
-    def get(self, *args, **kwargs):
-        """List nutrient intakes grouped by type.
+    # docstr-coverage: inherited
+    def get_template_context(self, data):
 
-        Includes intake information from the selected model entry.
-        """
-        self._obj = get_object_or_404(
-            self.collection_model, pk=self.kwargs.get(self.lookup_url_kwarg)
+        queryset = data["results"]
+        profile = self.request.user.profile
+        intakes = self.intakes
+
+        tracked = {nutrient.id for nutrient in profile.tracked_nutrients.all()}
+
+        # Nutrient access by name
+        n_data = {}
+        for nutrient in queryset:
+            recs = {}
+            n_data[_slugify_underscore(nutrient.name)] = {
+                "obj": nutrient,
+                "recommendations": recs,
+                "intake": self.intakes.get(nutrient.id, 0),
+                "highlight": nutrient.id in tracked,
+                "children": [],
+            }
+            # Set up recommendations with the profile and intakes
+            # and allow access by `dri_type`.
+            for recommendation in nutrient.recommendations.all():
+                recommendation.set_up(profile, intakes.get(nutrient.id, 0))
+                recs[_slugify_underscore(recommendation.dri_type)] = recommendation
+
+        # Group data by nutrient type
+        types = {type_.name for nutrient in queryset for type_ in nutrient.types.all()}
+        by_type = {t: {} for t in types}
+        by_type["none"] = {}
+        for name, nutrient in n_data.items():
+            nutrient_types = nutrient["obj"].types.all()
+            if len(nutrient_types) == 0:
+                by_type["none"][name] = nutrient
+                continue
+            for t in nutrient_types:
+                by_type[t.name][name] = nutrient
+        by_type = {_slugify_underscore(k): v for k, v in by_type.items()}
+
+        # Set up access to nutrients with the `child_type` through the children key
+        for nutrient in n_data.values():
+            if hasattr(nutrient["obj"], "child_type"):
+                nutrient["children"] = by_type.get(
+                    _slugify_underscore(nutrient["obj"].child_type.name)
+                )
+
+        energy_progress = (
+            profile.energy_progress(n_data["energy"]["intake"])
+            if "energy" in n_data
+            else None
         )
-        self.check_object_permissions(self.request, self._obj)
-        response = super().get(*args, **kwargs)
-        if not isinstance(response.data, dict):
-            response.data = {"results": response.data}
+        return {
+            "by_type": by_type,
+            "by_name": n_data,
+            "energy_requirement": profile.energy_requirement,
+            "energy_progress": energy_progress,
+            "calories": self.obj.calorie_ratio,
+        }
 
-        return response
+
+def _slugify_underscore(s: str) -> str:
+    """Slugify with underscores instead of hyphens.
+
+    This allows to convert strings to a format that can be used as
+    a template context var.
+    """
+    return slugify(s).replace("-", "_")

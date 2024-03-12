@@ -54,6 +54,7 @@ $chart_annotation: $danger;
 $border_gray: #ced4da;
 $progress-success: #89da99;
 $progress-danger: #e4937b;
+$progress-danger-background: #ffece6;
 
 .bordered {
     border: 1px solid $border_gray;
@@ -118,10 +119,18 @@ tr th.nutrient-label {
                 text-align: end;
             }
             &.subrow {
+                &.highlighted td:nth-of-type(1) {
+                    padding-left: 1rem;
+                    box-shadow: inset 3px 0 $info;
+                }
                 td:nth-of-type(1) {
                     padding-left: 1rem;
                     box-shadow: inset 3px 0 $border_gray;
                 }
+            }
+            &.highlighted {
+                background-color: #E1CFAE;
+                font-weight: bolder;
             }
         }
     }
@@ -158,6 +167,10 @@ tr th.nutrient-label {
     height: 1.3rem;
     font-size: 1rem;
     border-radius: 0.2rem;
+
+    &.prog-danger {
+        background-color: $progress-danger-background;
+    }
 
     .progress-bar {
         background-color: $info;
@@ -239,4 +252,17 @@ ul.url-list {
         text-align: center;
         color: inherit;
     }
+}
+
+.card-columns {
+    column-count: 2;
+}
+
+.card .table-card {
+    .card-body {
+        padding: 0;
+    }
+    box-shadow: none;
+    border: 1px solid $border_gray;
+    border-radius: .3rem;
 }
