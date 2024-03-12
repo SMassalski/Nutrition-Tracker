@@ -572,18 +572,39 @@ class TestIntakeRecommendation:
     ):
         recommendation.dri_type = models.IntakeRecommendation.RDAKG
         recommendation.amount_min = 10
-        recommendation.amount_max = 20
         recommendation.set_up(profile, 400)
 
         assert recommendation.progress == 50
+
+    def test_progress_property_rounded_to_nearest_integer(
+        self, profile, recommendation
+    ):
+        recommendation.amount_min = 9
+        recommendation.set_up(profile, 3)
+
+        assert recommendation.progress == 33
+
+    def test_progress_property_capped_at_100(self, profile, recommendation):
+        recommendation.amount_min = 5
+        recommendation.set_up(profile, 6)
+
+        assert recommendation.progress == 100
 
     def test_progress_property_returns_none_intake_not_set_up(
         self, profile, recommendation
     ):
         recommendation.dri_type = models.IntakeRecommendation.RDAKG
         recommendation.amount_min = 10
-        recommendation.amount_max = 20
         recommendation.set_up(profile)
+
+        assert recommendation.progress is None
+
+    def test_progress_property_returns_none_amount_min_is_none(
+        self, profile, recommendation
+    ):
+        recommendation.dri_type = models.IntakeRecommendation.RDAKG
+        recommendation.amount_min = None
+        recommendation.set_up(profile, 5)
 
         assert recommendation.progress is None
 
@@ -628,6 +649,15 @@ class TestIntakeRecommendation:
         recommendation.set_up(profile, 801)
 
         assert recommendation.over_limit is True
+
+    def test_over_limit_property_false_if_amount_max_is_none(
+        self, profile, recommendation
+    ):
+        recommendation.dri_type = models.IntakeRecommendation.RDAKG
+        recommendation.amount_max = None
+        recommendation.set_up(profile, 801)
+
+        assert recommendation.over_limit is False
 
     def test_over_limit_property_false_if_intake_not_set_up(
         self, profile, recommendation
