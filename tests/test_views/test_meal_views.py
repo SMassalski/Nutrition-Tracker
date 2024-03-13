@@ -2,8 +2,7 @@
 import pytest
 from django.conf import settings
 from main import models
-from main.views.api import MealIngredientPreviewView
-from main.views.api.meal_views import MealNutrientIntakeView
+from main.views.api.meal_views import MealIngredientPreviewView, MealNutrientIntakeView
 from rest_framework.reverse import reverse
 from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND, is_success
 
