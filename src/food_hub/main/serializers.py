@@ -3,7 +3,6 @@ from datetime import timedelta
 from typing import Dict
 
 from django.db.models import Q
-from django.urls import reverse
 from main import models
 from rest_framework import serializers
 from util import pounds_to_kilograms
@@ -41,23 +40,12 @@ class IngredientNutrientSerializer(serializers.ModelSerializer):
         fields = ["url", "nutrient", "amount"]
 
 
-class IngredientSerializer(serializers.HyperlinkedModelSerializer):
+class IngredientSerializer(serializers.ModelSerializer):
     """Serializer for ingredient list view."""
-
-    preview_url = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Ingredient
-        fields = ["id", "url", "name", "preview_url"]
-
-    def get_preview_url(self, obj: models.Ingredient):
-        """The url to the correct preview view.
-
-        Depends on the value of the `target` query param."""
-        target = self.context["request"].GET.get("target")
-        if target and target.lower() == "recipe":
-            return reverse("recipe-ingredient-preview", args=(obj.id,))
-        return reverse("meal-ingredient-preview", args=(obj.id,))
+        fields = ["id", "name"]
 
 
 class IngredientDetailSerializer(serializers.ModelSerializer):
@@ -70,77 +58,21 @@ class IngredientDetailSerializer(serializers.ModelSerializer):
         fields = ["external_id", "name", "dataset", "nutrients"]
 
 
-class IngredientPreviewSerializer(serializers.ModelSerializer):
-    """Serializer for previewing ingredients."""
-
-    calories = serializers.SerializerMethodField()
-
-    class Meta:
-        model = models.Ingredient
-        fields = ["id", "name", "calories"]
-
-    def get_calories(self, obj: models.Ingredient) -> dict:
-        """The percentage of energy each nutrient provides."""
-        calories = obj.calories
-        total = sum(calories.values())
-        return {nutrient: val * 100 / total for nutrient, val in calories.items()}
-
-
-class RecipePreviewSerializer(serializers.ModelSerializer):
-    """Serializer for previewing recipes."""
-
-    calories = serializers.SerializerMethodField()
-    slug = serializers.ReadOnlyField()
-
-    class Meta:
-        model = models.Recipe
-        fields = ["id", "name", "calories", "slug"]
-
-    def get_calories(self, obj: models.Ingredient) -> dict:
-        """The percentage of energy each nutrient provides."""
-        calories = obj.calories
-        total = sum(calories.values())
-        return {nutrient: val * 100 / total for nutrient, val in calories.items()}
-
-
 class CurrentMealSerializer(serializers.ModelSerializer):
     """Meal model's serializer for displaying and creating by dates.
 
-    Displays the meal's date (as a date object), and the dates of one
-    day before and after (as str in iso format).
-
-    Requires a profile id in the context.
+    Creating using the save method requires providing the owner as an argument.
     The create method was modified to use get_or_create().
     """
 
     date = serializers.DateField(required=True)
-    yesterday = serializers.SerializerMethodField()
-    tomorrow = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Meal
-        fields = ["id", "yesterday", "date", "tomorrow"]
-
-    @staticmethod
-    def get_yesterday(obj: models.Meal) -> str:
-        """The date a day before the meal's date in iso format."""
-        return str(obj.date - timedelta(days=1))
-
-    @staticmethod
-    def get_tomorrow(obj: models.Meal) -> str:
-        """The date a day after the meal's date in iso format."""
-        return str(obj.date + timedelta(days=1))
+        fields = ["id", "date"]
 
     # docstr-coverage: inherited
     def create(self, validated_data):
-        owner_id = self.context.get("owner_id")
-        if owner_id is None:
-            raise MissingContextError(
-                "Creating a meal using the CurrentMealSerializer requires passing the "
-                "`owner_id` in the context."
-            )
-
-        validated_data["owner_id"] = owner_id
         instance, _ = self.Meta.model._default_manager.get_or_create(**validated_data)
         return instance
 
@@ -148,28 +80,13 @@ class CurrentMealSerializer(serializers.ModelSerializer):
 class MealIngredientSerializer(serializers.ModelSerializer):
     """MealIngredient model serializer.
 
-    When creating an entry, the meal_id must be provided in the context
-    under the `meal` key.
+    When creating an entry, the meal_id must be provided in the
+    save method.
     """
-
-    component_name = serializers.ReadOnlyField(source="ingredient.name")
-    url = serializers.HyperlinkedIdentityField(view_name="meal-ingredient-detail")
 
     class Meta:
         model = models.MealIngredient
-        fields = ("id", "url", "ingredient", "amount", "component_name")
-
-    # docstr-coverage: inherited
-    def create(self, validated_data):
-        meal_id = self.context.get("meal")
-        if not meal_id:
-            raise MissingContextError(
-                "Creating a meal-ingredient using the MealIngredientSerializer "
-                "requires passing the `meal` in the context."
-            )
-
-        validated_data["meal_id"] = meal_id
-        return super().create(validated_data)
+        fields = ("id", "ingredient", "amount")
 
 
 class RecommendationSerializer(serializers.ModelSerializer):
@@ -244,13 +161,11 @@ class NutrientIntakeSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     """Serializer for the `Recipe` model."""
 
-    preview_url = serializers.HyperlinkedIdentityField(view_name="meal-recipe-preview")
-    url = serializers.HyperlinkedIdentityField(view_name="recipe-detail")
     slug = serializers.ReadOnlyField()
 
     class Meta:
         model = models.Recipe
-        fields = ["id", "name", "final_weight", "preview_url", "url", "slug"]
+        fields = ["id", "name", "final_weight", "slug"]
 
     # docstr-coverage: inherited
     def validate(self, data):
@@ -269,6 +184,8 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     # docstr-coverage: inherited
     def create(self, validated_data):
+        # Not enforcing the modification of preform create in views
+        # because the request is also needed for validation
         validated_data["owner_id"] = self.context["request"].user.profile.id
         return super().create(validated_data)
 
@@ -277,59 +194,24 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     """RecipeIngredient model serializer.
 
     When creating an entry, the recipe_id must be provided in the
-    context under the `recipe` key.
+    save method.
     """
-
-    component_name = serializers.ReadOnlyField(source="ingredient.name")
-    url = serializers.HyperlinkedIdentityField(view_name="recipe-ingredient-detail")
 
     class Meta:
         model = models.RecipeIngredient
-        fields = ("id", "url", "ingredient", "amount", "component_name")
-
-    # docstr-coverage: inherited
-    def create(self, validated_data):
-        recipe_id = self.context.get("recipe")
-        if not recipe_id:
-            raise MissingContextError(
-                "Creating a recipe-ingredient using the RecipeIngredientSerializer "
-                "requires passing the `recipe` in the context."
-            )
-
-        validated_data["recipe_id"] = recipe_id
-        return super().create(validated_data)
+        fields = ("id", "ingredient", "amount")
 
 
 class MealRecipeSerializer(serializers.ModelSerializer):
     """MealIngredient model serializer.
 
-    When creating an entry, the meal_id must be provided in the context
-    under the `meal` key.
+    When creating an entry, the meal_id must be provided in the save
+    method.
     """
-
-    component_name = serializers.ReadOnlyField(source="recipe.name")
-    url = serializers.HyperlinkedIdentityField(view_name="meal-recipe-detail")
 
     class Meta:
         model = models.MealRecipe
-        fields = ("id", "recipe", "amount", "component_name", "url")
-
-    # docstr-coverage: inherited
-    def create(self, validated_data):
-        meal_id = self.context.get("meal")
-        if not meal_id:
-            raise MissingContextError(
-                "Creating a meal-recipe using the MealRecipeSerializer requires "
-                "passing the `meal` in the context."
-            )
-        validated_data["meal_id"] = meal_id
-        return super().create(validated_data)
-
-
-class MissingContextError(ValueError):
-    """
-    Raised when a required value is missing from a serializer's context.
-    """
+        fields = ("id", "recipe", "amount")
 
 
 class WeightMeasurementSerializer(serializers.ModelSerializer):
@@ -343,13 +225,6 @@ class WeightMeasurementSerializer(serializers.ModelSerializer):
     KILOGRAMS = "KG"
     unit_choices = [(POUNDS, "lbs"), (KILOGRAMS, "kg")]
 
-    # Python 3.8 datetime.fromisoformat() doesn't fully support the
-    # default 'iso-8601' format from DRF (the timezone specifier).
-    # HTML input with type="datetime local" doesn't support microseconds
-    # and requires the 'T' separator.
-    time_format = "%Y-%m-%dT%H:%M:%S"
-    time = serializers.DateTimeField(format=time_format, required=False)
-
     url = serializers.HyperlinkedIdentityField(view_name="weight-measurement-detail")
     unit = serializers.ChoiceField(
         choices=unit_choices, write_only=True, required=False
@@ -359,20 +234,13 @@ class WeightMeasurementSerializer(serializers.ModelSerializer):
         model = models.WeightMeasurement
         fields = ("id", "url", "time", "value", "unit")
 
+    # docstr-coverage: inherited
     def create(self, validated_data):
-        """Create an instance and DB entry from validated data.
-
-        If the `profile` is not in `validated_data`, the method uses
-        the profile from the request.
-        """
-        if "profile" not in validated_data:
-            validated_data["profile"] = self.context["request"].user.profile
-
+        validated_data["profile"] = self.context["request"].user.profile
         return models.WeightMeasurement.objects.create(**validated_data)
 
     # docstr-coverage: inherited
     def validate_time(self, value):
-
         profile = self.context["request"].user.profile
         queryset = models.WeightMeasurement.objects.filter(profile=profile, time=value)
 
@@ -472,6 +340,10 @@ class ByDateIntakeSerializer(serializers.ModelSerializer):
     """Nutrient serializer that displays its intakes by date.
 
     Includes recommendations for the nutrient.
+
+    Requires an authenticated request in the context to work correctly.
+    The `date_min` and `date_max` context vars can be provided to
+    limit the date range of the intakes.
     """
 
     intakes = serializers.SerializerMethodField()
@@ -556,18 +428,11 @@ class TrackedNutrientSerializer(serializers.ModelSerializer):
     When saving a profile needs to be provided.
     """
 
-    name = serializers.CharField(source="nutrient.name", read_only=True)
-    chart_id = serializers.SerializerMethodField()
+    nutrient_name = serializers.CharField(source="nutrient.name", read_only=True)
 
     class Meta:
         model = models.Profile.tracked_nutrients.through
-        fields = ["id", "nutrient", "name", "chart_id"]
-
-    def get_chart_id(self, obj: models.Profile.tracked_nutrients.through) -> str:
-        """The HTML id to be used for the chart in the template."""
-        return (
-            obj.nutrient.name.lower().replace(" ", "-").replace("_", "-") + "-tracked"
-        )
+        fields = ["id", "nutrient", "nutrient_name"]
 
     # docstr-coverage: inherited
     def validate_nutrient(self, value):

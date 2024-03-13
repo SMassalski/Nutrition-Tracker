@@ -4,7 +4,6 @@ import datetime
 import pytest
 from django.db import IntegrityError
 from main import models, serializers
-from rest_framework.reverse import reverse
 
 
 @pytest.fixture
@@ -29,33 +28,6 @@ def context(rf, user, saved_profile):
     request = rf.get("")
     request.user = user
     return {"request": request}
-
-
-class TestMealIngredientSerializer:
-    """Tests of the MealIngredientSerializer class."""
-
-    def test_creates_entry_using_meal_from_context(self, meal, ingredient_1):
-        """
-        The serializer creates the entry using the meal id passed to its
-        context.
-        """
-        data = {"ingredient": ingredient_1.id, "amount": 3}
-        serializer = serializers.MealIngredientSerializer(
-            data=data, context=dict(meal=meal.id)
-        )
-        serializer.is_valid()
-
-        instance = serializer.save()
-
-        assert instance.meal == meal
-
-    def test_raises_error_if_creating_with_missing_context(self, ingredient_1):
-        data = {"ingredient": ingredient_1.id, "amount": 1}
-        serializer = serializers.MealIngredientSerializer(data=data)
-        serializer.is_valid()
-
-        with pytest.raises(serializers.MissingContextError):
-            serializer.save()
 
 
 class TestNutrientIntakeSerializer:
@@ -90,50 +62,27 @@ class TestNutrientIntakeSerializer:
 
 
 class TestCurrentMealSerializer:
-    def test_yesterday_field(self, meal):
-        meal.date = datetime.date(2023, 6, 22)
-        expected = "2023-06-21"
-        serializer = serializers.CurrentMealSerializer(meal)
-
-        assert serializer.data["yesterday"] == expected
-
-    def test_tomorrow_field(self, meal):
-        meal.date = datetime.date(2023, 6, 22)
-        expected = "2023-06-23"
-        serializer = serializers.CurrentMealSerializer(meal)
-
-        assert serializer.data["tomorrow"] == expected
-
     def test_creates_meal_entry(self, saved_profile):
         data = {"date": "2022-06-23"}
-        context = {"owner_id": saved_profile.id}
-        serializer = serializers.CurrentMealSerializer(data=data, context=context)
+        serializer = serializers.CurrentMealSerializer(data=data)
         serializer.is_valid()
 
-        meal = serializer.save()
+        meal = serializer.save(owner=saved_profile)
 
         assert models.Meal.objects.filter(pk=meal.id).exists()
 
-    def test_create_without_raising_error_if_meal_exists(self, meal):
+    def test_create_without_raising_error_if_meal_exists(self, meal, saved_profile):
         data = {"date": meal.date}
-        context = {"owner_id": meal.owner.id}
-        serializer = serializers.CurrentMealSerializer(data=data, context=context)
+        serializer = serializers.CurrentMealSerializer(data=data)
         serializer.is_valid()
 
         try:
-            serializer.save()
+            serializer.save(owner=saved_profile)
         except IntegrityError as e:
             pytest.fail(
                 f"CurrentMealSerializer caused an IntegrityError "
                 f"when calling create() on duplicate meal data. - {e}"
             )
-
-    def test_no_order_id_raises_missing_context_error(self):
-        serializer = serializers.CurrentMealSerializer(data={"date": "2022-06-23"})
-        serializer.is_valid()
-
-        with pytest.raises(serializers.MissingContextError):
-            serializer.save()
 
 
 class TestRecipeSerializer:
@@ -170,83 +119,6 @@ class TestRecipeSerializer:
         assert serializer.is_valid()
 
 
-class TestRecipeIngredientSerializer:
-    def test_creates_using_recipe_id_in_context(self, ingredient_1, recipe):
-        data = {"ingredient": ingredient_1.id, "amount": 1}
-        context = {"recipe": recipe.id}
-        serializer = serializers.RecipeIngredientSerializer(data=data, context=context)
-        serializer.is_valid()
-
-        instance = serializer.save()
-
-        assert instance.recipe == recipe
-
-    def test_raises_error_if_creating_with_missing_context(self, ingredient_1):
-        data = {"ingredient": ingredient_1.id, "amount": 1}
-        serializer = serializers.RecipeIngredientSerializer(data=data)
-        serializer.is_valid()
-
-        with pytest.raises(serializers.MissingContextError):
-            serializer.save()
-
-
-class TestMealRecipeSerializer:
-    def test_creates_using_meal_id_in_context(self, recipe, meal):
-        data = {"recipe": recipe.id, "amount": 1}
-        context = {"meal": meal.id}
-        serializer = serializers.MealRecipeSerializer(data=data, context=context)
-        serializer.is_valid()
-
-        instance = serializer.save()
-
-        assert instance.meal == meal
-
-    def test_raises_error_if_creating_with_missing_context(self, recipe):
-        data = {"recipe": recipe.id, "amount": 1}
-        serializer = serializers.MealRecipeSerializer(data=data)
-        serializer.is_valid()
-
-        with pytest.raises(serializers.MissingContextError):
-            serializer.save()
-
-
-class TestIngredientSerializer:
-    def test_get_preview_url_context_target_is_recipe(self, ingredient_1, rf):
-        request = rf.get("", data={"target": "recipe"})
-        context = {"request": request}
-        serializer = serializers.IngredientSerializer(ingredient_1, context=context)
-        expected = reverse("recipe-ingredient-preview", args=(ingredient_1.id,))
-
-        assert serializer.data["preview_url"] == expected
-
-    def test_get_preview_url_no_context_target(self, ingredient_1, rf):
-        request = rf.get("")
-        context = {"request": request}
-        serializer = serializers.IngredientSerializer(ingredient_1, context=context)
-        expected = reverse("meal-ingredient-preview", args=(ingredient_1.id,))
-
-        assert serializer.data["preview_url"] == expected
-
-
-class TestRecipePreviewSerializer:
-    def test_calories_field_returns_calorie_percentages_for_nutrients(
-        self,
-        recipe,
-        ingredient_1,
-        ingredient_nutrient_1_1,
-        ingredient_nutrient_1_2,
-        nutrient_1,
-        nutrient_2,
-        nutrient_1_energy,
-        recipe_ingredient,
-    ):
-        models.NutrientEnergy.objects.create(nutrient=nutrient_2, amount=0.5)
-        expected = {nutrient_1.name: 75, nutrient_2.name: 25}
-
-        serializer = serializers.RecipePreviewSerializer(recipe)
-        assert serializer.data["calories"] == expected
-
-
 class TestWeightMeasurementSerializer:
     def test_create_uses_profile_from_request_in_context(self, rf, user, saved_profile):
         request = rf.get("")
@@ -257,20 +129,6 @@ class TestWeightMeasurementSerializer:
         serializer.is_valid(raise_exception=True)
 
         instance = serializer.save()
-
-        assert instance.profile == saved_profile
-
-    def test_create_save_method_profile_kwarg_overrides_request_profile(
-        self, rf, saved_profile, new_user
-    ):
-        request = rf.get("")
-        request.user = new_user
-        serializer = serializers.WeightMeasurementSerializer(
-            data={"value": 80}, context={"request": request}
-        )
-        serializer.is_valid(raise_exception=True)
-
-        instance = serializer.save(profile=saved_profile)
 
         assert instance.profile == saved_profile
 
@@ -624,16 +482,3 @@ class TestByDateIntakeSerializer:
         serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
 
         assert serializer.get_avg(nutrient_1) == 0.3
-
-
-class TestTrackedNutrientSerializer:
-    def test_get_chart_id(self, saved_profile, nutrient_1):
-        instance = models.Profile.tracked_nutrients.through.objects.create(
-            profile=saved_profile, nutrient=nutrient_1
-        )
-        serializer = serializers.TrackedNutrientSerializer(instance)
-        expected = "test-nutrient-tracked"
-
-        actual = serializer.get_chart_id(instance)
-
-        assert actual == expected

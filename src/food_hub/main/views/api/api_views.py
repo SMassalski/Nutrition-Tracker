@@ -112,8 +112,7 @@ class IngredientPreviewView(RetrieveAPIView):
     """Ingredient preview (selected ingredient information)."""
 
     queryset = Ingredient.objects.all()
-    serializer_class = serializers.IngredientPreviewSerializer
-    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
+    renderer_classes = [TemplateHTMLRenderer]
     template_name = "main/data/preview.html"
 
     refresh_event = None
@@ -156,7 +155,6 @@ class MealRecipePreviewView(MealIngredientPreviewView):
     """View for displaying recipe previews in the context of a meal."""
 
     queryset = models.Recipe.objects.all()
-    serializer_class = serializers.RecipePreviewSerializer
     target_pattern = "meal-recipe-list"
     component_field = "recipe"
 

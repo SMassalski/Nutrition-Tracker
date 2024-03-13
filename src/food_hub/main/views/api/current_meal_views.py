@@ -39,10 +39,8 @@ class CurrentMealView(
     htmx_events = ["currentMealChanged"]
 
     # docstr-coverage: inherited
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context["owner_id"] = self.request.user.profile.id
-        return context
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user.profile)
 
     # docstr-coverage: inherited
     def get_object(self):

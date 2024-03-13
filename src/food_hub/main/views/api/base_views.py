@@ -101,18 +101,15 @@ class ComponentCollectionViewSet(HTMXEventMixin, ModelViewSet):
         return perms + [permissions.IsCollectionOwnerPermission()]
 
     # docstr-coverage: inherited
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-
-        if self.action == "create":
-            # Add the collection id
-            lookup_kwarg = (
-                getattr(self, "list_lookup_url_kwarg", None)
-                or self.through_collection_field_name()
-            )
-            context[self.through_collection_field_name()] = self.kwargs[lookup_kwarg]
-
-        return context
+    def perform_create(self, serializer):
+        lookup_kwarg = (
+            getattr(self, "list_lookup_url_kwarg", None)
+            or self.through_collection_field_name()
+        )
+        lookup = {
+            f"{self.through_collection_field_name()}_id": self.kwargs[lookup_kwarg]
+        }
+        serializer.save(**lookup)
 
     # docstr-coverage: inherited
     def get_queryset(self):
