@@ -1,11 +1,25 @@
-"""Main app's serializers"""
+"""
+Serializers related to the `Nutrient`, `Ingredient`
+and `IntakeRecommendation` models.
+"""
 from datetime import timedelta
 from typing import Dict
 
-from django.db.models import Q
 from main import models
 from rest_framework import serializers
-from util import pounds_to_kilograms
+
+__all__ = (
+    "NutrientSerializer",
+    "NutrientDetailSerializer",
+    "IngredientNutrientSerializer",
+    "IngredientSerializer",
+    "IngredientDetailSerializer",
+    "RecommendationSerializer",
+    "NutrientTypeSerializer",
+    "NutrientIntakeSerializer",
+    "SimpleRecommendationSerializer",
+    "ByDateIntakeSerializer",
+)
 
 
 class NutrientSerializer(serializers.HyperlinkedModelSerializer):
@@ -56,37 +70,6 @@ class IngredientDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Ingredient
         fields = ["external_id", "name", "dataset", "nutrients"]
-
-
-class CurrentMealSerializer(serializers.ModelSerializer):
-    """Meal model's serializer for displaying and creating by dates.
-
-    Creating using the save method requires providing the owner as an argument.
-    The create method was modified to use get_or_create().
-    """
-
-    date = serializers.DateField(required=True)
-
-    class Meta:
-        model = models.Meal
-        fields = ["id", "date"]
-
-    # docstr-coverage: inherited
-    def create(self, validated_data):
-        instance, _ = self.Meta.model._default_manager.get_or_create(**validated_data)
-        return instance
-
-
-class MealIngredientSerializer(serializers.ModelSerializer):
-    """MealIngredient model serializer.
-
-    When creating an entry, the meal_id must be provided in the
-    save method.
-    """
-
-    class Meta:
-        model = models.MealIngredient
-        fields = ("id", "ingredient", "amount")
 
 
 class RecommendationSerializer(serializers.ModelSerializer):
@@ -156,158 +139,6 @@ class NutrientIntakeSerializer(serializers.ModelSerializer):
         if intakes is None:
             return None
         return intakes.get(obj.id, 0)
-
-
-class RecipeSerializer(serializers.ModelSerializer):
-    """Serializer for the `Recipe` model."""
-
-    slug = serializers.ReadOnlyField()
-
-    class Meta:
-        model = models.Recipe
-        fields = ["id", "name", "final_weight", "slug"]
-
-    # docstr-coverage: inherited
-    def validate(self, data):
-        owner = self.context["request"].user.profile.id
-        # Don't check the unique together constraint if the name wasn't changed.
-        if (
-            self.instance
-            and models.Recipe.objects.get(pk=self.instance.id).name == data["name"]
-        ):
-            return data
-        if models.Recipe.objects.filter(owner=owner, name=data["name"]).exists():
-            raise serializers.ValidationError(
-                f"This profile already has a recipe with the name {data['name']}."
-            )
-        return data
-
-    # docstr-coverage: inherited
-    def create(self, validated_data):
-        # Not enforcing the modification of preform create in views
-        # because the request is also needed for validation
-        validated_data["owner_id"] = self.context["request"].user.profile.id
-        return super().create(validated_data)
-
-
-class RecipeIngredientSerializer(serializers.ModelSerializer):
-    """RecipeIngredient model serializer.
-
-    When creating an entry, the recipe_id must be provided in the
-    save method.
-    """
-
-    class Meta:
-        model = models.RecipeIngredient
-        fields = ("id", "ingredient", "amount")
-
-
-class MealRecipeSerializer(serializers.ModelSerializer):
-    """MealIngredient model serializer.
-
-    When creating an entry, the meal_id must be provided in the save
-    method.
-    """
-
-    class Meta:
-        model = models.MealRecipe
-        fields = ("id", "recipe", "amount")
-
-
-class WeightMeasurementSerializer(serializers.ModelSerializer):
-    """Serializer for the `WeightMeasurement` model.
-
-    The 'request' needs to be included in the context for validation and
-    entry creation.
-    """
-
-    POUNDS = "LBS"
-    KILOGRAMS = "KG"
-    unit_choices = [(POUNDS, "lbs"), (KILOGRAMS, "kg")]
-
-    url = serializers.HyperlinkedIdentityField(view_name="weight-measurement-detail")
-    unit = serializers.ChoiceField(
-        choices=unit_choices, write_only=True, required=False
-    )
-
-    class Meta:
-        model = models.WeightMeasurement
-        fields = ("id", "url", "time", "value", "unit")
-
-    # docstr-coverage: inherited
-    def create(self, validated_data):
-        validated_data["profile"] = self.context["request"].user.profile
-        return models.WeightMeasurement.objects.create(**validated_data)
-
-    # docstr-coverage: inherited
-    def validate_time(self, value):
-        profile = self.context["request"].user.profile
-        queryset = models.WeightMeasurement.objects.filter(profile=profile, time=value)
-
-        # On update check only entries other than that of `instance`.
-        if self.instance is not None:
-            queryset = queryset.filter(~Q(id=self.instance.id))
-
-        if queryset.exists():
-            raise serializers.ValidationError(
-                "Weight measurement for the specified time already exists."
-            )
-
-        return value
-
-    # docstr-coverage: inherited
-    def to_internal_value(self, data):
-        ret = super().to_internal_value(data)
-
-        # Unit conversion
-        unit = ret.get("unit")
-        if unit == WeightMeasurementSerializer.POUNDS:
-            ret["value"] = pounds_to_kilograms(ret["value"])
-
-        ret.pop("unit", None)  # To avoid unexpected keyword arg error when saving.
-
-        return ret
-
-
-class ProfileSerializer(serializers.ModelSerializer):
-    """Serializer for the `Profile` model."""
-
-    POUNDS = "LBS"
-    KILOGRAMS = "KG"
-    unit_choices = [(POUNDS, "lbs"), (KILOGRAMS, "kg")]
-    weight_unit = serializers.ChoiceField(
-        choices=unit_choices, write_only=True, required=False
-    )
-
-    # DRF does not apply min value validators to PositiveIntegerFields.
-    age = serializers.IntegerField(min_value=0)
-    height = serializers.IntegerField(min_value=0)
-    weight = serializers.IntegerField(min_value=0)
-
-    class Meta:
-        model = models.Profile
-        fields = (
-            "id",
-            "age",
-            "height",
-            "weight",
-            "weight_unit",
-            "activity_level",
-            "sex",
-        )
-
-    # docstr-coverage: inherited
-    def to_internal_value(self, data):
-        ret = super().to_internal_value(data)
-
-        # Unit conversion
-        unit = ret.get("weight_unit")
-        if "weight" in ret and unit == WeightMeasurementSerializer.POUNDS:
-            ret["weight"] = pounds_to_kilograms(ret["weight"])
-
-        # To avoid unexpected keyword arg error when saving.
-        ret.pop("weight_unit", None)
-        return ret
 
 
 class SimpleRecommendationSerializer(serializers.ModelSerializer):
@@ -419,36 +250,3 @@ class ByDateIntakeSerializer(serializers.ModelSerializer):
         intakes = profile.intakes_by_date(obj.id, date_min, date_max)
 
         return round(sum(intakes.values()) / (len(intakes) or 1), 1)
-
-
-class TrackedNutrientSerializer(serializers.ModelSerializer):
-    """Serializer for the `Profile.tracked_nutrients` through model.
-
-    Uses the request in the context during validation.
-    When saving a profile needs to be provided.
-    """
-
-    nutrient_name = serializers.CharField(source="nutrient.name", read_only=True)
-
-    class Meta:
-        model = models.Profile.tracked_nutrients.through
-        fields = ["id", "nutrient", "nutrient_name"]
-
-    # docstr-coverage: inherited
-    def validate_nutrient(self, value):
-
-        profile = self.context["request"].user.profile
-        queryset = models.Profile.tracked_nutrients.through.objects.filter(
-            profile=profile, nutrient=value
-        )
-
-        # On update check only entries other than that of `instance`.
-        if self.instance is not None:
-            queryset = queryset.filter(~Q(id=self.instance.id))
-
-        if queryset.exists():
-            raise serializers.ValidationError(
-                "Nutrient is already tracked by the profile."
-            )
-
-        return value
