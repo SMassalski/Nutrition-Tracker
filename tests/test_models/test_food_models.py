@@ -576,6 +576,15 @@ class TestIntakeRecommendation:
 
         assert recommendation.progress == 50
 
+    def test_progress_ul_is_the_percentage_ratio_of_intake_to_profile_amount_max(
+        self, profile, recommendation
+    ):
+        recommendation.dri_type = models.IntakeRecommendation.UL
+        recommendation.amount_max = 10
+        recommendation.set_up(profile, 5)
+
+        assert recommendation.progress == 50
+
     def test_progress_property_rounded_to_nearest_integer(
         self, profile, recommendation
     ):

@@ -549,7 +549,10 @@ class IntakeRecommendation(models.Model):
                 "using the `set_up()` method"
             )
 
-        target = self.profile_amount_min(self._profile)
+        if self.dri_type == IntakeRecommendation.UL:
+            target = self.profile_amount_max(self._profile)
+        else:
+            target = self.profile_amount_min(self._profile)
 
         try:
             progress = min(round(100 * self._intake / target), 100)
