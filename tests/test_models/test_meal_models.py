@@ -90,19 +90,6 @@ class TestRecipe:
         expected = 0.015 * 10 * 0.5
         assert recipe.calories == {nutrient_1.name: expected}
 
-    def test_ingredient_calories_results_ordered_alphabetically(
-        self,
-        ingredient_1,
-        nutrient_1,
-        ingredient_nutrient_1_1,
-        nutrient_2,
-        ingredient_nutrient_1_2,
-        nutrient_1_energy,
-        nutrient_2_energy,
-        recipe,
-    ):
-        assert list(recipe.calories.keys()) == [nutrient_1.name, nutrient_2.name]
-
     def test_calories_only_returns_nutrients_with_energy(
         self,
         ingredient_1,
@@ -180,6 +167,24 @@ class TestRecipe:
         expected = {nutrient_1.name: 15.8, nutrient_2.name: 84.2}
 
         actual = recipe.calorie_ratio
+
+        assert actual == expected
+
+    def test_calorie_ratio_property_sorted_by_values_descending(
+        self,
+        ingredient_1,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+        recipe,
+    ):
+        expected = [84.2, 15.8]
+
+        actual = list(recipe.calorie_ratio.values())
 
         assert actual == expected
 
@@ -628,5 +633,26 @@ class TestMeal:
         expected = {nutrient_1.name: 21.8, nutrient_2.name: 78.2}
 
         actual = meal.calorie_ratio
+
+        assert actual == expected
+
+    def test_calorie_ratio_property_is_sorted_by_values_descending(
+        self,
+        meal,
+        recipe,
+        recipe_2,
+        meal_recipe,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        meal_ingredients,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = [78.2, 21.8]
+
+        actual = list(meal.calorie_ratio.values())
 
         assert actual == expected

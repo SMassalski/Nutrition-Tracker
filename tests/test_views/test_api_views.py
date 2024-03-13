@@ -2,9 +2,11 @@
 import json
 
 import pytest
-from main.views import api as views
+from main.views.api import api_views as views
 from rest_framework import status
 from rest_framework.reverse import reverse
+
+from tests.test_views.util import create_api_request
 
 # API root
 
@@ -114,6 +116,30 @@ class TestIngredientDetailView:
         result = set(json.loads(response.content)["nutrients"][0].keys())
         expected = {"url", "nutrient", "amount"}
         assert result == expected
+
+
+class TestIngredientPreviewView:
+    def test_get_template_context_has_component_field(self, ingredient_1):
+        expected = "value"
+        view = views.IngredientPreviewView.as_view(component_field=expected)
+        request = create_api_request("get")
+
+        response = view(request, pk=ingredient_1.id)
+
+        actual = response.data["component_field"]
+        assert actual == expected
+
+    def test_get_template_context_calories_is_calorie_ratio(
+        self, ingredient_1, ingredient_nutrient_1_1, nutrient_1, nutrient_1_energy
+    ):
+        expected = 100
+        view = views.IngredientPreviewView.as_view(component_field=expected)
+        request = create_api_request("get")
+
+        response = view(request, pk=ingredient_1.id)
+
+        actual = response.data["calories"][nutrient_1.name]
+        assert actual == expected  # would be 15 if calories property was used
 
 
 # Nutrient view

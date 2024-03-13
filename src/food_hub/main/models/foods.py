@@ -291,19 +291,30 @@ class Ingredient(models.Model):
         """
         # 'filter(nutrient__types_parent_nutrient=None)' would only
         # exclude nutrients that have only types with a parent nutrient.
-        queryset = (
-            self.ingredientnutrient_set.filter(
-                ~models.Q(nutrient__types__parent_nutrient__isnull=False),
-                nutrient__energy__isnull=False,
-                nutrient__compounds=None,
-            )
-            .select_related("nutrient", "nutrient__energy")
-            .order_by("nutrient__name")
-        )
+        queryset = self.ingredientnutrient_set.filter(
+            ~models.Q(nutrient__types__parent_nutrient__isnull=False),
+            nutrient__energy__isnull=False,
+            nutrient__compounds=None,
+        ).select_related("nutrient", "nutrient__energy")
 
         return {
             ing_nut.nutrient.name: ing_nut.amount * ing_nut.nutrient.energy_per_unit
             for ing_nut in queryset
+        }
+
+    @property
+    def calorie_ratio(self) -> Dict[str, int]:
+        """
+        The percent ratio of calories by nutrient in the ingredient.
+
+        Does not include nutrients that have a parent in either
+        a NutrientType or NutrientComponent relationship.
+        """
+        ret = self.calories
+        total = sum(ret.values())
+        return {
+            k: round(v / total * 100, 1)
+            for k, v in sorted(ret.items(), key=lambda x: x[1], reverse=True)
         }
 
 

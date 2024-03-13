@@ -116,7 +116,10 @@ class Meal(models.Model):
         """
         ret = self.calories
         total = sum(ret.values())
-        return {k: round(v / total * 100, 1) for k, v in ret.items()}
+        return {
+            k: round(v / total * 100, 1)
+            for k, v in sorted(ret.items(), key=lambda x: x[1], reverse=True)
+        }
 
     @property
     def calories(self):
@@ -195,7 +198,6 @@ class Meal(models.Model):
             )
             .values("nutrient")
             .annotate(calories=Sum("energy"))
-            .order_by("calories")
         )
         return {nutrient["nutrient"]: nutrient["calories"] for nutrient in queryset}
 
@@ -333,7 +335,6 @@ class Recipe(models.Model):
                 nutrient=F("ingredient__nutrients__name"),
             )
             .values("nutrient")
-            .order_by("nutrient")
             .annotate(calories=Sum("energy") / self.weight)
         )
         return {nutrient["nutrient"]: nutrient["calories"] for nutrient in queryset}
@@ -348,7 +349,10 @@ class Recipe(models.Model):
         """
         ret = self.calories
         total = sum(ret.values())
-        return {k: round(v / total * 100, 1) for k, v in ret.items()}
+        return {
+            k: round(v / total * 100, 1)
+            for k, v in sorted(ret.items(), key=lambda x: x[1], reverse=True)
+        }
 
 
 class RecipeIngredient(models.Model):

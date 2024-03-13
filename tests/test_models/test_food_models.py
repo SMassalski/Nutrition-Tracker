@@ -35,19 +35,6 @@ class TestIngredient:
         expected = 1.5 * 10
         assert ingredient_1.calories == {nutrient_1.name: expected}
 
-    def test_ingredient_calories_results_ordered_alphabetically(
-        self,
-        ingredient_1,
-        nutrient_1,
-        ingredient_nutrient_1_1,
-        nutrient_2,
-        ingredient_nutrient_1_2,
-        nutrient_1_energy,
-    ):
-        models.NutrientEnergy.objects.create(nutrient=nutrient_2, amount=2)
-
-        assert list(ingredient_1.calories.keys()) == [nutrient_1.name, nutrient_2.name]
-
     def test_ingredient_calories_only_returns_nutrients_with_energy(
         self,
         ingredient_1,
@@ -90,6 +77,38 @@ class TestIngredient:
         result = ingredient_1.calories
 
         assert nutrient_1.name not in result
+
+    def test_ingredient_calorie_ratio_is_percent_caloric_contribution_of_nutrients(
+        self,
+        ingredient_1,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = {nutrient_1.name: 97.4, nutrient_2.name: 2.6}
+
+        actual = ingredient_1.calorie_ratio
+
+        assert actual == expected
+
+    def test_ingredient_calorie_ratio_is_sorted_by_values_descending(
+        self,
+        ingredient_1,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = [97.4, 2.6]
+
+        actual = list(ingredient_1.calorie_ratio.values())
+
+        assert actual == expected
 
 
 class TestNutrient:

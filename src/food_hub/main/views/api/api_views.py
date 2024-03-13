@@ -95,8 +95,8 @@ class IngredientPreviewView(RetrieveAPIView):
 
     # docstr-coverage: inherited
     def get_template_context(self, data):
-        calories = data["obj"].calories
-        total = sum(calories.values())
-        calories = {nutrient: val * 100 / total for nutrient, val in calories.items()}
 
-        return {"component_field": self.component_field, "calories": calories}
+        return {
+            "component_field": self.component_field,
+            "calories": data["obj"].calorie_ratio,
+        }
