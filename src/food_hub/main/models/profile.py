@@ -54,9 +54,7 @@ _EER_COEFFS = {
     ),
 }
 
-# A profile should not be required to use the app. Recommended intake
-# calculations can use assumptions and averages when relevant
-# information is not provided.
+
 class Profile(models.Model):
     """
     Represents user information used for calculating intake
