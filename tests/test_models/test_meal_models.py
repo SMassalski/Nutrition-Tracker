@@ -370,6 +370,7 @@ class TestMeal:
         self,
         meal,
         meal_recipe,
+        recipe_2,  # Added to test for n+1
         ingredient_nutrient_1_1,
         ingredient_nutrient_1_2,
         ingredient_nutrient_2_2,
@@ -581,6 +582,7 @@ class TestMeal:
         self,
         meal,
         recipe,
+        recipe_2,  # Added to test for n+1
         meal_recipe,
         nutrient_1,
         nutrient_2,

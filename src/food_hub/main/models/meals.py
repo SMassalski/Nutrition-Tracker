@@ -4,8 +4,9 @@ from typing import Dict
 
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import F, OuterRef, Q, Subquery, Sum
+from django.db.models import Case, F, OuterRef, Q, Subquery, Sum, When
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.text import slugify
 from main.models import Nutrient
 
@@ -79,10 +80,16 @@ class Meal(models.Model):
         if not queryset:
             return {}
 
-        recipes = {rec.id: rec for rec in Recipe.objects.filter(meal=self)}
+        recipe_queryset = self.recipes.annotate(
+            _weight=Case(
+                When(final_weight=None, then=Sum("recipeingredient__amount")),
+                When(final_weight__isnull=False, then=F("final_weight")),
+            )
+        )
+        recipes = {rec.id: rec for rec in recipe_queryset}
         ret = {}
         for val in queryset:
-            recipe_weight = recipes[val["recipe_id"]].weight
+            recipe_weight = recipes[val["recipe_id"]]._weight
             amount = val["total"] / recipe_weight
             ret[val["nutrient"]] = ret.get(val["nutrient"], 0) + amount
 
@@ -166,11 +173,17 @@ class Meal(models.Model):
         if not queryset:
             return {}
 
-        recipes = {rec.id: rec for rec in Recipe.objects.filter(meal=self)}
+        recipe_queryset = self.recipes.annotate(
+            _weight=Case(
+                When(final_weight=None, then=Sum("recipeingredient__amount")),
+                When(final_weight__isnull=False, then=F("final_weight")),
+            )
+        )
+        recipes = {rec.id: rec for rec in recipe_queryset}
         ret = {}
         for val in queryset:
             nutrient = nutrients[val["nutrient"]]
-            recipe_weight = recipes[val["recipe_id"]].weight
+            recipe_weight = recipes[val["recipe_id"]]._weight
             energy = val["total"] / recipe_weight * nutrient.energy.amount
             ret[nutrient.name] = ret.get(nutrient.name, 0) + energy
 
