@@ -4,7 +4,7 @@
     <td id="data-comp-{{ obj.id }}">
         <input class="form-control" value="{{ obj.amount }}" type="number" min="0.1" step="0.1" name="amount" id="amount-field" placeholder="Amount (g)" required>
     </td>
-    <td class="table-actions">
+    <td class="action-buttons">
         {# actions #}
         <a
             hx-patch="{% url url_name obj.id %}"

@@ -1,36 +1,34 @@
-<nav class="main-header navbar navbar-expand navbar-light">
+<nav class="main-header navbar navbar-expand">
     <!-- Left -->
-    <ul class="navbar-nav">
-        {% if user.is_authenticated %}
-        <li class="nav-item">
-            <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
-        </li>
-        {% endif %}
+    <ul class="navbar-nav me-auto">
+        {% comment %}
         <li class="nav-item d-none d-sm-inline-block">
             <a href="{% url 'dashboard' %}" class="nav-link">Home</a>
         </li>
+        {% endcomment %}
 
     </ul>
     <!-- Right -->
-    <ul class="navbar-nav ml-auto">
+    <ul class="navbar-nav">
         <!-- Account dropdown -->
         {% if user.is_authenticated %}
         <li class="nav-item dropdown">
-            <a class="nav-link" href="#" data-toggle="dropdown">
+            <a class="nav-link py-0 fs-4" href="#" data-bs-toggle="dropdown" aria-expanded="false" role="button">
                 <i class="fa-solid fa-circle-user"></i>
             </a>
-            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                <span class="dropdown-header">Logged in as <strong>{{ user.username }}</strong></span>
-                <div class="dropdown-divider"></div>
-                <form action="{% url 'logout' %}" method="POST" class="inline dropdown-item" style="cursor: pointer;">
-                    {% csrf_token %}
-                    <a onclick="this.parentNode.submit();"
-                       style="display: inline-block; width: 100%; text-align: center;">
-                        Log out
-                    </a>
-                </form>
-
-            </div>
+            <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
+                <li><h6 class="dropdown-header">Logged in as <strong>{{ user.username }}</strong></h6></li>
+                <li><hr class="dropdown-divider">
+                <li>
+                    <form action="{% url 'logout' %}" method="POST" class="inline dropdown-item" style="cursor: pointer;">
+                        {% csrf_token %}
+                        <a onclick="this.parentNode.submit();"
+                        style="display: inline-block; width: 100%; text-align: center;">
+                            Log out
+                        </a>
+                    </form>
+                </li>
+            </ul>
         </li>
         {% else %}
         <li class="nav-item d-none d-sm-inline-block">

@@ -4,8 +4,8 @@
 {% block card-content %}
 <form action="{% url 'registration' %}" method="POST">
     {% csrf_token %}
-    <div class="field-wrapper form-group row">
-        <label for="{{ form.username.id_for_label }}">Username</label>
+    <div class="mb-3">
+        <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
         <input id="{{ form.username.id_for_label }}"
             class="form-control{% if form.username.errors %} is-invalid{% endif %}"
             type="text"
@@ -14,14 +14,14 @@
             value="{{ form.username.value|default_if_none:'' }}"
             autocomplete="username"
             required
-            data-toggle="tooltip"
+            data-bs-toggle="tooltip"
             title="{{form.username.help_text}}">
         <div class="invalid-feedback">
             {{ form.username.errors }}
         </div>
     </div>
-    <div class="field-wrapper form-group row">
-        <label for="{{ form.email.id_for_label }}">Email</label>
+    <div class="mb-3">
+        <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
         <input id="{{ form.email.id_for_label }}"
             class="form-control{% if form.email.errors %} is-invalid{% endif %}"
             type="text"
@@ -30,14 +30,14 @@
             value="{{ form.email.value|default_if_none:'' }}"
             autocomplete="email"
             required
-            data-toggle="tooltip"
+            data-bs-toggle="tooltip"
             title="{{form.email.help_text}}">
         <div class="invalid-feedback">
             {{ form.email.errors }}
         </div>
     </div>
-    <div class="field-wrapper form-group row">
-        <label for="{{ form.password1.id_for_label }}">Password</label>
+    <div class="mb-3">
+        <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
         <input id="{{ form.password1.id_for_label }}"
             class="form-control{% if form.password1.errors or form.password2.errors %} is-invalid{% endif %}"
             type="password"
@@ -45,14 +45,15 @@
             autocomplete="new-password"
             value="{{ form.password1.value|default_if_none:'' }}"
             required
-            data-toggle="tooltip"
+            data-bs-toggle="tooltip"
+            data-bs-html="true"
             title="{{form.password1.help_text}}">
         <div class="invalid-feedback">
             {{ form.password1.errors }}
         </div>
     </div>
-    <div class="field-wrapper form-group row">
-        <label for="{{ form.password2.id_for_label }}">Confirm password</label>
+    <div class="mb-3">
+        <label for="{{ form.password2.id_for_label }}" class="form-label">Confirm password</label>
         <input id="{{ form.password2.id_for_label }}"
             class="form-control{% if form.password2.errors %} is-invalid{% endif %}"
             type="password"
@@ -60,15 +61,13 @@
             value="{{ form.password2.value|default_if_none:'' }}"
             autocomplete="new-password"
             required
-            data-toggle="tooltip"
+            data-bs-toggle="tooltip"
             title="{{form.password2.help_text}}">
         <div class="invalid-feedback">
             {{ form.password2.errors }}
         </div>
     </div>
-    <div class="form-group row">
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Sign Up</button>
-    </div>
+    <button type="submit" class="btn btn-primary" style="width: 100%;">Sign Up</button>
 </form>
 {% endblock card-content %}
 {% block tooltip-script %}

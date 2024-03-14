@@ -11,15 +11,16 @@
                 placeholder="Value (kg)" required>
             </div>
             <div class="col-3">
-                <select name="unit" id="weight-unit-select" class="select custom-select">
+                <select name="unit" id="weight-unit-select" class="form-select">
                     <option value="KG" selected>kg</option>
                     <option value="LBS">lbs</option>
                 </select>
             </div>
         </div>
     </td>
-    <td class="table-actions">
-        {# actions #}
+    {# actions #}
+    <td class="action-buttons">
+
         <a
             hx-patch="{% url "weight-measurement-detail" obj.id %}"
             hx-include="#weight-list-row-{{ obj.id }}"

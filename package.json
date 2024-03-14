@@ -31,12 +31,13 @@
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
-    "admin-lte": "^3.2.0",
-    "bootstrap": "4.6",
+    "bootstrap": "^5.2.3",
     "chart.js": "^4.1.1",
     "chartjs-plugin-annotation": "^2.1.2",
     "htmx.org": "^1.9.9",
     "jquery": "^3.6.3",
+    "jquery-bridget": "^3.0.1",
+    "masonry-layout": "^4.2.2",
     "popper.js": "^1.16.1"
   }
 }

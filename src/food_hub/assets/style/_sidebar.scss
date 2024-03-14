@@ -1,0 +1,142 @@
+@import "../../../../node_modules/bootstrap/scss/functions";
+@import "../../../../node_modules/bootstrap/scss/variables";
+@import "../../../../node_modules/bootstrap/scss/maps";
+@import "../../../../node_modules/bootstrap/scss/mixins";
+
+@include media-breakpoint-down(md) {
+    div.content-wrapper {
+        padding-left: calc(2rem + 72px) !important;
+    }
+    .sidebar {
+        width: 72px !important;
+
+        &:hover {
+            width: 72px !important;
+            .brand-link span {
+                    display: none !important;
+            }
+        }
+
+        ul .nav-link {
+            justify-content: center;
+            .nav-main-label {
+                display: none;
+            }
+
+        }
+        .nav-icon {
+            min-width: 56px !important;
+            .nav-bottom-label {
+                font-size: 0.6rem !important;
+                display: flex !important;
+            }
+        }
+        .brand-link {
+
+            height: 2.5rem;
+
+            span {
+                display: none;
+            }
+
+        }
+
+    }
+}
+
+.sidebar {
+    color: white;
+    padding: 0;
+    position: fixed;
+    z-index: 10;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    width: 60px;
+    transition: width 0.6s;
+
+    ul.nav-pills{
+        padding: 0 8px;
+        flex-direction: column;
+        margin-bottom: auto;
+        overflow-x: hidden;
+        overflow-y: auto;
+        flex-wrap: nowrap;
+
+
+        .nav-link {
+            white-space: nowrap;
+            color: white;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+
+            padding: 8px 0;
+            &:hover {
+                background-color: #132e40;;
+            }
+
+
+        }
+
+        .nav-bottom-label {
+            display: none;
+        }
+
+
+
+    }
+    .nav-icon {
+        min-width: 44px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    span.nav-main-label {
+        padding-left: 8px;
+    }
+
+    &:hover {
+        width: 260px;
+
+        .brand-link span {
+            display: flex;
+        }
+    }
+
+    .brand-link {
+        white-space: nowrap;
+        color: white;
+        text-decoration: none;
+        align-items: center;
+        display: flex;
+        padding-top: 1rem;
+        margin-bottom: 1rem;
+        margin-right: auto;
+        padding-left: 8px;
+        padding-right: 8px;
+
+        .nav-icon i {
+            font-size: 2rem;
+        }
+        span.nav-main-label {
+            padding-left: 6px;
+        }
+    }
+
+    .sidebar-collapse {
+        padding: 0;
+    }
+}
+
+.content-wrapper {
+    padding-left: calc(2rem + 60px) !important;
+}
+
+.nav-sidebar .nav-link p {
+    margin-left: 0.5rem;
+}

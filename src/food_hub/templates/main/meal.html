@@ -107,7 +107,7 @@
             <div class="card card-outline card-secondary">
                 <div class="card-body">
                     <div class="container-fluid mt-3">
-                        <div class="row" hx-get="{% url 'current-meal-intakes' %}"
+                        <div hx-get="{% url 'current-meal-intakes' %}"
                         hx-trigger="currentMealChanged from:body, mealComponentsChanged from:body, load">
                         </div>
                     </div>
@@ -122,9 +122,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Change Date</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="col">

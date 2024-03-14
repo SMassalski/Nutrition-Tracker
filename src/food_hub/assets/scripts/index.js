@@ -1,7 +1,5 @@
-import 'htmx.org';
 import "jquery";
 import 'bootstrap';
-import 'admin-lte';
 import {
     Chart,
     LineController,
@@ -17,6 +15,7 @@ import {
  } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
+// Chart.js
 Chart.register(
     LineController,
     LineElement,
@@ -31,8 +30,27 @@ Chart.register(
     annotationPlugin
     );
 window.Chart = Chart;
+
+// HTMX
 window.htmx = require('htmx.org');
 require('htmx.org/dist/ext/response-targets.js');
+
+// Masonry
+var Masonry = require('masonry-layout');
+var jQueryBridget = require('jquery-bridget')
+jQueryBridget( 'masonry', Masonry, $ );
+
+window.setUpGrid = function setUpGrid() {
+    $('.grid').masonry({
+        columnWidth: ".grid-item",
+        itemSelector: ".grid-item",
+    });
+    console.log("setUpGrid() called")
+}
+
+
+
+// Local
 
 window.autoConvertHeight = function autoConvertHeight(cm_selector, ft_selector, in_selector) {
     // Automatically convert the height value in centimeters to feet and inches and vice versa.

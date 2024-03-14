@@ -5,8 +5,8 @@
 {% block card-content %}
 <form action="{% url 'login' %}?next={{ next }}" method="POST">
     {% csrf_token %}
-    <div class="field-wrapper form-group row">
-        <label for="{{ form.username.id_for_label }}">Username</label>
+    <div class="mb-3">
+        <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
         <input id="{{ form.username.id_for_label }}"
             class="form-control{% if form.errors %} is-invalid{% endif %}"
             type="text"
@@ -15,8 +15,8 @@
             value="{{ form.username.value|default_if_none:'' }}"
             required>
     </div>
-    <div class="field-wrapper form-group row">
-        <label for="{{ form.password.id_for_label }}">Password</label>
+    <div class="mb-3">
+        <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
         <input id="{{ form.password.id_for_label }}"
             class="form-control{% if form.errors %} is-invalid{% endif %}"
             type="password"
@@ -33,8 +33,7 @@
         </div>
 
     </div>
-    <div class="form-group row justify-content-end">
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Log In</button>
-    </div>
+    <button type="submit" class="btn btn-primary" style="width: 100%;">Log In</button>
+
 </form>
 {% endblock card-content %}

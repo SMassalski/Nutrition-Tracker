@@ -1,8 +1,8 @@
-@use "sass:map";
+@use "sidebar";
+@use "navbar";
 
 // Bootstrap functions
 @import "../../../../node_modules/bootstrap/scss/functions";
-@import '../../../../node_modules/admin-lte/build/scss/bootstrap-variables';
 
 // Include default variable overrides here
 
@@ -14,31 +14,61 @@ $warning: #F6AE2D;
 $danger: #F26419;
 $light: #ffffff;
 $dark: #04141F;
+$font-family-sans-serif: "Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+$font-family-monospace: SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
 
 
-$theme-colors: (
-    'primary': $primary,
-    'secondary': $secondary,
-    'success': $success,
-    'info': $info,
-    'warning': $warning,
-    'danger': $danger,
-    'light': $light,
-    'dark': $dark,
-);
 
-@import '../../../../node_modules/admin-lte/build/scss/variables';
-@import '../../../../node_modules/admin-lte/build/scss/variables-alt';
-@import '../../../../node_modules/admin-lte/build/scss/mixins';
+// Remainder of required Bootstrap stylesheets
+@import "../../../../node_modules/bootstrap/scss/variables";
 
-@import '../../../../node_modules/bootstrap/scss/bootstrap';
+// Include any default map overrides here
 
-@import '../../../../node_modules/admin-lte/build/scss/parts/core';
-@import '../../../../node_modules/admin-lte/build/scss/parts/components';
-@import '../../../../node_modules/admin-lte/build/scss/parts/extra-components';
-@import '../../../../node_modules/admin-lte/build/scss/parts/pages';
-@import '../../../../node_modules/admin-lte/build/scss/parts/plugins';
-@import '../../../../node_modules/admin-lte/build/scss/parts/miscellaneous';
+
+// Remainder of required parts
+@import "../../../../node_modules/bootstrap/scss/maps";
+@import "../../../../node_modules/bootstrap/scss/mixins";
+@import "../../../../node_modules/bootstrap/scss/root";
+
+// 6. Optionally include any other parts as needed
+@import "../../../../node_modules/bootstrap/scss/utilities";
+@import "../../../../node_modules/bootstrap/scss/reboot";
+@import "../../../../node_modules/bootstrap/scss/type";
+// @import "../../../../node_modules/bootstrap/scss/images";
+@import "../../../../node_modules/bootstrap/scss/containers";
+@import "../../../../node_modules/bootstrap/scss/grid";
+@import "../../../../node_modules/bootstrap/scss/helpers";
+
+// Layout & components
+@import "../../../../node_modules/bootstrap/scss/tables";
+@import "../../../../node_modules/bootstrap/scss/forms";
+@import "../../../../node_modules/bootstrap/scss/buttons";
+@import "../../../../node_modules/bootstrap/scss/transitions";
+@import "../../../../node_modules/bootstrap/scss/dropdown";
+// @import "../../../../node_modules/bootstrap/scss/button-group";
+@import "../../../../node_modules/bootstrap/scss/nav";
+@import "../../../../node_modules/bootstrap/scss/navbar";
+@import "../../../../node_modules/bootstrap/scss/card";
+// @import "../../../../node_modules/bootstrap/scss/accordion";
+@import "../../../../node_modules/bootstrap/scss/breadcrumb";
+// @import "../../../../node_modules/bootstrap/scss/pagination";
+// @import "../../../../node_modules/bootstrap/scss/badge";
+@import "../../../../node_modules/bootstrap/scss/alert";
+@import "../../../../node_modules/bootstrap/scss/progress";
+// @import "../../../../node_modules/bootstrap/scss/list-group";
+@import "../../../../node_modules/bootstrap/scss/close";
+// @import "../../../../node_modules/bootstrap/scss/toasts";
+@import "../../../../node_modules/bootstrap/scss/modal";
+@import "../../../../node_modules/bootstrap/scss/tooltip";
+// @import "../../../../node_modules/bootstrap/scss/popover";
+// @import "../../../../node_modules/bootstrap/scss/carousel";
+// @import "../../../../node_modules/bootstrap/scss/spinners";
+// @import "../../../../node_modules/bootstrap/scss/offcanvas";
+// @import "../../../../node_modules/bootstrap/scss/placeholders";
+
+// 7. Optionally include utilities API last to generate classes based on the Sass map in `_utilities.scss`
+@import "../../../../node_modules/bootstrap/scss/utilities/api";
+
 
 $chart_palette: $primary, $info, $secondary, $warning, $danger;
 $chart_primary: $info;
@@ -56,63 +86,140 @@ $progress-success: #89da99;
 $progress-danger: #e4937b;
 $progress-danger-background: #ffece6;
 
-.bordered {
-    border: 1px solid $border_gray;
-    border-radius: .3rem;
+// Content
+.content-wrapper {
+    overflow: scroll;
+    height: 100vh;
+    background-color: #f4f6f9;
+    padding: 2.5rem 2rem 3rem 2rem;
 }
 
-.table.table-head-fixed thead tr:nth-child(1) th {
-    box-shadow: inset 0 -1px 0 $border_gray;
-    border-top: 0px;
-}
+// Cards
+.card {
+    margin-bottom: 1rem;
+    box-shadow: 1px 1px 3px $border_gray;
 
-.table thead tr.nutrient-table-label:nth-child(1) th {
-    border-top: 0px;
-    border-bottom: 0px;
-}
+    .card-header {
+        background-color: transparent;
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 400;
+            margin: 0;
+        }
+    }
 
-.bordered {
-    border: 1px solid $border_gray;
-    border-radius: .3rem;
+    .card-body {
+        padding: 1.25rem;
+    }
 
-    table {
-        margin-bottom: 0;
+    &.card-outline {
+        @each $name, $value in $theme-colors {
+            &.card-#{$name} {
+                border-top: 3px solid $value;
+            }
+        }
+    }
+
+    &.table-card {
+        box-shadow: none;
+
+        .card-body {
+            padding: 0;
+        }
     }
 }
 
-.table-responsive.bordered {
-    padding: 0;
+// Breadcrumb
+.nav-breadcrumbs {
+    display: flex;
+    .breadcrumb {
+        margin-left: auto;
+        @include media-breakpoint-down(md) {
+            font-size: 0.8rem;
+        }
+    }
 }
 
-tr th.nutrient-progress {
-    width: 100%;
-}
-
-tr th.nutrient-label {
-    width: 50%;
-}
-
+// Table
 .table {
     td {
         vertical-align: middle;
-    }
-    td.table-actions {
-        text-align: center;
-        a {
-            padding-left: 3px;
-            padding-right: 3px;
+
+        &.action-buttons {
+            text-align: center;
+        }
+        &.table-append {
+            text-align: center;
+            font-size: 1.5rem;
+            color: $info;
+            border-bottom: 0;
+            cursor: pointer;
         }
     }
-    td.table-append {
+
+    &.table-head-fixed {
+        th {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            box-shadow: inset 0 -1px 0 $border_gray;
+            border-top: 0px;
+        }
+    }
+
+    &.table-choice {
+        tbody tr {
+            cursor: pointer;
+            height: 55px;
+        }
+    }
+
+    &.table-hover tbody tr {
+
+        &:hover td.table-append {
+            background-color: tint-color($info, 50%);
+            color: shade-color($info, 20%);
+        }
+        &.table-form:hover td {
+            background-color: white;
+        }
+        &.hover-passive {
+            td {color: gray;}
+            &:hover td {
+                background-color: white;
+                color: gray;
+            }
+        }
+    }
+
+    &.bordered {
+        padding: 0;
+    }
+
+    &.amounts-table tbody tr td:nth-of-type(2) {
         text-align: center;
-        font-size: 1.5rem;
-        color: $info;
-        cursor: pointer;
     }
-    tr.nutrient-table-label {
-        background-color: #E9ECEF;
-    }
-    &.micronutrient-table {
+
+    &.intake-table {
+
+        thead {
+            tr {
+                background-color: #E9ECEF;
+            }
+            th {
+                border-top: 0px;
+                border-bottom: 0px;
+
+                &.nutrient-progress {
+                    width: 100%;
+                }
+
+                &.nutrient-label {
+                    width: 50%;
+                }
+            }
+        }
+
         tbody tr {
             td:nth-of-type(3) {
                 white-space: nowrap;
@@ -133,45 +240,14 @@ tr th.nutrient-label {
                 font-weight: bolder;
             }
         }
-    }
 
-    &.table-choice {
-        tbody tr {
-            cursor: pointer;
-        }
-    }
-    &.amounts-table tbody tr td:nth-of-type(2) {
-        text-align: center;
-    }
-
-    &.table-hover tbody {
-        tr:hover td.table-append {
-            background-color: theme-color-level(info, -10);
-        }
-        tr.table-form:hover td {
-            background-color: white;
-        }
-        tr.hover-passive:hover td {
-            background-color: white;
-            color: gray;
-        }
-        tr .recipe-actions {
-            i {
-                display: none;
-            }
-        }
-        tr:hover .recipe-actions{
-            i {
-                display: inline-block;
-            }
+        tr:last-of-type td{
+            border-bottom: 0;
         }
     }
 }
 
-.hover-passive {
-    color: gray;
-}
-
+// Progress Bars
 .progress {
     height: 1.3rem;
     font-size: 1rem;
@@ -194,9 +270,11 @@ tr th.nutrient-label {
     }
 }
 
+// Top Panel
 .top-panel {
     a {
         color: $primary;
+        text-decoration: none;
     }
 
     .sub-panel {
@@ -222,21 +300,12 @@ tr th.nutrient-label {
 
 }
 
-button.form-tip {
-    background-color: transparent;
-    border: none;
-    color: gray;
-}
-
+// Chart
 .chart-container {
     position: relative;
 }
 
-
-.nav-sidebar .nav-link p {
-    margin-left: 0.5rem;
-}
-
+// Tiny links below a form (like to registration and password reset under the login form)
 .form-links {
     a {
         margin-left: .25rem;
@@ -252,33 +321,33 @@ button.form-tip {
     }
 }
 
+// Settings URL list
 ul.url-list {
     li {
         margin-bottom: 1rem;
+        a {
+            text-decoration: none;
+        }
     }
 }
 
-.dropdown-menu .dropdown-item {
-    &:active {
-        background-color: gray;
-    }
-    a {
-        display: inline-block;
-        width: 100%;
-        text-align: center;
-        color: inherit;
-    }
-}
-
-.card-columns {
-    column-count: 2;
-}
-
-.card .table-card {
-    .card-body {
-        padding: 0;
-    }
-    box-shadow: none;
+// Misc
+.bordered {
     border: 1px solid $border_gray;
     border-radius: .3rem;
+    table {
+        margin-bottom: 0;
+    }
+}
+
+.action-buttons {
+    a {
+        padding-left: 3px;
+        padding-right: 3px;
+        cursor: pointer;
+        color: $primary !important;
+        &:active {
+            color: tint-color($primary, 50%) !important;
+        }
+    }
 }

@@ -1,38 +1,50 @@
-<aside class="main-sidebar sidebar-dark-primary elevation-4">
-
-    <a href="{% url 'dashboard' %}" class="brand-link">
-        <span class="brand-text font-weight-light">Nutrient Tracker</span>
-    </a>
 
 
-    <div class=sidebar>
-        <nav class="mt-2">
-            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-                <li class="nav-item">
-                    <a href="{% url 'dashboard' %}" class="nav-link">
+<div class="sidebar bg-dark">
+    <div id="sidebar" class="collapse collapse-horizontal show sidebar-collapse">
+        <a href="{% url 'dashboard' %}" class="brand-link">
+            <div class="nav-icon">
+                {% comment %} <i class="fa-solid fa-utensils brand-icon"></i> {% endcomment %}
+            </div>
+            <span class="fs-4 nav-main-label">Nutrient Tracker</span>
+        </a>
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}" class="nav-link">
+                    <div class="nav-icon">
                         <i class="fa-solid fa-chart-line"></i>
-                        <p>Dashboard</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'meal' %}" class="nav-link">
+                        <span class="nav-bottom-label">Dashboard</span>
+                    </div>
+                    <span class="nav-main-label">Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'meal' %}" class="nav-link">
+                    <div class="nav-icon">
                         <i class="fa-regular fa-calendar"></i>
-                        <p>Meals</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'recipe' %}" class="nav-link">
+                        <span class="nav-bottom-label">Meals</span>
+                    </div>
+                    <span class="nav-main-label">Meals</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'recipe' %}" class="nav-link">
+                    <div class="nav-icon">
                         <i class="fa-solid fa-receipt"></i>
-                        <p>Recipes</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'settings' %}" class="nav-link">
+                        <span class="nav-bottom-label">Recipes</span>
+                    </div>
+                    <span class="nav-main-label">Recipes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'settings' %}" class="nav-link">
+                    <div class="nav-icon">
                         <i class="fa-solid fa-gear"></i>
-                        <p>Settings</p>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+                        <span class="nav-bottom-label">Settings</span>
+                    </div>
+                    <span class="nav-main-label">Settings</span>
+                </a>
+            </li>
+        </ul>
     </div>
-</aside>
+</div>

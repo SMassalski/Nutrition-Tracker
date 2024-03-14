@@ -41,7 +41,7 @@ use_tooltips
 {% endcomment %}
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="overflow-hidden">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -52,23 +52,18 @@ use_tooltips
         <script src="{% static 'charts_wrapper.js' %}"></script>
         {% block top-scripts %}{% endblock top-scripts %}
     </head>
-    <body class="{% if user.is_authenticated %}hold-transition sidebar-mini{% else %}layout-top-nav{% endif %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-        <div class="wrapper">
-            <!--
-            Preloader is recommended here because of weird sidebar behaviour
-            <div class="preloader">
-                <img src="path_to_img" alt="NutritionTrackerLogo" height="60" width="60">
-            </div>
-            -->
-            <!-- Navbar -->
-            {% include "main/components/navbar.html"%}
+    <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
-            <!-- Sidebar -->
-            {% if user.is_authenticated %}
-            {% include "main/components/sidebar.html"%}
-            {% endif %}
 
+        {# Sidebar #}
+        {% if user.is_authenticated %}
+        {% include "main/components/sidebar.html"%}
+        {% endif %}
+        <!-- Navbar -->
+        {% include "main/components/navbar.html" %}
+        <div class="container-fluid p-0">
             <div class="content-wrapper">
+
                 <div class="content-header">
                     {% block content-header %}{% endblock content-header %}
                 </div>
@@ -82,13 +77,11 @@ use_tooltips
         {% if use_tooltips %}
         <script>
             $(function () {
-                $('[data-toggle="tooltip"]').tooltip(
+                $('[data-bs-toggle="tooltip"]').tooltip(
                 {% block tooltip-config %}
                 {
                     container: 'body',
                     placement: 'right',
-                    html: true,
-                    trigger: 'focus',
                 }
                 {% endblock tooltip-config %}
                 )

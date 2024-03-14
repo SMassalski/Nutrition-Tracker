@@ -7,16 +7,14 @@
 {% elif success %}  {# The template is also used by the get method #}
 <div class="alert alert-success alert-dismissible fade show profile-alert" role="alert" id="success-alert-{{ obj.id }}">
     Profile information saved.
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-    </button>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 {% endif %}
 <form {% if obj %}hx-patch={% else %}hx-post={% endif %}"{% url "profile" %}{% if next %}?next={{ next }}{% endif %}"
 hx-swap="outerHTML">
     {# Age field #}
-    <div id="age-div" class="form-group">
-        <label for="age-input">Age</label>
+    <div id="age-div" class="mb-3">
+        <label for="age-input" class="form-label">Age</label>
         <input id="age-input" type="number"
         class="numberinput form-control" step="1"
         min="0" name="age"
@@ -25,11 +23,11 @@ hx-swap="outerHTML">
     </div>
 
     {# Height fields #}
-    <div class="form-group mb-0">
-        <label for="height-input">Height</label>
-        <div class="form-row">
+    <div>
+        <label for="height-input" class="form-label">Height</label>
+        <div class="row mb-3">
             {# Centimeters #}
-            <div class="col-md">
+            <div class="col-12 col-lg">
                 <div id="height-div" class="form-group">
                     <div class="input-group">
                         <input id="height-input" type="number"
@@ -37,36 +35,31 @@ hx-swap="outerHTML">
                         min="0" name="height"
                         value="{% firstof serializer.height.value obj.height %}{% if obj.height == 0 %}{{obj.height}}{% endif %}"
                         required>
-                        <div class="input-group-append">
-                            <span class="input-group-text">cm</span>
-                        </div>
+                        <span class="input-group-text">cm</span>
+
                     </div>
                 </div>
             </div>
-            <div class="col-1 d-flex justify-content-center">
-                <span class="d-flex align-items-center form-group">or</span>
+            <div class="col-12 col-lg-1 d-flex justify-content-center py-2">
+                <span class="d-flex align-items-center">or</span>
             </div>
             {# Feet #}
-            <div class="col-md ">
+            <div class="col-6 col-lg">
                 <div id="div_id_feet" class="form-group">
                     <div class="">
                         <div class="input-group">
                             <input type="number" value="0" min=0 step=1 class="numberinput form-control" id="feet-input">
-                            <div class="input-group-append">
-                                <span class="input-group-text">ft</span>
-                            </div>
+                            <span class="input-group-text">ft</span>
                         </div>
                     </div>
                 </div>
             </div>
             {# Inches #}
-            <div class="col-md ">
-                <div id="div_id_inches" class="form-group">
-                    <div class=""> <div class="input-group">
+            <div class="col-6 col-lg">
+                <div id="div_id_inches">
+                    <div class="input-group">
                         <input type="number" value="0" min=0 step=1 class="numberinput form-control" id="inches-input">
-                        <div class="input-group-append">
-                            <span class="input-group-text">in</span>
-                        </div>
+                        <span class="input-group-text">in</span>
                      </div>
                 </div>
             </div>
@@ -77,17 +70,17 @@ hx-swap="outerHTML">
     </script>
     {% if not obj %}  {# Include weight fields only if the profile is being created. #}
     {# Weight fields #}
-    <div class="form-group mb-0">
-        <label for="weight-input">Weight</label>
-        <div class="form-row ">
-            <div class="col-md ">
+    <div>
+        <label for="weight-input" class="form-label">Weight</label>
+        <div class="row mb-3">
+            <div class="col">
                 <div id="weight_div" class="form-group">
                     <input type="number" name="weight" class="numberinput form-control" id="weight-input" value={{ serializer.weight.value }} min=0 step=1 required>
                 </div>
             </div>
             <div class="col-2">
                 <div id="weight_unit_div" class="form-group">
-                    <select name="weight_unit" class="select custom-select" id="weight-unit">
+                    <select name="weight_unit" class="form-select" id="weight-unit">
                         <option value="LBS">lbs</option>
                         <option value="KG" selected>kg</option>
                     </select>
@@ -98,18 +91,18 @@ hx-swap="outerHTML">
     {% endif %}
 
     {# Sex field #}
-    <div id="sex-div" class="form-group">
-        <label for="sex-input">Sex</label>
-        <select name="sex" class="select custom-select" id="sex-input" required>
+    <div id="sex-div" class="mb-3">
+        <label for="sex-input" class="form-label">Sex</label>
+        <select name="sex" class="form-select" id="sex-input" required>
             <option value=""{% if  not serializer.sex.value or not obj.sex %} selected{% endif %}>---------</option>
             <option value="M"{% if serializer.sex.value == "M" or obj.sex == "M" %} selected{% endif %}>Male</option>
             <option value="F"{% if serializer.sex.value == "F" or obj.sex == "F" %} selected{% endif %}>Female</option>
         </select>
     </div>
     {# Activity level field#}
-    <div id="activity-level-div" class="form-group">
-        <label for="activity_level-input">Activity level</label>
-        <select name="activity_level" class="select custom-select" required="" id="activity_level-input">
+    <div id="activity-level-div" class="mb-3">
+        <label for="activity_level-input" class="form-label">Activity level</label>
+        <select name="activity_level" class="form-select" required="" id="activity_level-input">
             <option value=""{% if not serializer.activity_level.value or not obj.activity_level %} selected{% endif %}>---------</option>
             <option value="S"{% if serializer.activity_level.value == "S" or obj.activity_level == "S" %} selected{% endif %}>Sedentary</option>
             <option value="LA"{% if serializer.activity_level.value == "LA" or obj.activity_level == "LA" %} selected{% endif %}>Low Active</option>

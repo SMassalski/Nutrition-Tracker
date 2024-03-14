@@ -90,7 +90,7 @@
                 </div>
                 <div class="card-body">
                     <div class="container-fluid mt-3">
-                        <div class="row" hx-get="{% url 'recipe-intakes' recipe.id %}"
+                        <div hx-get="{% url 'recipe-intakes' recipe.id %}"
                         hx-trigger="recipeComponentsChanged from:body, load">
                         </div>
                     </div>
