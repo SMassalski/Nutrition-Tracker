@@ -213,8 +213,13 @@ tr th.nutrient-label {
     span {
         i {
             cursor: pointer;
+            font-size: 1.2rem;
         }
+        color: $primary;
+        display: inline-flex;
+        align-items: center;
     }
+
 }
 
 button.form-tip {

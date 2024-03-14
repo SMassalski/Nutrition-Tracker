@@ -2,7 +2,7 @@
 <span hx-post="{% url 'current-meal' %}" hx-target="#meal-date-header-content" hx-vals='{"date":"{{ yesterday }}"}'>
     <i class="fa-solid fa-circle-chevron-left"></i>
 </span>
-<h4>{{ obj.date|date:"D, d F Y" }}</h4>
+<h4 class="mb-0">{{ obj.date|date:"D, d F Y" }}</h4>
 <span hx-post="{% url 'current-meal' %}" hx-target="#meal-date-header-content" hx-vals='{"date":"{{ tomorrow }}"}'>
     <i class="fa-solid fa-circle-chevron-right"></i>
 </span>
