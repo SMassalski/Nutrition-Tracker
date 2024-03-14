@@ -134,27 +134,36 @@ tr th.nutrient-label {
             }
         }
     }
-}
 
-.table-hover tbody {
-    tr:hover td.table-append {
-        background-color: theme-color-level(info, -10);
-    }
-    tr.table-form:hover td {
-        background-color: white;
-    }
-    tr.hover-passive:hover td {
-        background-color: white;
-        color: gray;
-    }
-    tr .recipe-actions {
-        i {
-            display: none;
+    &.table-choice {
+        tbody tr {
+            cursor: pointer;
         }
     }
-    tr:hover .recipe-actions{
-        i {
-            display: inline-block;
+    &.amounts-table tbody tr td:nth-of-type(2) {
+        text-align: center;
+    }
+
+    &.table-hover tbody {
+        tr:hover td.table-append {
+            background-color: theme-color-level(info, -10);
+        }
+        tr.table-form:hover td {
+            background-color: white;
+        }
+        tr.hover-passive:hover td {
+            background-color: white;
+            color: gray;
+        }
+        tr .recipe-actions {
+            i {
+                display: none;
+            }
+        }
+        tr:hover .recipe-actions{
+            i {
+                display: inline-block;
+            }
         }
     }
 }
@@ -200,16 +209,18 @@ tr th.nutrient-label {
     .d-flex {
         justify-content: space-evenly;
     }
+
+    span {
+        i {
+            cursor: pointer;
+        }
+    }
 }
 
 button.form-tip {
     background-color: transparent;
     border: none;
     color: gray;
-}
-
-.amounts-table tbody tr td:nth-of-type(2) {
-    text-align: center;
 }
 
 .chart-container {
