@@ -1,11 +1,8 @@
 {% if results %}
 {% for obj in results %}
-<tr>
-    <td>{{ obj.name }}</td>
-    <td class="recipe-actions">
-        <a href="{% url "recipe-edit" obj.slug %}">
-        <i class="fa-solid fa-arrow-right"></i></i>
-        </a>
+<tr onclick="window.location='{% url "recipe-edit" obj.slug %}';">
+    <td>
+        {{ obj.name}}
     </td>
 </tr>
 
