@@ -72,7 +72,7 @@ class TestMealView:
         add_session_and_meal(request, meal)
         view = views.MealView.as_view()
 
-        with django_assert_num_queries(0):
+        with django_assert_num_queries(1):
             view(request)
 
     # Session
@@ -109,6 +109,23 @@ class TestMealView:
         view(request)
 
         assert request.session.get("meal_id") != meal.id
+
+    def test_creates_meal_if_meal_in_session_doesnt_exist(
+        self, rf, user, saved_profile
+    ):
+        view = views.MealView.as_view()
+        request = rf.get("")
+        request.user = user
+        add_session(request)
+        session = request.session
+        session["meal_id"] = 1
+        session.save()
+
+        view(request)
+
+        meal_id = request.session.get("meal_id")
+        assert meal_id is not None
+        assert models.Meal.objects.filter(pk=meal_id).exists()
 
 
 class TestRecipeEditView:

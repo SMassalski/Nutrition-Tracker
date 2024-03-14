@@ -42,7 +42,11 @@ class MealView(TemplateView):
         # Retrieve or create the current meal. Check if expired.
         meal_id = self.request.session.get("meal_id")
 
-        if meal_id is None or is_meal_expired(self.request):
+        if (
+            meal_id is None
+            or is_meal_expired(self.request)
+            or not models.Meal.objects.filter(pk=meal_id).exists()
+        ):
             meal = models.Meal.objects.get_or_create(
                 owner=self.request.user.profile, date=timezone.now().date()
             )[0]
