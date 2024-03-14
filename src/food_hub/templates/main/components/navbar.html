@@ -13,14 +13,6 @@
     </ul>
     <!-- Right -->
     <ul class="navbar-nav ml-auto">
-        <li class="nav-item dropdown">
-            <a class="nav-link"  href="#" data-toggle="dropdown">
-                <i class="fa-solid fa-caret-down"></i>
-            </a>
-            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-            </div>
-        </li>
-
         <!-- Account dropdown -->
         {% if user.is_authenticated %}
         <li class="nav-item dropdown">
@@ -30,12 +22,6 @@
             <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
                 <span class="dropdown-header">Logged in as <strong>{{ user.username }}</strong></span>
                 <div class="dropdown-divider"></div>
-                <div class="dropdown-item">
-                    <a href="{% url 'profile-information' %}">Edit Profile</a>
-                </div>
-                <div class="dropdown-item">
-                    <a href="{% url 'account-settings' %}">Account Settings</a>
-                </div>
                 <form action="{% url 'logout' %}" method="POST" class="inline dropdown-item" style="cursor: pointer;">
                     {% csrf_token %}
                     <a onclick="this.parentNode.submit();"
