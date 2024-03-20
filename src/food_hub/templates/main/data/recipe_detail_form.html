@@ -27,7 +27,7 @@
             <a
             class="mr-3"
             hx-include="#top-panel-recipe-form"
-            hx-patch="{% url "recipe-detail" id %}"
+            hx-patch="{% url "recipe-detail" obj.id %}"
             hx-target="#top-panel-recipe-form"
             hx-target-400="#top-panel-recipe-form">
             <i class="fa-solid fa-check"></i>
@@ -35,7 +35,7 @@
 
             <a
                 class="mr-3"
-                hx-delete="{% url "recipe-detail" id %}"
+                hx-delete="{% url "recipe-detail" obj.id %}"
                 hx-target="#top-panel-recipe-form"
                 hx-confirm="Are you sure you want to delete this recipe?"
                 hx-swap="delete">
