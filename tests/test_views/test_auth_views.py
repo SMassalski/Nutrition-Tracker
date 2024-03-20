@@ -52,6 +52,12 @@ class TestRegistrationView:
 
         assert response.status_code == status.HTTP_302_FOUND
 
+    def test_registration_view_redirect_to_correct_url(self, db, client):
+        """Successful registration post request returns a redirect."""
+        response = client.post(self.url, data=self.default_data)
+
+        assert response.url == "/profile_information/?next=/"
+
     def test_registration_view_invalid_post_data_request_status_code(self, db, client):
         """
         Registration `POST` request returns a with status code 200 if
