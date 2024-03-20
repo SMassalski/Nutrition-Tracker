@@ -26,3 +26,23 @@ def component(nutrient_1, nutrient_2):
     return models.NutrientComponent.objects.create(
         target=nutrient_2, component=nutrient_1
     )
+
+
+@pytest.fixture
+def recipe_2(meal, ingredient_1):
+    """Recipe instance.
+
+    name: "S"
+    owner: saved_profile
+
+    MealRecipe:
+    meal: meal
+    amount: 100
+
+    ingredient: ingredient_1
+    amount: 50
+    """
+    recipe_2 = models.Recipe.objects.create(owner=meal.owner, name="S")
+    recipe_2.recipeingredient_set.create(ingredient=ingredient_1, amount=50)
+    meal.mealrecipe_set.create(recipe=recipe_2, amount=100)
+    return recipe_2

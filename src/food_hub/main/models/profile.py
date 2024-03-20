@@ -313,39 +313,55 @@ class Profile(models.Model):
         if date_max is not None:
             queryset = queryset.filter(date__lte=date_max)
 
-        subquery = Recipe.objects.filter(meal=OuterRef("mealrecipe__meal")).annotate(
-            weight=Case(
-                When(
-                    final_weight__isnull=True,
-                    then=Sum("recipeingredient__amount"),
-                ),
-                When(
-                    final_weight__isnull=False,
-                    then=F("final_weight"),
-                ),
-            )
-        )
+        # subquery = Recipe.objects.filter(meal=OuterRef("mealrecipe__meal")).annotate(
+        #     weight=Case(
+        #         When(
+        #             final_weight__isnull=True,
+        #             then=Sum("recipeingredient__amount"),
+        #         ),
+        #         When(
+        #             final_weight__isnull=False,
+        #             then=F("final_weight"),
+        #         ),
+        #     )
+        # )
         queryset = (
             queryset.annotate(
                 nutrient_id=F(
                     "mealrecipe__recipe__ingredients__ingredientnutrient__nutrient"
-                )
+                ),
+                recipe_id=F("mealrecipe__recipe_id"),
             )
             .filter(nutrient_id=nutrient_id)
-            .alias(recipe_weight=Subquery(subquery.values("weight")))
+            # .alias(recipe_weight=Subquery(subquery.values("weight")))
             .alias(
                 nutrient_amount=F("mealrecipe__amount")
                 * F("mealrecipe__recipe__recipeingredient__amount")
                 * F(
                     "mealrecipe__recipe__recipeingredient__ingredient__ingredientnutrient__amount"
                 )
-                / F("recipe_weight")
+                # / F("recipe_weight")
             )
             .annotate(amount=Sum("nutrient_amount"))
-            .values("date", "amount")
+            .values("date", "amount", "recipe_id")
         )
+        if not queryset:
+            return {}
 
-        return {meal["date"]: meal["amount"] for meal in queryset}
+        recipe_queryset = self.recipes.annotate(
+            _weight=Case(
+                When(final_weight=None, then=Sum("recipeingredient__amount")),
+                When(final_weight__isnull=False, then=F("final_weight")),
+            )
+        )
+        recipes = {rec.id: rec for rec in recipe_queryset}
+
+        ret = {}
+        for val in queryset:
+            amount = val["amount"] / recipes[val["recipe_id"]]._weight
+            ret[val["date"]] = ret.get(val["date"], 0) + amount
+
+        return ret
 
     def energy_progress(self, intake):
         """

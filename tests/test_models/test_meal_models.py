@@ -24,26 +24,6 @@ def recipe(recipe, ingredient_1, ingredient_2):
 
 
 @pytest.fixture
-def recipe_2(meal, ingredient_1):
-    """Recipe instance.
-
-    name: "S"
-    owner: saved_profile
-
-    MealRecipe:
-    meal: meal
-    amount: 100
-
-    ingredient: ingredient_1
-    amount: 50
-    """
-    recipe_2 = models.Recipe.objects.create(owner=meal.owner, name="S")
-    recipe_2.recipeingredient_set.create(ingredient=ingredient_1, amount=50)
-    meal.mealrecipe_set.create(recipe=recipe_2, amount=100)
-    return recipe_2
-
-
-@pytest.fixture
 def ingredient_nutrient_1_1(ingredient_nutrient_1_1) -> models.IngredientNutrient:
     """
     IngredientNutrient associating nutrient_1 with ingredient_1.

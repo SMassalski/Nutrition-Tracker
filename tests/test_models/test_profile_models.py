@@ -346,6 +346,22 @@ class TestProfile:
 
         assert result == expected
 
+    def test_intakes_from_recipes_multiple_recipes(
+        self,
+        saved_profile,
+        meal,
+        meal_recipe,
+        recipe_2,
+        recipe_ingredient,
+        ingredient_nutrient_1_2,
+        nutrient_2,
+    ):
+        result = saved_profile.intakes_from_recipes(nutrient_2.id)
+
+        expected = {date(2020, 6, 15): 15}
+
+        assert result == expected
+
     # Intakes by dates (combined)
 
     def test_intakes_by_date_only_ingredients(
