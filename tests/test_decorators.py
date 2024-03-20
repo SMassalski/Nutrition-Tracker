@@ -1,5 +1,6 @@
 """Tests of main app's view decorators."""
 import pytest
+from django.contrib.auth.models import AnonymousUser
 from django.http.response import HttpResponse
 from django.views import View
 from main.decorators import profile_required
@@ -43,6 +44,22 @@ class TestProfileRequired:
 
         assert is_redirect(response.status_code)
 
+    def test_class_based_view_unauthenticated_redirects(self, function_view, rf):
+        request = rf.get("")
+        request.user = AnonymousUser()
+
+        response = function_view(request)
+
+        assert is_redirect(response.status_code)
+
+    def test_class_based_view_unauthenticated_redirect_target(self, function_view, rf):
+        request = rf.get("")
+        request.user = AnonymousUser()
+
+        response = function_view(request)
+
+        assert response.url == "/authentication/login/?next=/"
+
     def test_class_based_view_request_with_profile_ok(
         self, rf, user, saved_profile, class_based_view
     ):
@@ -62,3 +79,21 @@ class TestProfileRequired:
         response = class_based_view(request)
 
         assert is_redirect(response.status_code)
+
+    def test_class_based_view_unauthenticated_redirects(self, class_based_view, rf):
+        request = rf.get("")
+        request.user = AnonymousUser()
+
+        response = class_based_view(request)
+
+        assert is_redirect(response.status_code)
+
+    def test_class_based_view_unauthenticated_redirect_target(
+        self, class_based_view, rf
+    ):
+        request = rf.get("")
+        request.user = AnonymousUser()
+
+        response = class_based_view(request)
+
+        assert response.url == "/authentication/login/?next=/"

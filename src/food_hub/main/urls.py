@@ -8,26 +8,18 @@ from main.views import main as views
 urlpatterns = [
     path(
         "",
-        profile_required(
-            login_required(TemplateView.as_view(template_name="main/dashboard.html"))
-        ),
+        profile_required(TemplateView.as_view(template_name="main/dashboard.html")),
         name="dashboard",
     ),
-    path(
-        "meal/", profile_required(login_required(views.MealView.as_view())), name="meal"
-    ),
+    path("meal/", profile_required(views.MealView.as_view()), name="meal"),
     path(
         "recipes/",
-        profile_required(
-            login_required(
-                TemplateView.as_view(template_name="main/select_recipe.html")
-            )
-        ),
+        profile_required(TemplateView.as_view(template_name="main/select_recipe.html")),
         name="recipe",
     ),
     path(
         "recipes/<slug:slug>",
-        profile_required(login_required(views.RecipeEditView.as_view())),
+        profile_required(views.RecipeEditView.as_view()),
         name="recipe-edit",
     ),
     path(
@@ -50,9 +42,7 @@ urlpatterns = [
     path(
         "settings/profile/weight_measurements",
         profile_required(
-            login_required(
-                TemplateView.as_view(template_name="main/weight_measurements.html")
-            )
+            TemplateView.as_view(template_name="main/weight_measurements.html")
         ),
         name="profile-weight-measurements",
     ),
