@@ -170,7 +170,7 @@ class UpdateModelMixin(UpdateMixin):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
 
-        data = {"serializer": serializer}
+        data = {"serializer": serializer, "obj": instance}
         if serializer.is_valid():
             self.perform_update(serializer)
 
@@ -178,7 +178,6 @@ class UpdateModelMixin(UpdateMixin):
             if getattr(instance, "_prefetched_objects_cache", None):
                 instance._prefetched_objects_cache = {}
 
-            data["obj"] = instance
             status = HTTP_200_OK
         else:
             status = HTTP_400_BAD_REQUEST
