@@ -13,46 +13,9 @@ class TestWeightMeasurementSerializer:
         )
         serializer.is_valid(raise_exception=True)
 
-        instance = serializer.save()
+        instance = serializer.save(profile=saved_profile)
 
         assert instance.profile == saved_profile
-
-    def test_validate_time_profile_unique_together_create(
-        self, rf, saved_profile, user, weight_measurement
-    ):
-        request = rf.get("")
-        request.user = user
-        serializer = serializers.WeightMeasurementSerializer(
-            data={"value": 80, "time": weight_measurement.time},
-            context={"request": request},
-        )
-
-        assert not serializer.is_valid()
-
-    def test_validate_time_profile_unique_together_checks_entries_other_than_updated(
-        self, rf, saved_profile, user, weight_measurement
-    ):
-        request = rf.get("")
-        request.user = user
-        serializer = serializers.WeightMeasurementSerializer(
-            weight_measurement,
-            data={"value": 90, "time": weight_measurement.time},
-            context={"request": request},
-        )
-
-        assert serializer.is_valid()
-
-        new_instance = models.WeightMeasurement.objects.create(
-            profile=saved_profile, value=80
-        )
-
-        serializer = serializers.WeightMeasurementSerializer(
-            weight_measurement,
-            data={"value": 90, "time": new_instance.time},
-            context={"request": request},
-        )
-
-        assert not serializer.is_valid()
 
     def test_create_pound_units(self, rf, user, saved_profile):
         request = rf.get("")
@@ -62,7 +25,7 @@ class TestWeightMeasurementSerializer:
         )
         serializer.is_valid(raise_exception=True)
 
-        instance = serializer.save()
+        instance = serializer.save(profile=saved_profile)
 
         assert instance.value == 45
 
@@ -74,7 +37,7 @@ class TestWeightMeasurementSerializer:
         )
         serializer.is_valid(raise_exception=True)
 
-        instance = serializer.save()
+        instance = serializer.save(profile=saved_profile)
 
         assert instance.value == 100
 

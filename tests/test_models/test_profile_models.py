@@ -107,17 +107,17 @@ class TestProfile:
     ):
         profile.user = user
         profile.save()
-        last = profile.weight_measurements.first().time
+        last = profile.weight_measurements.first().date
         models.WeightMeasurement.objects.bulk_create(
             [
                 models.WeightMeasurement(
-                    profile=profile, time=last - timedelta(days=1), value=81
+                    profile=profile, date=last - timedelta(days=1), value=81
                 ),
                 models.WeightMeasurement(
-                    profile=profile, time=last - timedelta(days=7), value=82
+                    profile=profile, date=last - timedelta(days=7), value=82
                 ),
                 models.WeightMeasurement(
-                    profile=profile, time=last - timedelta(days=8), value=90
+                    profile=profile, date=last - timedelta(days=8), value=90
                 ),  # This one is not included
             ]
         )
@@ -481,19 +481,14 @@ class TestProfile:
 class TestWeightMeasurement:
     """Tests of the `WeightMeasurement` model."""
 
-    def test_has_min_value_1_validation(self, saved_profile):
+    def test_has_min_value_01_validation(self, saved_profile):
         instance = models.WeightMeasurement(profile=saved_profile, value=0)
 
         with pytest.raises(ValidationError):
             instance.full_clean()
 
-    def test_has_profile_time_unique_constraint(self, saved_profile):
-        time = timezone.now()
-        models.WeightMeasurement.objects.create(
-            profile=saved_profile, value=1, time=time
-        )
-
-        with pytest.raises(IntegrityError):
-            models.WeightMeasurement.objects.create(
-                profile=saved_profile, value=2, time=time
-            )
+        instance = models.WeightMeasurement(profile=saved_profile, value=0.1)
+        try:
+            instance.full_clean()
+        except ValidationError:
+            pytest.fail()

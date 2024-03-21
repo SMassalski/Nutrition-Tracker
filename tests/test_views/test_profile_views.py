@@ -4,6 +4,7 @@ import main.views
 import pytest
 from main import models
 from main.serializers import WeightMeasurementSerializer
+from main.views import api as views
 from rest_framework.reverse import reverse
 from rest_framework.status import HTTP_404_NOT_FOUND, is_success
 
@@ -12,7 +13,7 @@ from tests.test_views.util import create_api_request
 
 class TestWeightMeasurementViewSet:
 
-    view_class = main.views.api.profile_views.WeightMeasurementViewSet
+    view_class = views.WeightMeasurementViewSet
 
     @pytest.mark.parametrize("method", ("get", "post"))
     def test_endpoint_ok_list(self, method, logged_in_api_client, saved_profile):
@@ -27,7 +28,7 @@ class TestWeightMeasurementViewSet:
         url = reverse("weight-measurement-detail", args=(weight_measurement.id,))
 
         response = getattr(logged_in_api_client, method)(
-            url, data={"value": 81, "time": weight_measurement.time}
+            url, data={"value": 81, "date": "2022-02-10"}
         )
 
         assert is_success(response.status_code)

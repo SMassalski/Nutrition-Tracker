@@ -26,7 +26,7 @@
                         <label for="weight-input" class="col col-form-label">Weight (kg)</label>
                         <div class="col">
                             <input class="form-control {% if serializer.value.errors %}is-invalid{% endif %}"
-                            name="value" type="number" id="weight-input" min="1" step="1"
+                            name="value" type="number" id="weight-input" min="0.1" step="0.1"
                             {% if serializer.value.value is not None %}value="{{ serializer.value.value }}"{% endif %}
                             required>
                             {% if serializer.value.errors %}
@@ -45,18 +45,18 @@
                             </select>
                         </div>
                     </div>
-                    {% if with_time_input %}
+                    {% if with_date_input %}
                     <div class="form-group row">
-                        <label for="time-input" class="col col-form-label">Time</label>
+                        <label for="date-input" class="col col-form-label">Date</label>
                         <div class="col">
-                            <input class="form-control {% if serializer.time.errors %}is-invalid{% endif %}"
-                            name="time" type="datetime-local" id="time-input"
-                            {% if serializer.time.value is not None %}
-                            value="{{ serializer.time.value }}"
+                            <input class="form-control {% if serializer.date.errors %}is-invalid{% endif %}"
+                            name="date" type="date" id="date-input"
+                            {% if serializer.date.value is not None %}
+                            value="{{ serializer.date.value }}"
                             {% endif %}
                             required>
-                            {% if serializer.time.errors %}
-                                {% for error in serializer.time.errors %}
+                            {% if serializer.date.errors %}
+                                {% for error in serializer.date.errors %}
                                     <div class="invalid-feedback">{{ error }}</div>
                                 {% endfor %}
                             {% endif %}

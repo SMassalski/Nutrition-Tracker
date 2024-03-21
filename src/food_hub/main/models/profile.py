@@ -1,17 +1,15 @@
 """Models related to profile functionality."""
-from datetime import timedelta
+from datetime import date, timedelta
 from warnings import warn
 
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Case, F, OuterRef, Subquery, Sum, When
+from django.db.models import Case, F, Sum, When
 from django.db.models.lookups import LessThanOrEqual
-from django.utils import timezone
 
 __all__ = ["Profile", "IntakeRecommendation", "WeightMeasurement"]
 
-from main.models.meals import Recipe
 
 # Estimated Energy Requirement equation constants and coefficients
 # dependent on age and sex. The physical activity coefficient is
@@ -149,12 +147,12 @@ class Profile(models.Model):
         The returned value is the average of all profile's weight
         measurements within a week from the last one.
         """
-        last_measurement_time = self.weight_measurements.aggregate(models.Max("time"))[
-            "time__max"
+        last_measurement_date = self.weight_measurements.aggregate(models.Max("date"))[
+            "date__max"
         ]
 
         return self.weight_measurements.filter(
-            time__gte=last_measurement_time - timedelta(days=7)
+            date__gte=last_measurement_date - timedelta(days=7)
         ).aggregate(models.Avg("value"))["value__avg"]
 
     # TODO: There may be a better way to do this
@@ -678,12 +676,5 @@ class WeightMeasurement(models.Model):
     profile = models.ForeignKey(
         Profile, on_delete=models.CASCADE, related_name="weight_measurements"
     )
-    value = models.IntegerField(validators=(MinValueValidator(1),))
-    time = models.DateTimeField(default=timezone.now)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                "profile", "time", name="unique_%(app_label)s_%(class)s_profile_time"
-            )
-        ]
+    value = models.FloatField(validators=(MinValueValidator(0.1),))
+    date = models.DateField(default=date.today)

@@ -65,6 +65,10 @@ class WeightMeasurementViewSet(ModelViewSet):
         ).order_by("-id")
 
     # docstr-coverage: inherited
+    def perform_create(self, serializer):
+        serializer.save(profile=self.request.user.profile)
+
+    # docstr-coverage: inherited
     def get_fail_headers(self, data):
         headers = super().get_success_headers(data)
 

@@ -14,8 +14,8 @@ __all__ = (
 class WeightMeasurementSerializer(serializers.ModelSerializer):
     """Serializer for the `WeightMeasurement` model.
 
-    The 'request' needs to be included in the context for validation and
-    entry creation.
+    When creating using the `save` method the profile must be provided
+    in the args.
     """
 
     POUNDS = "LBS"
@@ -29,28 +29,7 @@ class WeightMeasurementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.WeightMeasurement
-        fields = ("id", "url", "time", "value", "unit")
-
-    # docstr-coverage: inherited
-    def create(self, validated_data):
-        validated_data["profile"] = self.context["request"].user.profile
-        return models.WeightMeasurement.objects.create(**validated_data)
-
-    # docstr-coverage: inherited
-    def validate_time(self, value):
-        profile = self.context["request"].user.profile
-        queryset = models.WeightMeasurement.objects.filter(profile=profile, time=value)
-
-        # On update check only entries other than that of `instance`.
-        if self.instance is not None:
-            queryset = queryset.filter(~Q(id=self.instance.id))
-
-        if queryset.exists():
-            raise serializers.ValidationError(
-                "Weight measurement for the specified time already exists."
-            )
-
-        return value
+        fields = ("id", "url", "date", "value", "unit")
 
     # docstr-coverage: inherited
     def to_internal_value(self, data):

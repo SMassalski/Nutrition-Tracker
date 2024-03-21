@@ -433,10 +433,10 @@ def weight_measurement(saved_profile):
 
     profile: saved_profile
     value: 80
-    time: 2022-01-01
+    date: 2022-01-01
     """
     return models.WeightMeasurement.objects.create(
-        profile=saved_profile, value=80, time=datetime(year=2022, month=1, day=1)
+        profile=saved_profile, value=80, date=datetime(year=2022, month=1, day=1)
     )
 
 
