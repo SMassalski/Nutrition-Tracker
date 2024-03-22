@@ -9,7 +9,7 @@
                 <div class="row">
                     {% for obj in results %}
                     <div class="col-md-6 mt-2">
-                        {% include "main/chart.html" with id=obj.nutrient.id name=obj.nutrient.name id_suf="tracked" %}
+                        {% include "main/intake_chart.html" with id=obj.nutrient.id name=obj.nutrient.name id_suf="tracked" %}
                     </div>
                     {% endfor %}
                 </div>
