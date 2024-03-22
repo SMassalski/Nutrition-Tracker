@@ -153,6 +153,33 @@ class TestWeightMeasurementViewSet:
 
         assert "serializer" not in response.data
 
+    def test_last_month_excludes_dates_older_than_30_days(
+        self, user, saved_profile, weight_measurement
+    ):
+        date_ = date.today() - timedelta(days=31)
+        weight_measurement.date = date_
+        weight_measurement.save()
+
+        request = create_api_request("get", user, format="json")
+
+        response = self.view_class.as_view({"get": "last_month"}, detail=False)(request)
+
+        assert date_.strftime("%b %d") not in response.data
+
+    def test_last_month_rounds_value_to_first_decimal_place(
+        self, user, saved_profile, weight_measurement
+    ):
+        date_ = date.today()
+        weight_measurement.date = date_
+        weight_measurement.value = 80.11
+        weight_measurement.save()
+
+        request = create_api_request("get", user, format="json")
+
+        response = self.view_class.as_view({"get": "last_month"}, detail=False)(request)
+
+        assert response.data[date_.strftime("%b %d")] == 80.1
+
 
 class TestProfileAPIView:
 

@@ -11,13 +11,22 @@
         <div class="row">
             <div class="col">
                 <div class="card card-outline card-secondary">
-                    <div class="card-header">
-                        <h3 class="card-title">Micronutrients and Calories</h3>
-                    </div>
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
                                 {% include "main/chart.html" with id=1 name="Protein" %}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="chart-container" style="position: relative;">
+                                    <canvas
+                                        id="weight-chart"
+                                        style="min-height: 250px; max-width: 100%;">
+                                    </canvas>
+                                </div>
+                                <script>
+                                   fetchLastMonthWeight("{% url "weight-measurement-last-month" format='json'%}", "weight-chart");
+
+                                </script>
                             </div>
                         </div>
                     </div>

@@ -250,3 +250,49 @@ const fetchLastMonthIntake = function (url, chartId) {
         });
     });
 }
+
+
+const fetchLastMonthWeight = function (url, chartId) {
+    $.get(url, function(data) {
+        const ctx = document.getElementById(chartId);
+        const values = Object.values(data);
+        const yMax = Math.max(values.reduce((a, b) => Math.max(a, b), -Infinity)) + 5
+        const yMin = Math.min(values.reduce((a, b) => Math.min(a, b), Infinity)) - 5
+
+        const options = {
+            responsive: true,
+
+            //Scales
+            scales: {
+                y: {
+                    min: yMin,
+                    max: yMax,
+                }
+            },
+
+            // Title
+            plugins: {
+                legend: false,
+                title: {
+                    display: true,
+                    text: "Weight (kg)"
+                }
+            }
+
+        }
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Object.keys(data),
+                datasets: [
+                    {
+                        data: values,
+                        backgroundColor: primary
+                    }
+                ]
+            },
+            options: options
+        });
+    });
+}

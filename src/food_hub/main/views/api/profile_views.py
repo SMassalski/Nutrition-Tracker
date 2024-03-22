@@ -88,6 +88,19 @@ class WeightMeasurementViewSet(ModelViewSet):
             ret["success"] = data["serializer"].is_valid()
         return ret
 
+    @action(methods=["get"], detail=False, renderer_classes=[JSONRenderer])
+    def last_month(self, request, *_args, **_kwargs):
+        """
+        List the average weight measurement value each day within the
+        last 30 days.
+        """
+        weights = request.user.profile.weight_by_date(
+            date_max=date.today(), date_min=date.today() - timedelta(days=30)
+        )
+        data = {k.strftime("%b %d"): round(v, 1) for k, v in weights.items()}
+
+        return Response(data)
+
 
 class ProfileApiView(
     CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericView
