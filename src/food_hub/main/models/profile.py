@@ -5,7 +5,7 @@ from warnings import warn
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Case, F, Sum, When
+from django.db.models import Avg, Case, F, Sum, When
 from django.db.models.lookups import LessThanOrEqual
 
 __all__ = ["Profile", "IntakeRecommendation", "WeightMeasurement"]
@@ -361,6 +361,29 @@ class Profile(models.Model):
 
         return ret
 
+    def weight_by_date(self, date_min=None, date_max=None):
+        """Get the average value of weight measurements each day.
+
+        Parameters
+        ----------
+        date_min: date
+            The lower bound of dates to be included in the results.
+        date_max: date
+            The upper bound of dates to be included in the results.
+
+        Returns
+        -------
+        Dict[date, float]
+        """
+        queryset = self.weight_measurements
+        if date_min:
+            queryset = queryset.filter(date__gte=date_min)
+        if date_max:
+            queryset = queryset.filter(date__lte=date_max)
+
+        queryset = queryset.values("date").annotate(avg=Avg("value"))
+        return {wm["date"]: wm["avg"] for wm in queryset}
+
     def energy_progress(self, intake):
         """
         The % ratio of the caloric intake to the recommended intake.
@@ -678,3 +701,6 @@ class WeightMeasurement(models.Model):
     )
     value = models.FloatField(validators=(MinValueValidator(0.1),))
     date = models.DateField(default=date.today)
+
+    def __str__(self):
+        return f"{self.date}: {self.value}"

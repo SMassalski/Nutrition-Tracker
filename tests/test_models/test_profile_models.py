@@ -1,5 +1,5 @@
 """Tests of profile related features."""
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -173,6 +173,34 @@ class TestProfile:
         amount: 200
         """
         return models.MealRecipe.objects.create(meal=meal_2, recipe=recipe, amount=200)
+
+    @pytest.fixture
+    def multiple_weight_measurements(self, saved_profile):
+        """WeightMeasurement instances.
+
+        profile: saved_profile
+        date: 2002-09-21
+        value: 77.7
+
+        profile: saved_profile
+        date: 2022-09-21
+        value: 80
+        """
+        ret = models.WeightMeasurement.objects.bulk_create(
+            (
+                models.WeightMeasurement(
+                    profile=saved_profile,
+                    date=datetime(year=2002, month=9, day=21),
+                    value=77.7,
+                ),
+                models.WeightMeasurement(
+                    profile=saved_profile,
+                    date=datetime(year=2022, month=9, day=21),
+                    value=80,
+                ),
+            )
+        )
+        return ret
 
     # Ingredient nutrient intake
 
@@ -476,6 +504,34 @@ class TestProfile:
         actual = profile.energy_progress(180)
 
         assert actual == expected
+
+    def test_weight_by_date_returns_avg_value_by_date(
+        self, saved_profile, multiple_weight_measurements
+    ):
+        date_ = date(year=2022, month=9, day=21)
+        models.WeightMeasurement.objects.create(
+            profile=saved_profile, date=date_, value=40
+        )
+
+        result = saved_profile.weight_by_date()
+
+        assert result[date_] == 60
+
+    def test_weight_by_date_date_min(self, saved_profile, multiple_weight_measurements):
+        date_ = date(year=2022, month=9, day=21)
+
+        result = saved_profile.weight_by_date(date_min=date_)
+
+        assert date(year=2002, month=9, day=21) not in result
+        assert date_ in result
+
+    def test_weight_by_date_date_max(self, saved_profile, multiple_weight_measurements):
+        date_ = date(year=2002, month=9, day=21)
+
+        result = saved_profile.weight_by_date(date_max=date_)
+
+        assert date(year=2022, month=9, day=21) not in result
+        assert date_ in result
 
 
 class TestWeightMeasurement:
