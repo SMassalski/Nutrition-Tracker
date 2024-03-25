@@ -553,3 +553,13 @@ class TestWeightMeasurement:
         models.WeightMeasurement.objects.create(profile=saved_profile, value=60)
 
         assert saved_profile.weight == 70
+
+    def test_delete_updates_profile_weight(self, saved_profile, weight_measurement):
+        weight_measurement.value = 100
+        weight_measurement.date = date.today()
+        weight_measurement.save()
+        assert saved_profile.weight == 90
+
+        weight_measurement.delete()
+
+        assert saved_profile.weight == 80

@@ -709,4 +709,4 @@ class WeightMeasurement(models.Model):
     # docstr-coverage: inherited
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        self.profile.update_weight()
+        self.profile.save(recalculate_weight=True)
