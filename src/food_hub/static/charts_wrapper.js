@@ -253,7 +253,14 @@ const fetchLastMonthIntake = function (url, chartId) {
 
 
 const fetchLastMonthWeight = function (url, chartId) {
+    const chart = Chart.getChart(chartId)
     $.get(url, function(data) {
+        if (chart) {
+            chart.data.datasets[0].data = Object.values(data);
+            chart.data.labels = Object.keys(data);
+            chart.update();
+            return;
+        }
         const ctx = document.getElementById(chartId);
         const values = Object.values(data);
         const yMax = Math.max(values.reduce((a, b) => Math.max(a, b), -Infinity)) + 5
