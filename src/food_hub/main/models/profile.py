@@ -141,15 +141,23 @@ class Profile(models.Model):
         self.save()
 
     @property
-    def current_weight(self):
+    def current_weight(self) -> float:
         """The weight of the person based on measurements.
 
         The returned value is the average of all profile's weight
         measurements within a week from the last one.
+
+        Returns `None` if the profile has no weight measurements
+
+        Returns
+        -------
+        float
         """
         last_measurement_date = self.weight_measurements.aggregate(models.Max("date"))[
             "date__max"
         ]
+        if last_measurement_date is None:
+            return None
 
         return self.weight_measurements.filter(
             date__gte=last_measurement_date - timedelta(days=7)

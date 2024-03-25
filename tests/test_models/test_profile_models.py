@@ -533,6 +533,11 @@ class TestProfile:
         assert date(year=2022, month=9, day=21) not in result
         assert date_ in result
 
+    def test_current_weight_no_measurements_returns_none(self, saved_profile):
+        saved_profile.weight_measurements.all().delete()
+
+        assert saved_profile.current_weight is None
+
 
 class TestWeightMeasurement:
     """Tests of the `WeightMeasurement` model."""
