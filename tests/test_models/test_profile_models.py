@@ -538,6 +538,15 @@ class TestProfile:
 
         assert saved_profile.current_weight is None
 
+    def test_save_recalculate_weight_ignored_if_profile_has_no_measurements(
+        self, saved_profile
+    ):
+        saved_profile.weight_measurements.all().delete()
+
+        saved_profile.save(recalculate_weight=True)
+
+        assert saved_profile.weight == 80
+
 
 class TestWeightMeasurement:
     """Tests of the `WeightMeasurement` model."""

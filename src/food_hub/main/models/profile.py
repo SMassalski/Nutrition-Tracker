@@ -119,6 +119,8 @@ class Profile(models.Model):
             before saving.
             This happens after a measurement is created
             if `add_measurement` is True.
+            `recalculate_weight` is ignored if the profile has no weight
+            measurements.
 
 
         """
@@ -127,7 +129,7 @@ class Profile(models.Model):
             if add_measurement:
                 self.weight_measurements.create(value=self.weight)
             if recalculate_weight:
-                self.weight = self.current_weight
+                self.weight = self.current_weight or self.weight
 
         self.energy_requirement = self.calculate_energy()
         super().save(*args, **kwargs)
