@@ -35,11 +35,12 @@ __all__ = (
 )
 
 
-class WeightMeasurementViewSet(ModelViewSet):
+class WeightMeasurementViewSet(HTMXEventMixin, ModelViewSet):
     """Add weight measurements to the user's profile."""
 
     serializer_class = serializers.WeightMeasurementSerializer
     renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
+    htmx_events = ["weightChanged"]
 
     list_template = "main/data/weight_measurement_list.html"
     row_template = "main/data/weight_measurement_list_row.html"

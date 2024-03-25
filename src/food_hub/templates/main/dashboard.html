@@ -23,10 +23,6 @@
                                         style="min-height: 250px; max-width: 100%;">
                                     </canvas>
                                 </div>
-                                <script>
-                                   fetchLastMonthWeight("{% url "weight-measurement-last-month" format='json'%}", "weight-chart");
-
-                                </script>
                             </div>
                         </div>
                     </div>
@@ -83,3 +79,15 @@
       });
 </script>
 {% endblock content %}
+
+{% block scripts %}
+<script>
+    // Load
+    fetchLastMonthWeight("{% url "weight-measurement-last-month" format='json'%}", "weight-chart");
+
+    // weightChanged
+    $("body").on("weightChanged", function() {
+        fetchLastMonthWeight("{% url "weight-measurement-last-month" format='json'%}", "weight-chart");
+    });
+</script>
+{% endblock scripts %}

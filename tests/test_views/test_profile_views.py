@@ -180,6 +180,15 @@ class TestWeightMeasurementViewSet:
 
         assert response.data[date_.strftime("%b %d")] == 80.1
 
+    def test_unsafe_method_response_has_weight_changed_event_header(
+        self, user, saved_profile
+    ):
+        request = create_api_request("post", user, data={"value": 80}, format="json")
+
+        response = self.view_class.as_view({"post": "create"}, detail=False)(request)
+
+        assert response.headers["HX-Trigger"] == "weightChanged"
+
 
 class TestProfileAPIView:
 
