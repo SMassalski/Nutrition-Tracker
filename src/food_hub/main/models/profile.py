@@ -311,6 +311,7 @@ class Profile(models.Model):
         if date_max is not None:
             queryset = queryset.filter(date__lte=date_max)
 
+        # TODO: Delete this. It should have been deleted in commit e1af508b
         # subquery = Recipe.objects.filter(meal=OuterRef("mealrecipe__meal")).annotate(
         #     weight=Case(
         #         When(
@@ -704,3 +705,8 @@ class WeightMeasurement(models.Model):
 
     def __str__(self):
         return f"{self.date}: {self.value}"
+
+    # docstr-coverage: inherited
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.profile.update_weight()

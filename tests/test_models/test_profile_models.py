@@ -548,3 +548,8 @@ class TestWeightMeasurement:
             instance.full_clean()
         except ValidationError:
             pytest.fail()
+
+    def test_save_updates_profile_weight(self, saved_profile):
+        models.WeightMeasurement.objects.create(profile=saved_profile, value=60)
+
+        assert saved_profile.weight == 70
