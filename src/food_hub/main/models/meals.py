@@ -8,7 +8,7 @@ from django.db.models import Case, F, OuterRef, Q, Subquery, Sum, When
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import slugify
-from main.models import Nutrient
+from main.models.nutrient import Nutrient
 
 __all__ = [
     "Meal",

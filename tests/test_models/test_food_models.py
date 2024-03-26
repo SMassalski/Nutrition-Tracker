@@ -7,7 +7,7 @@ from django.db import IntegrityError
 from main import models
 
 # noinspection PyProtectedMember
-from main.models.foods import NutrientTypeHierarchyError, update_compound_nutrients
+from main.models.nutrient import NutrientTypeHierarchyError, update_compound_nutrients
 
 
 class TestIngredient:

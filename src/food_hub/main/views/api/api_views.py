@@ -1,7 +1,7 @@
 """Main app's api views."""
 
 from main import serializers
-from main.models.foods import Ingredient, Nutrient
+from main.models import Ingredient, Nutrient
 from main.views.generics import ListAPIView, RetrieveAPIView
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.filters import SearchFilter
