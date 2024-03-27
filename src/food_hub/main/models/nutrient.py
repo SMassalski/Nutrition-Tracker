@@ -122,6 +122,21 @@ class Nutrient(models.Model):
     def __str__(self):
         return f"{self.name} ({self.PRETTY_UNITS.get(self.unit, self.unit)})"
 
+    def update_compound_energy(self):
+        """Update the energy value of a compound nutrient.
+
+        Does nothing if the nutrient is not compound.
+        """
+        if not self.is_compound:
+            return
+
+        energy = 0
+        for comp in self.components.all():
+            energy += comp.energy * get_conversion_factor(comp.unit, self.unit)
+
+        self.energy = energy
+        self.save()
+
     @property
     def pretty_unit(self) -> str:
         """The unit's symbols (e.g., µg or kcal)."""

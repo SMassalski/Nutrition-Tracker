@@ -138,6 +138,30 @@ class TestNutrient:
         assert nutrient_1.is_component is False
         assert nutrient_2.is_component is True
 
+    def test_update_compound_energy(self, nutrient_1, nutrient_2, component):
+        nutrient_1.energy = 5
+        nutrient_1.save()
+        nutrient_2.energy = 10
+        nutrient_2.unit = "G"
+        nutrient_2.save()
+
+        nutrient_2.update_compound_energy()
+
+        assert nutrient_2.energy == 5
+
+    def test_update_compound_energy_adjusts_for_different_units(
+        self, nutrient_1, nutrient_2, component
+    ):
+        nutrient_1.energy = 5
+        nutrient_1.save()
+        nutrient_2.energy = 10
+        nutrient_2.unit = "MG"
+        nutrient_2.save()
+
+        nutrient_2.update_compound_energy()
+
+        assert nutrient_2.energy == 5000
+
 
 class TestNutrientComponent:
     """Tests of NutrientComponents."""
