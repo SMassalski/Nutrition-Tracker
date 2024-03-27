@@ -162,6 +162,19 @@ class TestNutrient:
 
         assert nutrient_2.energy == 5000
 
+    def test_component_save_updates_compound_energy(
+        self, nutrient_1, nutrient_2, component
+    ):
+        nutrient_2.energy = 10
+        nutrient_2.unit = "G"
+        nutrient_2.save()
+
+        nutrient_1.energy = 5
+        nutrient_1.save()
+
+        nutrient_2.refresh_from_db()
+        assert nutrient_2.energy == 5
+
 
 class TestNutrientComponent:
     """Tests of NutrientComponents."""
@@ -199,6 +212,27 @@ class TestNutrientComponent:
 
         ing_nut = nutrient.ingredientnutrient_set.get(ingredient=ingredient_1)
         assert ing_nut.amount == 1.5
+
+    def test_save_updates_compound_nutrients_energy(self, nutrient_1, nutrient_2):
+        nutrient_2.energy = 4
+        nutrient_2.unit = "G"
+        nutrient_2.save()
+
+        models.NutrientComponent.objects.create(target=nutrient_1, component=nutrient_2)
+
+        assert nutrient_1.energy == 4
+
+    def test_delete_updates_compound_nutrients_energy(
+        self, nutrient_1_energy, nutrient_2, component
+    ):
+        nutrient_2.unit = "G"
+        nutrient_2.save()
+        nutrient_2.update_compound_energy()
+
+        component.delete()
+
+        nutrient_2.refresh_from_db()
+        assert nutrient_2.energy == 0
 
 
 class TestNutrientType:

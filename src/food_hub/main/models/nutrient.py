@@ -1,7 +1,6 @@
 """The nutrient and related models."""
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.utils.functional import cached_property
 from util import get_conversion_factor
 
 from .foods import update_compound_nutrients
@@ -105,6 +104,12 @@ class Nutrient(models.Model):
 
         super().save(*args, **kwargs)
 
+        # Update energy values
+        for nutrient in self.compounds.all():
+            nutrient.update_compound_energy()
+
+        # Update the amount values of ingredient nutrients under the
+        # right conditions
         update_amounts = (
             update_amounts and not self._state.adding and self.unit != old_unit
         )
@@ -187,6 +192,7 @@ class NutrientComponent(models.Model):
         """
         super().save(*args, **kwargs)
         update_compound_nutrients(self.target)
+        self.target.update_compound_energy()
 
     def __str__(self):
         return f"[{self.target.name}]: {self.component.name}"
