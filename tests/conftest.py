@@ -47,6 +47,7 @@ def nutrient_1(db) -> models.Nutrient:
 
     name: test_nutrient
     unit: G
+    energy: 0
     """
     name = "test_nutrient"
     unit = models.Nutrient.GRAMS
@@ -60,6 +61,7 @@ def nutrient_2(db) -> models.Nutrient:
 
     name: test_nutrient_2
     unit: UG
+    energy: 0
     """
     name = "test_nutrient_2"
     unit = models.Nutrient.MICROGRAMS
@@ -258,13 +260,15 @@ def meal_ingredient(meal, ingredient_1):
 
 
 @pytest.fixture
-def nutrient_1_energy(nutrient_1) -> models.NutrientEnergy:
-    """A saved NutrientEnergy instance.
+def nutrient_1_energy(nutrient_1) -> models.Nutrient:
+    """nutrient_1 with non-zero energy.
 
     nutrient: nutrient_1
     amount: 10
     """
-    return models.NutrientEnergy.objects.create(nutrient=nutrient_1, amount=10)
+    nutrient_1.energy = 10
+    nutrient_1.save()
+    return nutrient_1
 
 
 @pytest.fixture
@@ -472,9 +476,11 @@ def meal_2(ingredient_1, saved_profile):
 
 @pytest.fixture
 def nutrient_2_energy(nutrient_2):
-    """NutrientEnergy instance for nutrient_2
+    """nutrient_2 with non-zero energy.
 
     nutrient: nutrient_2
     amount: 4
     """
-    return models.NutrientEnergy.objects.create(nutrient=nutrient_2, amount=4)
+    nutrient_2.energy = 4
+    nutrient_2.save()
+    return nutrient_2

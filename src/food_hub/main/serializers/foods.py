@@ -126,7 +126,7 @@ class NutrientIntakeSerializer(serializers.ModelSerializer):
             "name",
             "unit",
             "pretty_unit",
-            "energy_per_unit",
+            "energy",
             "recommendations",
             "types",
             "child_type",

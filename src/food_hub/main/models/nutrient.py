@@ -1,12 +1,12 @@
 """The nutrient and related models."""
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.functional import cached_property
 from util import get_conversion_factor
 
 from .foods import update_compound_nutrients
 
-__all__ = ("Nutrient", "NutrientComponent", "NutrientEnergy", "NutrientType")
+__all__ = ("Nutrient", "NutrientComponent", "NutrientType")
 
 
 class Nutrient(models.Model):
@@ -53,6 +53,8 @@ class Nutrient(models.Model):
         through_fields=("target", "component"),
         related_name="compounds",
     )
+    # Calories per <unit> of the nutrient
+    energy = models.FloatField(default=0, validators=(MinValueValidator(0),))
 
     # NOTE: `from_db()` and `save()` method overrides to update amount values
     #   of related IngredientNutrient records so the actual amount
@@ -125,17 +127,6 @@ class Nutrient(models.Model):
         """The unit's symbols (e.g., µg or kcal)."""
         return self.PRETTY_UNITS[self.unit]
 
-    @cached_property
-    def energy_per_unit(self) -> float:
-        """The amount of energy per unit provided by the nutrient.
-
-        Requires an additional database query if not prefetched
-        """
-        try:
-            return self.energy.amount
-        except ObjectDoesNotExist:
-            return 0
-
     @property
     def is_compound(self) -> bool:
         """
@@ -184,23 +175,6 @@ class NutrientComponent(models.Model):
 
     def __str__(self):
         return f"[{self.target.name}]: {self.component.name}"
-
-
-class NutrientEnergy(models.Model):
-    """
-    Represents the amount of energy provided by a nutrient in kcal/unit.
-    """
-
-    nutrient = models.OneToOneField(
-        Nutrient, on_delete=models.CASCADE, related_name="energy", primary_key=True
-    )
-    amount = models.FloatField()
-
-    def __str__(self):
-        return f"{self.nutrient.name}: {self.amount} kcal/{self.nutrient.pretty_unit}"
-
-    class Meta:
-        verbose_name_plural = "Nutrient energies"
 
 
 class NutrientType(models.Model):

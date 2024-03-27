@@ -687,15 +687,13 @@ class IntakeRecommendation(models.Model):
             # energy provided by the nutrient
             try:
                 return (
-                    amount
-                    * profile.energy_requirement
-                    / (self.nutrient.energy_per_unit * 100.0)
+                    amount * profile.energy_requirement / (self.nutrient.energy * 100.0)
                 )
             except ZeroDivisionError:
                 warn(
-                    f"Couldn't find a NutrientEnergy record for a nutrient with an "
-                    f"AMDR recommendation: {self.nutrient}. Some of the displayed "
-                    f"information ma be inaccurate."
+                    f"Nutrient with an AMDR recommendation: {self.nutrient} has "
+                    f"an energy value of 0. "
+                    f"Some of the displayed information may be inaccurate."
                 )
                 return 0.0
 

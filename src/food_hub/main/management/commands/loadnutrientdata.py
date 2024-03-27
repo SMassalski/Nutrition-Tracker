@@ -42,13 +42,7 @@ from typing import Dict
 from warnings import warn
 
 from django.core.management.base import BaseCommand
-from main.models import (
-    IntakeRecommendation,
-    Nutrient,
-    NutrientComponent,
-    NutrientEnergy,
-    NutrientType,
-)
+from main.models import IntakeRecommendation, Nutrient, NutrientComponent, NutrientType
 
 from ._data import FULL_NUTRIENT_DATA, NUTRIENT_TYPE_DATA
 
@@ -94,7 +88,6 @@ class Command(BaseCommand):
 
         create_recommendations(nutrient_instances, self.data)
         create_nutrient_types(nutrient_instances, self.data, self.type_data)
-        create_energy(nutrient_instances, self.data)
         create_nutrient_components(nutrient_instances, self.data)
 
 
@@ -107,7 +100,10 @@ def create_nutrients(data: list) -> None:
         A list containing the nutrient information in the same
         format as FULL_NUTRIENT_DATA (see module docs).
     """
-    nutrient_data = [{"name": nut["name"], "unit": nut["unit"]} for nut in data]
+    nutrient_data = [
+        {k: v for k, v in d.items() if k in ("name", "unit", "energy")} for d in data
+    ]
+    # nutrient_data = [{"name": nut["name"], "unit": nut["unit"]} for nut in data]
     instances = [Nutrient(**data) for data in nutrient_data]
     Nutrient.objects.bulk_create(instances, ignore_conflicts=True)
 
@@ -194,29 +190,6 @@ def create_nutrient_types(
             nutrient_instance = nutrient_dict.get(nutrient["name"])
             if nutrient_instance is not None:
                 nutrient_instance.types.add(types[type_])
-
-
-def create_energy(nutrient_dict: Dict[str, Nutrient], data: list) -> None:
-    """Create and save NutrientEnergy records.
-
-    Parameters
-    ----------
-    nutrient_dict
-        Mapping of nutrient names to their respective instances.
-    data
-        A list containing the nutrient information in the same
-        format as FULL_NUTRIENT_DATA (see module docs).
-    """
-    instances = []
-    for nutrient in data:
-        energy = nutrient.get("energy")
-        if energy is None:
-            continue
-
-        nutrient_instance = nutrient_dict.get(nutrient.get("name"))
-        instances.append(NutrientEnergy(nutrient=nutrient_instance, amount=energy))
-
-    NutrientEnergy.objects.bulk_create(instances, ignore_conflicts=True)
 
 
 def create_nutrient_components(nutrient_dict: Dict[str, Nutrient], data: list) -> None:

@@ -5,7 +5,6 @@ from django.db import IntegrityError
 from main import models
 from main.management.commands.loadnutrientdata import (
     Command,
-    create_energy,
     create_nutrient_components,
     create_nutrient_types,
     create_nutrients,
@@ -110,6 +109,7 @@ class TestCreateNutrient:
         nutrient = models.Nutrient.objects.first()
         assert nutrient.name == "test_nutrient"
         assert nutrient.unit == models.Nutrient.GRAMS
+        assert nutrient.energy == 5
 
     def test_already_existing_nutrient(self, nutrient_1, nutrient_data):
         """
@@ -247,19 +247,6 @@ class TestCreateRecommendations:
             )
 
 
-def test_create_energy(nutrient_1_data, nutrient_1):
-    """
-    create_energy() creates NutrientEnergy records for nutrients in
-    `nutrient_dict`, according to the information in the provided
-    data.
-    """
-    data, nutrient_dict = nutrient_1_data
-
-    create_energy(nutrient_dict, data=data)
-
-    assert nutrient_1.energy.amount == 5  # from fixture
-
-
 class TestCreateNutrientCombinations:
     """Tests of the create_nutrient_combinations() function."""
 
@@ -378,13 +365,10 @@ class TestCommand:
         assert is_from_data(data_dict, recommendation)
 
     def test_saves_nutrient_energy(self, db, cmd):
-        """
-        The load_nutrient_data command saves to the database
-        nutrient energies specified in the data.
-        """
         call_command(cmd)
 
-        assert models.NutrientEnergy.objects.first().amount == 5
+        nutrient = models.Nutrient.objects.first()
+        assert nutrient.energy == 5
 
     def test_saves_nutrient_components(self, db):
         """

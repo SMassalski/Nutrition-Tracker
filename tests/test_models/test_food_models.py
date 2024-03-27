@@ -216,22 +216,6 @@ class TestNutrient:
         assert recommendation.amount_min is None
         assert recommendation.amount_max is None
 
-    def test_nutrient_energy_per_unit(self, nutrient_1):
-        """
-        Nutrient.energy_per_unit() returns the amount value of the
-        nutrient's related NutrientEnergy record.
-        """
-        models.NutrientEnergy(nutrient=nutrient_1, amount=5)
-
-        assert nutrient_1.energy_per_unit == 5
-
-    def test_nutrient_energy_per_unit_no_energy(self):
-        """
-        Nutrient.energy_per_unit() returns 0 if the nutrient doesn't have
-        a related NutrientEnergy record.
-        """
-        assert models.Nutrient().energy_per_unit == 0
-
     @pytest.mark.parametrize(
         "unit,expected", [("UG", "µg"), ("MG", "mg"), ("G", "g"), ("KCAL", "kcal")]
     )
@@ -456,7 +440,8 @@ class TestIntakeRecommendation:
 
         5%(`amount_max`)*2000kcal(`energy_requirement`)/ energy per unit
         """
-        models.NutrientEnergy(nutrient=nutrient_1, amount=4)
+        nutrient_1.energy = 4
+        nutrient_1.save()
 
         assert amdr_recommendation.profile_amount_min(profile) == 25.0
 
@@ -467,51 +452,32 @@ class TestIntakeRecommendation:
 
         5%(`amount_max`)*2000kcal(`energy_requirement`)/ energy per unit
         """
-        models.NutrientEnergy(nutrient=nutrient_1, amount=4)
+        nutrient_1.energy = 4
+        nutrient_1.save()
 
         assert amdr_recommendation.profile_amount_max(profile) == 25.0
 
     @pytest.mark.filterwarnings("ignore::UserWarning")
-    def test_profile_amount_min_amdr_no_energy(
+    def test_profile_amount_min_amdr_zero_energy(
         self, profile, nutrient_1, amdr_recommendation
     ):
-        """
-        IntakeRecommendation.profile_amount_min() returns 0 for
-        recommendations with `dri_type` = 'AMDR' when no NutrientEnergy
-        record for the related nutrient exists.
-        """
         assert amdr_recommendation.profile_amount_min(profile) == 0
 
     @pytest.mark.filterwarnings("ignore::UserWarning")
     def test_profile_amount_max_amdr_no_energy(
         self, profile, nutrient_1, amdr_recommendation
     ):
-        """
-        IntakeRecommendation.profile_amount_max() returns 0 for
-        recommendations with `dri_type` = 'AMDR' when no NutrientEnergy
-        record for the related nutrient exists.
-        """
         assert amdr_recommendation.profile_amount_max(profile) == 0
 
     def test_profile_amount_min_amdr_no_energy_warns(
         self, profile, nutrient_1, amdr_recommendation
     ):
-        """
-        IntakeRecommendation.profile_amount_min() issues a warning for
-        recommendations with `dri_type` = 'AMDR' when no NutrientEnergy
-        record for the related nutrient exists.
-        """
         with pytest.warns(UserWarning):
             amdr_recommendation.profile_amount_min(profile)
 
     def test_profile_amount_max_amdr_no_energy_warns(
         self, profile, nutrient_1, amdr_recommendation
     ):
-        """
-        IntakeRecommendation.profile_amount_max() issues a warning for
-        recommendations with `dri_type` = 'AMDR' when no NutrientEnergy
-        record for the related nutrient exists.
-        """
         with pytest.warns(UserWarning):
             amdr_recommendation.profile_amount_max(profile)
 

@@ -165,7 +165,7 @@ class NutrientIntakeView(ListAPIView):
     # docstr-coverage: inherited
     def get_queryset(self):
         return (
-            models.Nutrient.objects.select_related("energy", "child_type")
+            models.Nutrient.objects.select_related("child_type")
             .prefetch_related(
                 "types",
                 Prefetch(

@@ -151,8 +151,8 @@ class Meal(models.Model):
         nutrients = Nutrient.objects.filter(
             ~Q(types__parent_nutrient__isnull=False),
             compounds=None,
-            energy__isnull=False,
-        ).select_related("energy")
+            energy__gt=0,
+        )
         nutrients = {nut.id: nut for nut in nutrients}
 
         queryset = (
@@ -184,7 +184,7 @@ class Meal(models.Model):
         for val in queryset:
             nutrient = nutrients[val["nutrient"]]
             recipe_weight = recipes[val["recipe_id"]]._weight
-            energy = val["total"] / recipe_weight * nutrient.energy.amount
+            energy = val["total"] / recipe_weight * nutrient.energy
             ret[nutrient.name] = ret.get(nutrient.name, 0) + energy
 
         return ret
@@ -200,11 +200,11 @@ class Meal(models.Model):
 
         queryset = (
             self.mealingredient_set.filter(
-                ingredient__nutrients__energy__amount__isnull=False,
+                ingredient__nutrients__energy__gt=0,
                 ingredient__nutrients__in=Subquery(subquery.values("pk")),
             )
             .annotate(
-                energy=F("ingredient__nutrients__energy__amount")
+                energy=F("ingredient__nutrients__energy")
                 * F("amount")
                 * F("ingredient__ingredientnutrient__amount"),
                 nutrient=F("ingredient__nutrients__name"),
@@ -338,11 +338,11 @@ class Recipe(models.Model):
 
         queryset = (
             self.recipeingredient_set.filter(
-                ingredient__nutrients__energy__amount__isnull=False,
+                ingredient__nutrients__energy__gt=0,
                 ingredient__nutrients__in=Subquery(subquery.values("pk")),
             )
             .annotate(
-                energy=F("ingredient__nutrients__energy__amount")
+                energy=F("ingredient__nutrients__energy")
                 * F("amount")
                 * F("ingredient__ingredientnutrient__amount"),
                 nutrient=F("ingredient__nutrients__name"),

@@ -67,12 +67,12 @@ class Ingredient(models.Model):
         # exclude nutrients that have only types with a parent nutrient.
         queryset = self.ingredientnutrient_set.filter(
             ~models.Q(nutrient__types__parent_nutrient__isnull=False),
-            nutrient__energy__isnull=False,
+            nutrient__energy__gt=0,
             nutrient__compounds=None,
-        ).select_related("nutrient", "nutrient__energy")
+        ).select_related("nutrient")
 
         return {
-            ing_nut.nutrient.name: ing_nut.amount * ing_nut.nutrient.energy_per_unit
+            ing_nut.nutrient.name: ing_nut.amount * ing_nut.nutrient.energy
             for ing_nut in queryset
         }
 
