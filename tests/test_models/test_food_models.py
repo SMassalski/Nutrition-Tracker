@@ -505,6 +505,12 @@ class TestIntakeRecommendationManager:
 class TestUpdateCompoundNutrient:
     """Tests of the update_compound_nutrients() function."""
 
+    def test_clear_old_true_removes_old_ingredient_nutrients(self, compound_nutrient):
+        update_compound_nutrients(compound_nutrient)
+
+        update_compound_nutrients(compound_nutrient, commit=False, clear_old=True)
+        assert not compound_nutrient.ingredientnutrient_set.exists()
+
     def test_commit_true(self, compound_nutrient):
         """
         update_compound_nutrients() updates the amounts of
@@ -669,3 +675,27 @@ class TestIngredientNutrient:
             ingredient=ingredient_1, nutrient=nutrient_2
         )
         assert ing_nut_1_2.amount == 2
+
+    def test_delete_updates_compound_ingredient_nutrient(
+        self, ingredient_1, nutrient_1, nutrient_2, ingredient_nutrient_1_1, component
+    ):
+        nutrient_3 = models.Nutrient.objects.create(name="3", unit="G")
+        models.NutrientComponent.objects.create(target=nutrient_2, component=nutrient_3)
+        models.IngredientNutrient.objects.create(
+            ingredient=ingredient_1, nutrient=nutrient_3, amount=10
+        )
+        ingredient_nutrient_1_1.delete()
+
+        instance = models.IngredientNutrient.objects.get(
+            ingredient=ingredient_1, nutrient=nutrient_2
+        )
+        assert instance.amount == 10
+
+    def test_delete_last_removes_compound_ingredient_nutrient(
+        self, ingredient_1, nutrient_1, nutrient_2, ingredient_nutrient_1_1, component
+    ):
+        ingredient_nutrient_1_1.delete()
+
+        assert not models.IngredientNutrient.objects.filter(
+            ingredient=ingredient_1, nutrient=nutrient_2
+        ).exists()

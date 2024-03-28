@@ -213,6 +213,30 @@ class TestNutrientComponent:
         ing_nut = nutrient.ingredientnutrient_set.get(ingredient=ingredient_1)
         assert ing_nut.amount == 1.5
 
+    def test_delete_updates_compound_ingredient_nutrient(
+        self, ingredient_1, nutrient_1, nutrient_2, ingredient_nutrient_1_1, component
+    ):
+        nutrient_3 = models.Nutrient.objects.create(name="3", unit="UG")
+        models.NutrientComponent.objects.create(target=nutrient_2, component=nutrient_3)
+        models.IngredientNutrient.objects.create(
+            ingredient=ingredient_1, nutrient=nutrient_3, amount=10
+        )
+        component.delete()
+
+        instance = models.IngredientNutrient.objects.get(
+            ingredient=ingredient_1, nutrient=nutrient_2
+        )
+        assert instance.amount == 10
+
+    def test_delete_last_removes_compound_ingredient_nutrient(
+        self, ingredient_1, nutrient_1, nutrient_2, ingredient_nutrient_1_1, component
+    ):
+        component.delete()
+
+        assert not models.IngredientNutrient.objects.filter(
+            ingredient=ingredient_1, nutrient=nutrient_2
+        ).exists()
+
     def test_save_updates_compound_nutrients_energy(self, nutrient_1, nutrient_2):
         nutrient_2.energy = 4
         nutrient_2.unit = "G"

@@ -141,6 +141,7 @@ class IngredientNutrient(models.Model):
 
         super().save(*args, **kwargs)
 
+        # This check covers both amount changes and creating a new entry.
         if self.amount != self._old_amount:
             for compound in self.nutrient.compounds.all():
                 update_compound_nutrients(compound)
@@ -155,7 +156,7 @@ class IngredientNutrient(models.Model):
 
 
 def update_compound_nutrients(
-    nutrient: "Nutrient", commit: bool = True
+    nutrient: "Nutrient", commit: bool = True, clear_old: bool = False
 ) -> List[IngredientNutrient]:
     """Update IngredientNutrient amounts for a compound nutrient.
 
@@ -168,12 +169,19 @@ def update_compound_nutrients(
         The compound nutrient to be updated.
     commit
         Whether to save the IngredientNutrient records.
+    clear_old
+        Whether to delete all the nutrient's ingredient nutrient entries
+        before creating new ones. Without this, when removing a
+        component, ingredient nutrient entries from that relation may
+        remain.
 
     Returns
     -------
     List[IngredientNutrient]
         The `nutrient`'s IngredientNutrient instances.
     """
+    if clear_old:
+        nutrient.ingredientnutrient_set.all().delete()
 
     ingredient_nutrient_data = IngredientNutrient.objects.filter(
         nutrient__in=nutrient.components.all()
