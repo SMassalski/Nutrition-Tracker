@@ -94,7 +94,7 @@ class Profile(models.Model):
     energy_requirement = models.PositiveIntegerField()
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     tracked_nutrients = models.ManyToManyField(
-        "main.Nutrient", related_name="tracking_profiles"
+        "main.Nutrient", related_name="tracking_profiles", blank=True
     )
 
     def __str__(self):
@@ -483,9 +483,9 @@ class IntakeRecommendation(models.Model):
     dri_type = models.CharField(max_length=6, choices=type_choices)
     sex = models.CharField(max_length=1, choices=sex_choices)
     age_min = models.PositiveIntegerField()
-    age_max = models.PositiveIntegerField(null=True)
-    amount_min = models.FloatField(help_text=amount_help_text, null=True)
-    amount_max = models.FloatField(null=True)
+    age_max = models.PositiveIntegerField(null=True, blank=True)
+    amount_min = models.FloatField(help_text=amount_help_text, null=True, blank=True)
+    amount_max = models.FloatField(null=True, blank=True)
 
     objects = RecommendationQuerySet.as_manager()
 

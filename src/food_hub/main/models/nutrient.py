@@ -44,7 +44,9 @@ class Nutrient(models.Model):
 
     name = models.CharField(max_length=32, unique=True)
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
-    types = models.ManyToManyField("main.NutrientType", related_name="nutrients")
+    types = models.ManyToManyField(
+        "main.NutrientType", related_name="nutrients", blank=True
+    )
     components = models.ManyToManyField(
         "self",
         symmetrical=False,
