@@ -1,8 +1,12 @@
 """main app admin panel configuration"""
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
+from django.core.management import call_command
 from django.db.models.functions import Lower
+from django.http import HttpResponse
+from django.urls import path
 from main import models
+from rest_framework.status import HTTP_405_METHOD_NOT_ALLOWED
 
 # User and Profile
 
@@ -151,10 +155,36 @@ class MealAdmin(admin.ModelAdmin):
     list_filter = ["date"]
     search_help_text = "Search by owner and date."
 
+    class Media:
+        js = ["bundle.js"]
+
     @admin.display(description="Owner", ordering="owner__user__username")
     def user(self, obj):
         """The name of the meal's owner."""
         return obj.owner.user.username
+
+    # docstr-coverage: inherited
+    def get_urls(self):
+        urls = super().get_urls()
+        new_urls = [
+            path(
+                "empty_meals/",
+                self.admin_site.admin_view(self.clear_empty_meals),
+                name="empty-meals",
+            )
+        ]
+        return new_urls + urls
+
+    def clear_empty_meals(self, request, **kwargs):
+        """
+        Delete meals without ingredients or recipes and are not in
+        any of the users' sessions.
+        """
+        if request.method.lower() != "delete":
+            return HttpResponse(status=HTTP_405_METHOD_NOT_ALLOWED)
+        call_command("clearemptymeals")
+        self.message_user(request, "Empty meals removed.", messages.SUCCESS)
+        return HttpResponse(headers={"HX-Refresh": "true"})
 
 
 class RecipeIngredientInline(admin.TabularInline):

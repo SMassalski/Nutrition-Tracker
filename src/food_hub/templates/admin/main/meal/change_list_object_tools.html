@@ -1,0 +1,13 @@
+{% extends "admin/change_list_object_tools.html" %}
+
+{% block object-tools-items %}
+  {% if has_delete_permission or True %}
+  <li>
+    <a href="#" hx-swap="none" hx-delete="{% url "admin:empty-meals" %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+      Clear Empty Meals
+      {{ has_delete_permission }}
+    </a>
+  </li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}
