@@ -28,14 +28,14 @@ class Ingredient(models.Model):
     """Represents a food ingredient."""
 
     # Ingredient's id in the data source database
-    external_id = models.IntegerField(null=True)
+    external_id = models.IntegerField(null=True, blank=True)
     data_source = models.ForeignKey(
-        FoodDataSource, on_delete=models.SET_NULL, null=True
+        FoodDataSource, on_delete=models.SET_NULL, null=True, blank=True
     )
     nutrients = models.ManyToManyField("main.Nutrient", through="IngredientNutrient")
 
     name = models.CharField(max_length=50)
-    dataset = models.CharField(max_length=50, null=True)
+    dataset = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         constraints = [

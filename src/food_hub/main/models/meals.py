@@ -2,6 +2,7 @@
 import re
 from typing import Dict
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Case, F, OuterRef, Q, Subquery, Sum, When
@@ -22,7 +23,9 @@ __all__ = [
 class Meal(models.Model):
     """Represents the foods eaten in a single day."""
 
-    owner = models.ForeignKey("main.Profile", on_delete=models.CASCADE)
+    owner = models.ForeignKey(
+        "main.Profile", on_delete=models.CASCADE
+    )  # , related_name="meals")
     date = models.DateField(default=timezone.now)
     ingredients = models.ManyToManyField(
         "main.Ingredient", through="main.MealIngredient"
@@ -234,7 +237,7 @@ class Recipe(models.Model):
         "main.Profile", on_delete=models.CASCADE, related_name="recipes"
     )
     final_weight = models.FloatField(
-        validators=[MinValueValidator(0.1)], null=True
+        validators=[MinValueValidator(0.1)], null=True, blank=True
     )  # In grams
     ingredients = models.ManyToManyField(
         "main.Ingredient", through="main.RecipeIngredient"
@@ -390,3 +393,9 @@ class MealRecipe(models.Model):
     meal = models.ForeignKey(Meal, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     amount = models.FloatField(validators=[MinValueValidator(0.1)])
+
+    # docstr-coverage: inherited
+    def clean(self):
+        # Check if the MealRecipe owners match.
+        if self.meal.owner != self.recipe.owner:
+            raise ValidationError("The meal and recipe owners must be the same.")
