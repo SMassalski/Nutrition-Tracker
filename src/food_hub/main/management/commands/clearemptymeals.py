@@ -27,4 +27,8 @@ class Command(BaseCommand):
         meal_ids = [session.get_decoded().get("meal_id") for session in sessions]
         meal_ids = [id_ for id_ in meal_ids if id_ is not None]
 
-        Meal.objects.filter(~Q(id__in=meal_ids), mealingredient__isnull=True).delete()
+        Meal.objects.filter(
+            ~Q(id__in=meal_ids),
+            mealingredient__isnull=True,
+            mealrecipe__isnull=True,
+        ).delete()

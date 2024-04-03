@@ -11,7 +11,12 @@ class TestCommand:
 
         assert not Meal.objects.exists()
 
-    def test_keeps_non_empty_meals(self, meal, meal_ingredient):
+    def test_keeps_meals_with_only_ingredients(self, meal, meal_ingredient):
+        call_command("clearemptymeals")
+
+        assert Meal.objects.exists()
+
+    def test_keeps_meals_with_only_recipes(self, meal, meal_recipe):
         call_command("clearemptymeals")
 
         assert Meal.objects.exists()
