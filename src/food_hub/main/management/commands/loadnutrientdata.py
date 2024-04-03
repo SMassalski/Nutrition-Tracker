@@ -80,15 +80,23 @@ class Command(BaseCommand):
     # docstr-coverage: inherited
     def handle(self, *args, **options):
 
+        self.stdout.write("Creating nutrients...")
         create_nutrients(self.data)
 
         names = [nut["name"] for nut in self.data]
         nutrients = Nutrient.objects.filter(name__in=names)
         nutrient_instances = {nut.name: nut for nut in nutrients}
 
+        self.stdout.write("Creating intake recommendations...")
         create_recommendations(nutrient_instances, self.data)
+
+        self.stdout.write("Creating nutrient types...")
         create_nutrient_types(nutrient_instances, self.data, self.type_data)
+
+        self.stdout.write("Creating nutrient component relations...")
         create_nutrient_components(nutrient_instances, self.data)
+
+        self.stdout.write(self.style.SUCCESS("Done"))
 
 
 def create_nutrients(data: list) -> None:
