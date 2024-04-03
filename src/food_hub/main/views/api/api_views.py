@@ -23,7 +23,6 @@ __all__ = (
 )
 
 
-# TODO: Remove unused views
 @api_view(["GET"])
 @renderer_classes([BrowsableAPIRenderer, JSONRenderer])
 def api_root(request, format=None):

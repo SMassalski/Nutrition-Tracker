@@ -17,7 +17,7 @@ class Nutrient(models.Model):
     Special consideration should be given when updating the nutrient's
     unit value. The save method updates the amount values of related
     IngredientNutrients, but when using bulk_update() the amounts must
-    be changed manually
+    be changed manually.
     """
 
     # Unit constants
@@ -56,11 +56,6 @@ class Nutrient(models.Model):
     )
     # Calories per <unit> of the nutrient
     energy = models.FloatField(default=0, validators=(MinValueValidator(0),))
-
-    # NOTE: `from_db()` and `save()` method overrides to update amount values
-    #   of related IngredientNutrient records so the actual amount
-    #   remains unchanged (when changing unit from grams to milligrams
-    #   the amounts are multiplied x 1000)
 
     # docstr-coverage: inherited
     def __init__(self, *args, **kwargs):

@@ -70,11 +70,6 @@ class Profile(models.Model):
     FEMALE = "F"
     MALE = "M"
 
-    # TODO: Additional age functionality
-    #  * Column for age unit (months / years)
-    #  * Column for tracking age (last time age was edited)
-    #  * Energy calculations for ages < 3yo
-
     activity_choices = [
         (SEDENTARY, "Sedentary"),
         (LOW_ACTIVE, "Low Active"),
@@ -165,7 +160,6 @@ class Profile(models.Model):
             date__gte=last_measurement_date - timedelta(days=7)
         ).aggregate(models.Avg("value"))["value__avg"]
 
-    # TODO: There may be a better way to do this
     def calculate_energy(self):
         """
         Calculate the Estimated Energy Requirement for the profile.
@@ -321,19 +315,6 @@ class Profile(models.Model):
         if date_max is not None:
             queryset = queryset.filter(date__lte=date_max)
 
-        # TODO: Delete this. It should have been deleted in commit e1af508b
-        # subquery = Recipe.objects.filter(meal=OuterRef("mealrecipe__meal")).annotate(
-        #     weight=Case(
-        #         When(
-        #             final_weight__isnull=True,
-        #             then=Sum("recipeingredient__amount"),
-        #         ),
-        #         When(
-        #             final_weight__isnull=False,
-        #             then=F("final_weight"),
-        #         ),
-        #     )
-        # )
         queryset = (
             queryset.annotate(
                 nutrient_id=F(
@@ -342,14 +323,12 @@ class Profile(models.Model):
                 recipe_id=F("mealrecipe__recipe_id"),
             )
             .filter(nutrient_id=nutrient_id)
-            # .alias(recipe_weight=Subquery(subquery.values("weight")))
             .alias(
                 nutrient_amount=F("mealrecipe__amount")
                 * F("mealrecipe__recipe__recipeingredient__amount")
                 * F(
                     "mealrecipe__recipe__recipeingredient__ingredient__ingredientnutrient__amount"
                 )
-                # / F("recipe_weight")
             )
             .annotate(amount=Sum("nutrient_amount"))
             .values("date", "amount", "recipe_id")
@@ -425,17 +404,19 @@ class IntakeRecommendation(models.Model):
     """
     Represents dietary intake recommendations for a selected
     demographic.
-    """
 
-    # NOTE: Different recommendation types will use the amount fields
-    #  in different ways:
-    #  * AMDR - `amount_min` and amount_max are the lower and the upper
-    #   limits of the range respectively.
-    #  * AI/UL, RDA/UL, AIK, AI/KG, RDA/KG - `amount_min` is the RDA or
-    #   AI value. `amount_max` is the UL value (if available).
-    #  * AIK - uses only `amount_min`
-    #  * UL - uses only `amount_max`
-    #  * ALAP - ignores both.
+    Notes
+    -----
+    Different recommendation types will use the amount fields
+    in different ways:
+     * AMDR - `amount_min` and amount_max are the lower and the upper
+      limits of the range respectively.
+     * AI/UL, RDA/UL, AIK, AI/KG, RDA/KG - `amount_min` is the RDA or
+      AI value. `amount_max` is the UL value (if available).
+     * AIK - uses only `amount_min`
+     * UL - uses only `amount_max`
+     * ALAP - ignores both.
+    """
 
     AI = "AI"
     AIK = "AIK"
@@ -645,9 +626,6 @@ class IntakeRecommendation(models.Model):
         """
         return self._profile_amount(self.amount_max, profile)
 
-    # DEV_NOTE: Decide whether the energy dependant recommendations use
-    #   the recommended or actual energy intake. (currently recommended
-    #   is used)
     def _profile_amount(self, amount: float, profile: Profile) -> float:
         """Get the amount for the recommendation type and given profile.
 

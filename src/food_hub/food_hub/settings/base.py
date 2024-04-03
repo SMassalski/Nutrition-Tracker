@@ -144,7 +144,7 @@ AUTH_USER_MODEL = "main.User"
 
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard"
-LOGOUT_REDIRECT_URL = "login"  # TODO: Landing page
+LOGOUT_REDIRECT_URL = "login"
 
 
 # Data

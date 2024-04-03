@@ -150,8 +150,6 @@ class TestMealNutrientIntakeView:
         assert data["recommendations"]["rda"] == saved_recommendation
         assert "children" in data
 
-    # NOTE
-
     def test_get_template_context_energy_requirement_is_profiles_energy_requirement(
         self, nutrient_1, _request, saved_recommendation, meal
     ):

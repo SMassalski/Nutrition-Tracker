@@ -3,7 +3,6 @@ import pytest
 from util import get_conversion_factor, weighted_dict_sum
 
 
-# NOTE: DONE
 class TestWeightedDictSum:
     """Tests of the weighted_dict_sum() function."""
 

@@ -1,4 +1,19 @@
-"""Parsing functions used by the `loadfdcdata` command."""
+"""Parsing functions used by the `loadfdcdata` command.
+
+Notes
+-----
+Some nutrients (referred to as nonstandard nutrients) have
+multiple records in the fdc database. If there is a record that is
+preferred over others, the application should use the amount for
+that record if possible.
+These nutrients need to be treated differently:
+  - Cysteine is probably conflated with cystine in the fdc data.
+  - Vitamin A and Vitamin D can have entries in either or both IU
+  and micrograms.
+  - Vitamin B9 (Folate) has entries as total or equivalents (DFE).
+  - Vitamin K has entries that are different molecules and need
+  to be summed up.
+"""
 import csv
 import io
 import os
@@ -19,26 +34,14 @@ from ._fdc_helpers import (
 UNIT_CONVERSION = {"MCG_RE": "UG", "MG_GAE": "MG", "MG_ATE": "MG"}
 
 # Set of data sources in occurring in the FDC db.
-# NOTE: Excluded "branded_food" and "foundation_food" to avoid more
-#  complexity (not clearly indicated historical records in
-#  food_nutrient.csv)
+# Excluded "branded_food" and "foundation_food" to avoid more
+# complexity (not clearly indicated historical records in
+# food_nutrient.csv)
 FDC_DATASETS = {
     "sr_legacy_food",
     "survey_fndds_food",
 }
 
-# NOTE:
-#     Some nutrients (referred to as nonstandard nutrients) have
-#     multiple records in the fdc database. If there is a record that is
-#     preferred over others, the application should use the amount for
-#     that record if possible.
-#     These nutrients need to be treated differently:
-#       - Cysteine is probably conflated with cystine in the fdc data.
-#       - Vitamin A and Vitamin D can have entries in either or both IU
-#       and micrograms.
-#       - Vitamin B9 (Folate) has entries as total or equivalents (DFE).
-#       - Vitamin K has entries that are different molecules and need
-#       to be summed up.
 
 # IDs in the FDC db of nutrients that have to be treated differently.
 FDC_EXCEPTION_IDS = {

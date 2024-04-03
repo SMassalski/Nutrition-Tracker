@@ -1,4 +1,11 @@
-"""Tests of the load_fdc_data command helper functions."""
+"""Tests of the load_fdc_data command helper functions.
+
+Notes
+-----
+A 'nonstandard nutrient' is a nutrient that needs to be handled
+differently based on the differences in the way they are stored
+in the FDC data and the app's database.
+"""
 import pytest
 from django.db import IntegrityError
 from main import models
@@ -9,10 +16,6 @@ from main.management.commands._fdc_helpers import (
     get_fdc_data_source,
     handle_nonstandard,
 )
-
-# NOTE: Nonstandard nutrient is a nutrient that needs to be handled
-#  differently based on the differences in the way they are stored
-#  in the FDC data and the app's database.
 
 # FDC ids of nutrients that need to be handled differently
 CYSTEINE = 1232
