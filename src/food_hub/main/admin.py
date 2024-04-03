@@ -188,7 +188,9 @@ class MealAdmin(admin.ModelAdmin):
             raise PermissionDenied
 
         call_command("clearemptymeals")
-        self.message_user(request, "Empty meals removed.", messages.SUCCESS)
+        self.message_user(
+            request, "Empty meals removed.", messages.SUCCESS, fail_silently=True
+        )
         return HttpResponse(headers={"HX-Refresh": "true"})
 
 
