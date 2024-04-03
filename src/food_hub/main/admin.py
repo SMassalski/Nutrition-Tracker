@@ -1,6 +1,7 @@
 """main app admin panel configuration"""
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
+from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
 from django.db.models.functions import Lower
 from django.http import HttpResponse
@@ -182,6 +183,10 @@ class MealAdmin(admin.ModelAdmin):
         """
         if request.method.lower() != "delete":
             return HttpResponse(status=HTTP_405_METHOD_NOT_ALLOWED)
+
+        if not self.has_delete_permission(request):
+            raise PermissionDenied
+
         call_command("clearemptymeals")
         self.message_user(request, "Empty meals removed.", messages.SUCCESS)
         return HttpResponse(headers={"HX-Refresh": "true"})
