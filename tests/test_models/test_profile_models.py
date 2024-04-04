@@ -1,9 +1,11 @@
 """Tests of profile related features."""
 from datetime import date, datetime, timedelta
+from pprint import pprint
 
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.db.models import F, OuterRef, Q, Subquery, Sum
 from django.utils import timezone
 from main import models
 
@@ -546,6 +548,341 @@ class TestProfile:
         saved_profile.save(recalculate_weight=True)
 
         assert saved_profile.weight == 80
+
+    # Ingredient calories
+
+    def test_calories_from_ingredients_single_meal(
+        self,
+        saved_profile,
+        meal,
+        meal_ingredient,
+        meal_ingredient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = {
+            date(year=2020, month=6, day=15): {
+                "test_nutrient": 3000,
+                "test_nutrient_2": 280,
+            }
+        }
+        actual = saved_profile.calories_from_ingredients()
+
+        assert actual == expected
+
+    def test_calories_from_ingredients_multiple_meals(
+        self,
+        saved_profile,
+        meal,
+        meal_2,
+        meal_ingredient,
+        meal_ingredient_2,
+        meal_2_ingredient_1,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = {
+            date(2020, 6, 15): {
+                "test_nutrient": 3000,
+                "test_nutrient_2": 280,
+            },
+            date(2020, 6, 1): {
+                "test_nutrient": 4500,
+                "test_nutrient_2": 120,
+            },
+        }
+
+        actual = saved_profile.calories_from_ingredients()
+
+        assert actual == expected
+
+    def test_calories_from_ingredients_date_min(
+        self,
+        saved_profile,
+        meal,
+        meal_2,
+        meal_ingredient,
+        meal_ingredient_2,
+        meal_2_ingredient_1,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = {
+            date(2020, 6, 15): {
+                "test_nutrient": 3000,
+                "test_nutrient_2": 280,
+            }
+        }
+
+        actual = saved_profile.calories_from_ingredients(date_min=date(2020, 6, 2))
+
+        assert actual == expected
+
+    def test_calories_from_ingredients_date_max(
+        self,
+        saved_profile,
+        meal,
+        meal_2,
+        meal_ingredient,
+        meal_ingredient_2,
+        meal_2_ingredient_1,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = {
+            date(2020, 6, 1): {
+                "test_nutrient": 4500,
+                "test_nutrient_2": 120,
+            }
+        }
+
+        actual = saved_profile.calories_from_ingredients(date_max=date(2020, 6, 2))
+
+        assert actual == expected
+
+    # Recipe calories
+
+    def test_calories_from_recipes_single_meal(
+        self,
+        saved_profile,
+        meal,
+        meal_recipe,
+        recipe_ingredient,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+
+        expected = {
+            date(2020, 6, 15): {"test_nutrient": 750.0, "test_nutrient_2": 20.0}
+        }
+
+        actual = saved_profile.calories_from_recipes()
+
+        assert actual == expected
+
+    def test_calories_from_recipes_multiple_meals(
+        self,
+        saved_profile,
+        meal,
+        meal_2,
+        meal_recipe,
+        meal_2_recipe,
+        recipe_ingredient,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = {
+            date(2020, 6, 15): {"test_nutrient": 750.0, "test_nutrient_2": 20.0},
+            date(2020, 6, 1): {"test_nutrient": 1500.0, "test_nutrient_2": 40.0},
+        }
+
+        actual = saved_profile.calories_from_recipes()
+
+        assert actual == expected
+
+    def test_calories_from_recipes_date_min(
+        self,
+        saved_profile,
+        meal,
+        meal_2,
+        meal_recipe,
+        meal_2_recipe,
+        recipe_ingredient,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+
+        expected = {
+            date(2020, 6, 15): {"test_nutrient": 750.0, "test_nutrient_2": 20.0}
+        }
+
+        actual = saved_profile.calories_from_recipes(date_min=date(2020, 6, 2))
+
+        assert actual == expected
+
+    def test_calories_from_recipes_date_max(
+        self,
+        saved_profile,
+        meal,
+        meal_2,
+        meal_recipe,
+        meal_2_recipe,
+        recipe_ingredient,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = {
+            date(2020, 6, 1): {"test_nutrient": 1500.0, "test_nutrient_2": 40.0}
+        }
+
+        actual = saved_profile.calories_from_recipes(date_max=date(2020, 6, 2))
+
+        assert actual == expected
+
+    def test_calories_from_recipes_multiple_recipes(
+        self,
+        saved_profile,
+        meal,
+        meal_recipe,
+        recipe_2,
+        recipe_ingredient,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+
+        expected = {
+            date(2020, 6, 15): {"test_nutrient": 2250.0, "test_nutrient_2": 60.0}
+        }
+
+        actual = saved_profile.calories_from_recipes()
+
+        assert actual == expected
+
+    # Calories by dates (combined)
+
+    def test_calories_by_date_only_ingredients(
+        self,
+        saved_profile,
+        meal,
+        meal_2,
+        meal_ingredient,
+        meal_ingredient_2,
+        meal_2_ingredient_1,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = {
+            date(2020, 6, 15): {"test_nutrient": 3000.0, "test_nutrient_2": 280.0},
+            date(2020, 6, 1): {"test_nutrient": 4500.0, "test_nutrient_2": 120.0},
+        }
+
+        actual = saved_profile.calories_by_date()
+
+        assert actual == expected
+
+    def test_calories_by_date_only_recipes(
+        self,
+        saved_profile,
+        meal,
+        meal_2,
+        meal_recipe,
+        meal_2_recipe,
+        recipe_ingredient,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = {
+            date(2020, 6, 15): {"test_nutrient": 750.0, "test_nutrient_2": 20.0},
+            date(2020, 6, 1): {"test_nutrient": 1500.0, "test_nutrient_2": 40.0},
+        }
+
+        actual = saved_profile.calories_by_date()
+
+        assert actual == expected
+
+    def test_calories_by_date_both(
+        self,
+        saved_profile,
+        meal,
+        meal_2,
+        meal_recipe,
+        meal_2_recipe,
+        recipe_ingredient,
+        meal_ingredient,
+        meal_ingredient_2,
+        meal_2_ingredient_1,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+
+        expected = {
+            date(2020, 6, 15): {"test_nutrient": 3750.0, "test_nutrient_2": 300.0},
+            date(2020, 6, 1): {"test_nutrient": 6000.0, "test_nutrient_2": 160.0},
+        }
+
+        actual = saved_profile.calories_by_date()
+
+        assert actual == expected
+
+    def test_calories_by_date_date_min(
+        self,
+        saved_profile,
+        meal,
+        meal_2,
+        meal_recipe,
+        meal_2_recipe,
+        recipe_ingredient,
+        meal_ingredient,
+        meal_ingredient_2,
+        meal_2_ingredient_1,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = {
+            date(2020, 6, 15): {"test_nutrient": 3750.0, "test_nutrient_2": 300.0},
+        }
+
+        actual = saved_profile.calories_by_date(date_min=date(2020, 6, 2))
+
+        assert actual == expected
+
+    def test_calories_by_date_date_max(
+        self,
+        saved_profile,
+        meal,
+        meal_2,
+        meal_recipe,
+        meal_2_recipe,
+        recipe_ingredient,
+        meal_ingredient,
+        meal_ingredient_2,
+        meal_2_ingredient_1,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        expected = {
+            date(2020, 6, 1): {"test_nutrient": 6000.0, "test_nutrient_2": 160.0},
+        }
+
+        actual = saved_profile.calories_by_date(date_max=date(2020, 6, 2))
+
+        assert actual == expected
 
 
 class TestWeightMeasurement:

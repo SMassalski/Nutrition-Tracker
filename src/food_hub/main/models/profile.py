@@ -5,8 +5,9 @@ from warnings import warn
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Avg, Case, F, Sum, When
+from django.db.models import Avg, Case, F, OuterRef, Q, Subquery, Sum, When
 from django.db.models.lookups import LessThanOrEqual
+from main.models.nutrient import Nutrient
 
 __all__ = ["Profile", "IntakeRecommendation", "WeightMeasurement"]
 
@@ -348,6 +349,171 @@ class Profile(models.Model):
         for val in queryset:
             amount = val["amount"] / recipes[val["recipe_id"]]._weight
             ret[val["date"]] = ret.get(val["date"], 0) + amount
+
+        return ret
+
+    def calories_by_date(self, date_min=None, date_max=None):
+        """Get the caloric contribution of nutrients by date.
+
+        Parameters
+        ----------
+        date_min: datetime.date
+            The lower limit (inclusive) for dates that will be included
+            in the results
+        date_max: datetime.date
+            The upper limit (inclusive) for dates that will be included
+            in the results
+
+        Returns
+        -------
+        dict[datetime.date, float]
+        """
+        recipe = self.calories_from_recipes(date_min, date_max)
+        ingredient = self.calories_from_ingredients(date_min, date_max)
+
+        # Combine dicts
+        ret = {}
+        dates = {*recipe.keys(), *ingredient.keys()}
+        for date in dates:
+            r = recipe.get(date, {})
+            i = ingredient.get(date, {})
+            ret[date] = {k: r.get(k, 0) + i.get(k, 0) for k in {*r.keys(), *i.keys()}}
+
+        return ret
+
+    def calories_from_ingredients(self, date_min=None, date_max=None):
+        """Get the caloric contribution of nutrients from ingredients,
+        by date.
+
+        Parameters
+        ----------
+        date_min: datetime.date
+            The lower limit (inclusive) for dates that will be included
+            in the results
+        date_max: datetime.date
+            The upper limit (inclusive) for dates that will be included
+            in the results
+
+        Returns
+        -------
+        dict[datetime.date, float]
+        """
+        queryset = self.meal_set
+
+        # Date filtering
+        if date_min is not None:
+            queryset = queryset.filter(date__gte=date_min)
+        if date_max is not None:
+            queryset = queryset.filter(date__lte=date_max)
+
+        nutrients = Nutrient.objects.filter(
+            ~Q(types__parent_nutrient__isnull=False),
+            compounds=None,
+            energy__gt=0,
+        ).values("name")
+        nutrients = [nutrient["name"] for nutrient in nutrients]
+
+        # Core queryset
+        queryset = (
+            queryset.annotate(
+                nutrient=F(
+                    "mealingredient__ingredient__ingredientnutrient__nutrient__name"
+                )
+            )
+            .filter(nutrient__in=nutrients)
+            .alias(
+                energy=F(
+                    "mealingredient__ingredient__ingredientnutrient__nutrient__energy"
+                )
+                * F("mealingredient__amount")
+                * F("mealingredient__ingredient__ingredientnutrient__amount")
+            )
+            .values("date", "nutrient")
+            .annotate(calories=Sum("energy"))
+        )
+
+        ret = {}
+        for intake in queryset:
+            if intake["date"] not in ret:
+                ret[intake["date"]] = {}
+
+            ret[intake["date"]][intake["nutrient"]] = intake["calories"]
+
+        return ret
+
+    def calories_from_recipes(self, date_min=None, date_max=None):
+        """Get the caloric contribution of nutrients from recipes, by
+        date.
+
+        Parameters
+        ----------
+        date_min: datetime.date
+            The lower limit (inclusive) for dates that will be included
+            in the results
+        date_max: datetime.date
+            The upper limit (inclusive) for dates that will be included
+            in the results
+
+        Returns
+        -------
+        dict[datetime.date, float]
+        """
+        queryset = self.meal_set
+
+        # Date filtering
+        if date_min is not None:
+            queryset = queryset.filter(date__gte=date_min)
+        if date_max is not None:
+            queryset = queryset.filter(date__lte=date_max)
+
+        nutrients = Nutrient.objects.filter(
+            ~Q(types__parent_nutrient__isnull=False),
+            compounds=None,
+            energy__gt=0,
+        ).values("name")
+        nutrients = [nutrient["name"] for nutrient in nutrients]
+
+        queryset = (
+            queryset.annotate(
+                nutrient=F(
+                    "mealrecipe__recipe__ingredients__ingredientnutrient__nutrient__name"
+                ),
+                recipe_id=F("mealrecipe__recipe_id"),
+            )
+            .filter(nutrient__in=nutrients)
+            .alias(
+                nutrient_energy=F("mealrecipe__amount")
+                * F("mealrecipe__recipe__recipeingredient__amount")
+                * F(
+                    "mealrecipe__recipe__recipeingredient__ingredient__ingredientnutrient__amount"
+                )
+                * F(
+                    "mealrecipe__recipe__recipeingredient__ingredient__ingredientnutrient__nutrient__energy"
+                )
+            )
+            .values("date", "nutrient", "recipe_id")
+            .annotate(calories=Sum("nutrient_energy"))
+        )
+        if not queryset:
+            return {}
+
+        recipe_queryset = self.recipes.annotate(
+            _weight=Case(
+                When(final_weight=None, then=Sum("recipeingredient__amount")),
+                When(final_weight__isnull=False, then=F("final_weight")),
+            )
+        )
+        recipes = {rec.id: rec for rec in recipe_queryset}
+
+        ret = {}
+        for val in queryset:
+            date = val["date"]
+            amount = val["calories"] / recipes[val["recipe_id"]]._weight
+
+            if date not in ret:
+                ret[date] = {}
+
+            ret[date][val["nutrient"]] = ret[date].get(val["nutrient"], 0) + amount
 
         return ret
 
