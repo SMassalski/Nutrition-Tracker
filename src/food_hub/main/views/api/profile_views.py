@@ -32,6 +32,7 @@ __all__ = (
     "ProfileApiView",
     "TrackedNutrientViewSet",
     "WeightMeasurementViewSet",
+    "LastMonthCalorieView",
 )
 
 
@@ -200,6 +201,26 @@ class LastMonthIntakeView(RetrieveAPIView):
                 ),
             )
         )
+
+
+class LastMonthCalorieView(RetrieveAPIView):
+    """
+    List caloric contribution of nutrients by date from the last 30 days.
+    """
+
+    serializer_class = serializers.ByDateCalorieSerializer
+    renderer_classes = (BrowsableAPIRenderer, JSONRenderer)
+
+    # docstr-coverage: inherited
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["date_min"] = date.today() - timedelta(days=30)
+        ctx["date_max"] = date.today()
+        return ctx
+
+    # docstr-coverage: inherited
+    def get_object(self):
+        return self.request.user.profile
 
 
 class TrackedNutrientViewSet(

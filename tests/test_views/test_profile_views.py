@@ -332,7 +332,7 @@ class TestProfileAPIView:
         assert response.data["success"] is False
 
 
-class TestLastMonthIntakeByView:
+class TestLastMonthIntakeView:
     def test_endpoint_ok(self, logged_in_api_client, nutrient_1, saved_profile):
         url = reverse("last-month-intake", args=(nutrient_1.id,))
         response = logged_in_api_client.get(url)
@@ -387,6 +387,19 @@ class TestLastMonthIntakeByView:
 
         assert response.data["recommendations"][0]["amount_min"] == 400
         assert response.data["recommendations"][0]["amount_max"] == 400
+
+
+class TestLastMonthCalorieView:
+    def test_returns_calories_for_the_last_30_days(self, user, saved_profile):
+        request = create_api_request("get", user)
+        view = views.LastMonthCalorieView.as_view()
+        expected = [
+            (date.today() - timedelta(days=30 - i)).strftime("%b %d") for i in range(31)
+        ]
+
+        response = view(request)
+
+        assert list(response.data["caloric_intake"].keys()) == expected
 
 
 class TestTrackedNutrientViewSet:

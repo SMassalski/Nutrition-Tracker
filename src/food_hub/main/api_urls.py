@@ -82,6 +82,11 @@ urlpatterns = [
         views.LastMonthIntakeView.as_view(),
         name="last-month-intake",
     ),
+    path(
+        "calories/last-month",
+        views.LastMonthCalorieView.as_view(),
+        name="last-month-calories",
+    ),
 ]
 router = SimpleRouter()
 router.register("recipes", views.RecipeViewSet, "recipe")
