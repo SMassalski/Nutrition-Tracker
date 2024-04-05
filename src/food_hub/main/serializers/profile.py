@@ -1,4 +1,8 @@
 """Serializers related to the `Profile` model."""
+from datetime import timedelta
+from functools import cached_property
+from typing import Dict
+
 from django.db.models import Q
 from main import models
 from rest_framework import serializers
@@ -8,6 +12,7 @@ __all__ = (
     "ProfileSerializer",
     "TrackedNutrientSerializer",
     "WeightMeasurementSerializer",
+    "ByDateCalorieSerializer",
 )
 
 
@@ -117,3 +122,71 @@ class TrackedNutrientSerializer(serializers.ModelSerializer):
             )
 
         return value
+
+
+class ByDateCalorieSerializer(serializers.ModelSerializer):
+    """Profile serializer that displays its caloric contributions by date.
+
+    The `date_min` and `date_max` context vars can be provided to
+    limit the date range of the intakes.
+    """
+
+    avg = serializers.SerializerMethodField()
+    caloric_intake = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Profile
+        fields = ("caloric_intake", "avg")
+
+    @cached_property
+    def calories(self):
+        date_min = self.context.get("date_min")
+        date_max = self.context.get("date_max")
+
+        return self.instance.calories_by_date(date_min, date_max)
+
+    def get_caloric_intake(self, *_args) -> Dict[str, Dict[str, float]]:
+        """Get the caloric contribution of nutrients grouped by date.
+
+        Context Params
+        --------------
+        date_min: date
+            The lower limit (inclusive) of dates to be included in the
+            results.
+        date_max: date
+            The upper limit (inclusive) of dates to be included in the
+            results.
+        """
+
+        date_min = self.context.get("date_min")
+        date_max = self.context.get("date_max")
+
+        # Don't fill the intakes if the range cannot be determined.
+        if len(self.calories) == 0 and (date_min is None or date_max is None):
+            return {}
+
+        # Fill empty dates in the date range.
+        date_min = date_min or min(self.calories)
+        date_max = date_max or max(self.calories)
+
+        result = {
+            date_min + timedelta(days=i): {}
+            for i in range((date_max - date_min).days + 1)
+        }
+        result.update(self.calories)
+
+        # Change dates to strings in the format
+        #   <Month locale's abbreviated name> <zero-padded day of the month>.
+        # Round the values to the first decimal place.
+        ret = {}
+        for date in result:
+            ret[date.strftime("%b %d")] = {
+                k: round(v, 1) for k, v in result[date].items()
+            }
+
+        return ret
+
+    def get_avg(self, *_args) -> float:
+        """Get the average caloric intake."""
+        daily_sums = [sum(cal.values()) for cal in self.calories.values()]
+        return round(sum(daily_sums) / (len(daily_sums) or 1), 1)

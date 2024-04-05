@@ -330,3 +330,180 @@ class TestByDateIntakeSerializer:
         serializer = serializers.ByDateIntakeSerializer(nutrient_1, context=context)
 
         assert serializer.get_avg(nutrient_1) == 0.3
+
+
+class TestByDateCalorieSerializer:
+    @pytest.fixture()
+    def meal_ingredients(
+        self,
+        meal,
+        meal_2,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        """Load meal ingredient fixtures.
+
+        meal_ingredient
+        meal_2
+        ingredient_nutrient_1_1
+        ingredient_nutrient_1_2
+        nutrient_1_energy
+        nutrient_2_energy
+
+        Caloric contributions
+        meal:
+            'test_nutrient': 30.0
+            'test_nutrient_2': 80.0
+        meal_2:
+            'test_nutrient': 3.0
+            'test_nutrient_2': 8.0
+        """
+        pass
+
+    def test_get_calories_date_min(self, saved_profile, meal_ingredients):
+        serializer = serializers.ByDateCalorieSerializer(
+            instance=saved_profile, context={"date_min": datetime.date(2020, 6, 15)}
+        )
+
+        result = serializer.get_caloric_intake()
+
+        assert "Jun 15" in result
+        assert "Jun 02" not in result
+
+    def test_get_calories_date_max(self, saved_profile, meal_ingredients):
+        serializer = serializers.ByDateCalorieSerializer(
+            instance=saved_profile, context={"date_max": datetime.date(2020, 6, 2)}
+        )
+
+        result = serializer.get_caloric_intake()
+
+        assert "Jun 15" not in result
+        assert "Jun 02" in result
+
+    def test_get_calories_no_meals_and_no_date_min_empty_results(self, saved_profile):
+
+        serializer = serializers.ByDateCalorieSerializer(
+            instance=saved_profile, context={"date_max": datetime.date(2020, 6, 2)}
+        )
+
+        assert serializer.get_caloric_intake() == {}
+
+    def test_get_calories_no_meals_and_no_date_max_empty_results(self, saved_profile):
+
+        serializer = serializers.ByDateCalorieSerializer(
+            instance=saved_profile, context={"date_min": datetime.date(2020, 6, 2)}
+        )
+
+        assert serializer.get_caloric_intake() == {}
+
+    def test_get_calories_fills_date_range_with_empty_dicts(
+        self, saved_profile, meal_ingredients
+    ):
+
+        serializer = serializers.ByDateCalorieSerializer(
+            instance=saved_profile,
+            context={
+                "date_min": datetime.date(2020, 6, 1),
+                "date_max": datetime.date(2020, 6, 10),
+            },
+        )
+        expected = {f"Jun {2+i:02}": {} for i in range(9)}
+
+        actual = serializer.get_caloric_intake()
+
+        del actual["Jun 01"]
+        assert actual == expected
+
+    def test_get_calories_no_meals_fills_date_range_with_empty_dicts(
+        self, saved_profile
+    ):
+
+        serializer = serializers.ByDateCalorieSerializer(
+            instance=saved_profile,
+            context={
+                "date_min": datetime.date(2020, 6, 2),
+                "date_max": datetime.date(2020, 6, 10),
+            },
+        )
+        expected = {f"Jun {2+i:02}": {} for i in range(9)}
+
+        actual = serializer.get_caloric_intake()
+
+        assert actual == expected
+
+    def test_get_calories_rounds_values(
+        self, saved_profile, meal_ingredients, nutrient_2_energy
+    ):
+        nutrient_2_energy.energy = 0.014
+        nutrient_2_energy.save()
+        serializer = serializers.ByDateCalorieSerializer(instance=saved_profile)
+        expected = 0.3  # 0.28 without rounding
+
+        actual = serializer.get_caloric_intake()["Jun 15"]["test_nutrient_2"]
+
+        assert actual == expected
+
+    def test_get_calories_results_are_sorted_chronologically(
+        self, saved_profile, meal_ingredients
+    ):
+        serializer = serializers.ByDateCalorieSerializer(instance=saved_profile)
+        expected = [f"Jun {1+i:02}" for i in range(15)]
+
+        actual = list(serializer.get_caloric_intake().keys())
+
+        assert actual == expected
+
+    def test_get_avg_no_meals_doesnt_raise_zero_division(self, saved_profile):
+        serializer = serializers.ByDateCalorieSerializer(instance=saved_profile)
+
+        try:
+            serializer.get_avg()
+        except ZeroDivisionError:
+            pytest.fail()
+
+    def test_get_avg_returns_the_average_caloric_intake(
+        self, saved_profile, meal_ingredients, meal_ingredient
+    ):
+        meal_ingredient.amount = 20
+        meal_ingredient.save()
+        serializer = serializers.ByDateCalorieSerializer(instance=saved_profile)
+        expected = 11
+
+        actual = serializer.get_avg()
+
+        assert actual == expected
+
+    def test_get_avg_rounds_values_to_first_decimal_place(
+        self, saved_profile, meal_ingredients, meal_ingredient
+    ):
+        meal_ingredient.amount = 0.2
+        meal_ingredient.save()
+        serializer = serializers.ByDateCalorieSerializer(instance=saved_profile)
+        expected = 5.6  # 5.555 without rounding
+
+        actual = serializer.get_avg()
+
+        assert actual == expected
+
+    def test_get_avg_date_min(self, saved_profile, meal_ingredients):
+        serializer = serializers.ByDateCalorieSerializer(
+            instance=saved_profile, context={"date_min": datetime.date(2020, 6, 10)}
+        )
+        expected = 110
+
+        actual = serializer.get_avg()
+
+        assert actual == expected
+
+    def test_get_avg_date_max(self, saved_profile, meal_ingredients):
+        serializer = serializers.ByDateCalorieSerializer(
+            instance=saved_profile, context={"date_max": datetime.date(2020, 6, 10)}
+        )
+        expected = 11
+
+        actual = serializer.get_avg()
+
+        assert actual == expected
