@@ -302,3 +302,74 @@ const fetchLastMonthWeight = function (url, chartId) {
         });
     });
 }
+
+
+const fetchLastMonthCalorie = function (url, chartId) {
+    $.get(url, function(data) {
+        const ctx = document.getElementById(chartId);
+        const values = Object.values(data.caloric_intake);
+        const avg = data.avg;
+        datasets = [];
+
+        Object.keys(data.caloric_intake.values).forEach(element => {
+            datasets.push({
+                label: element,
+                data: data.caloric_intake.values[element],
+                backgroundColor: colorMap[element]
+            });
+        });
+
+        const options = {
+            responsive: true,
+
+            //Scales
+            scales: {
+                y: {
+                    // min: yMin,
+                    // max: yMax,
+                    stacked: true
+                },
+                x: {
+                    stacked: true
+                }
+            },
+
+            // Title
+            plugins: {
+                legend: true,
+                title: {
+                    display: true,
+                    text: "Caloric Intake"
+                }
+            },
+
+            annotations: {
+                average: {
+                    type: 'line',
+                    yMin: avg,
+                    yMax: avg,
+                    borderColor: primary,
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    label: {
+                        content: "Avg: " + avg.toFixed(1),
+                        display: true,
+                        backgroundColor: 'rgba(0, 0, 0, 0)',
+                        color: primary,
+                        position: "start",
+                        yAdjust: -10,
+                    }
+                }
+            }
+        }
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.caloric_intake.dates,
+                datasets: datasets
+            },
+            options: options
+        });
+    });
+}

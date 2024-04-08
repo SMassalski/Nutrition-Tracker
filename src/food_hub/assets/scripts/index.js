@@ -11,12 +11,16 @@ import {
     LinearScale,
     Tooltip,
     Title,
-    Legend
+    Legend,
+    BarController,
+    BarElement
  } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
 // Chart.js
 Chart.register(
+    BarController,
+    BarElement,
     LineController,
     LineElement,
     PointElement,

@@ -14,7 +14,12 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                {% include "main/intake_chart.html" with id=1 name="Protein" %}
+                                <div class="chart-container" style="position: relative;">
+                                    <canvas
+                                        id="macro-chart"
+                                        style="min-height: 250px; max-width: 100%;">
+                                    </canvas>
+                                </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="chart-container" style="position: relative;">
@@ -84,6 +89,7 @@
 <script>
     // Load
     fetchLastMonthWeight("{% url "weight-measurement-last-month" format='json'%}", "weight-chart");
+    fetchLastMonthCalorie("{% url "last-month-calories" format='json'%}", "macro-chart");
 
     // weightChanged
     $("body").on("weightChanged", function() {
