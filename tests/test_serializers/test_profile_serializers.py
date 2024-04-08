@@ -368,7 +368,7 @@ class TestByDateCalorieSerializer:
             instance=saved_profile, context={"date_min": datetime.date(2020, 6, 15)}
         )
 
-        result = serializer.get_caloric_intake()
+        result = serializer.get_caloric_intake()["dates"]
 
         assert "Jun 15" in result
         assert "Jun 02" not in result
@@ -378,7 +378,7 @@ class TestByDateCalorieSerializer:
             instance=saved_profile, context={"date_max": datetime.date(2020, 6, 2)}
         )
 
-        result = serializer.get_caloric_intake()
+        result = serializer.get_caloric_intake()["dates"]
 
         assert "Jun 15" not in result
         assert "Jun 02" in result
@@ -399,7 +399,7 @@ class TestByDateCalorieSerializer:
 
         assert serializer.get_caloric_intake() == {}
 
-    def test_get_calories_fills_date_range_with_empty_dicts(
+    def test_get_calories_fills_date_range_with_zeros_where_intake_is_missing(
         self, saved_profile, meal_ingredients
     ):
 
@@ -410,16 +410,13 @@ class TestByDateCalorieSerializer:
                 "date_max": datetime.date(2020, 6, 10),
             },
         )
-        expected = {f"Jun {2+i:02}": {} for i in range(9)}
+        expected = [3] + [0] * 9
 
-        actual = serializer.get_caloric_intake()
+        actual = serializer.get_caloric_intake()["values"]["test_nutrient"]
 
-        del actual["Jun 01"]
         assert actual == expected
 
-    def test_get_calories_no_meals_fills_date_range_with_empty_dicts(
-        self, saved_profile
-    ):
+    def test_get_calories_no_meals_fills_date_range(self, saved_profile):
 
         serializer = serializers.ByDateCalorieSerializer(
             instance=saved_profile,
@@ -428,9 +425,9 @@ class TestByDateCalorieSerializer:
                 "date_max": datetime.date(2020, 6, 10),
             },
         )
-        expected = {f"Jun {2+i:02}": {} for i in range(9)}
+        expected = [f"Jun {2+i:02}" for i in range(9)]
 
-        actual = serializer.get_caloric_intake()
+        actual = serializer.get_caloric_intake()["dates"]
 
         assert actual == expected
 
@@ -442,7 +439,7 @@ class TestByDateCalorieSerializer:
         serializer = serializers.ByDateCalorieSerializer(instance=saved_profile)
         expected = 0.3  # 0.28 without rounding
 
-        actual = serializer.get_caloric_intake()["Jun 15"]["test_nutrient_2"]
+        actual = serializer.get_caloric_intake()["values"]["test_nutrient_2"][-1]
 
         assert actual == expected
 
@@ -452,7 +449,7 @@ class TestByDateCalorieSerializer:
         serializer = serializers.ByDateCalorieSerializer(instance=saved_profile)
         expected = [f"Jun {1+i:02}" for i in range(15)]
 
-        actual = list(serializer.get_caloric_intake().keys())
+        actual = serializer.get_caloric_intake()["dates"]
 
         assert actual == expected
 

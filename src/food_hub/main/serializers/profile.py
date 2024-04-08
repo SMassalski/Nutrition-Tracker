@@ -145,7 +145,7 @@ class ByDateCalorieSerializer(serializers.ModelSerializer):
 
         return self.instance.calories_by_date(date_min, date_max)
 
-    def get_caloric_intake(self, *_args) -> Dict[str, Dict[str, float]]:
+    def get_caloric_intake(self, *_args) -> dict:
         """Get the caloric contribution of nutrients grouped by date.
 
         Context Params
@@ -156,6 +156,18 @@ class ByDateCalorieSerializer(serializers.ModelSerializer):
         date_max: date
             The upper limit (inclusive) of dates to be included in the
             results.
+
+        Returns
+        -------
+        dict:
+            A dictionary in the format:
+            {
+                "dates": <list of dates>,
+                "values": {
+                    <nutrient name>: <list of caloric intake values>
+                    ...
+                }
+            }
         """
 
         date_min = self.context.get("date_min")
@@ -169,22 +181,28 @@ class ByDateCalorieSerializer(serializers.ModelSerializer):
         date_min = date_min or min(self.calories)
         date_max = date_max or max(self.calories)
 
-        result = {
-            date_min + timedelta(days=i): {}
-            for i in range((date_max - date_min).days + 1)
+        dates = [
+            date_min + timedelta(days=i) for i in range((date_max - date_min).days + 1)
+        ]
+        nutrients = sorted(
+            list({k for v in self.calories.values() for k in v.keys()}), reverse=True
+        )  # Reverse alphabetical order
+
+        values = {
+            nutrient: [
+                # Round values
+                round(self.calories.get(date, {}).get(nutrient, 0), 1)
+                for date in dates
+            ]
+            for nutrient in nutrients
         }
-        result.update(self.calories)
 
-        # Change dates to strings in the format
-        #   <Month locale's abbreviated name> <zero-padded day of the month>.
-        # Round the values to the first decimal place.
-        ret = {}
-        for date in result:
-            ret[date.strftime("%b %d")] = {
-                k: round(v, 1) for k, v in result[date].items()
-            }
-
-        return ret
+        return {
+            # Change dates to strings in the format
+            #   <Month locale's abbreviated name> <zero-padded day of the month>.
+            "dates": [date.strftime("%b %d") for date in dates],
+            "values": values,
+        }
 
     def get_avg(self, *_args) -> float:
         """Get the average caloric intake."""

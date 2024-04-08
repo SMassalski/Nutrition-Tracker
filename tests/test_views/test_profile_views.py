@@ -399,7 +399,7 @@ class TestLastMonthCalorieView:
 
         response = view(request)
 
-        assert list(response.data["caloric_intake"].keys()) == expected
+        assert response.data["caloric_intake"]["dates"] == expected
 
 
 class TestTrackedNutrientViewSet:
