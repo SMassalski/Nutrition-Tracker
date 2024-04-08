@@ -1,7 +1,6 @@
 """Serializers related to the `Profile` model."""
 from datetime import timedelta
 from functools import cached_property
-from typing import Dict
 
 from django.db.models import Q
 from main import models
@@ -147,15 +146,6 @@ class ByDateCalorieSerializer(serializers.ModelSerializer):
 
     def get_caloric_intake(self, *_args) -> dict:
         """Get the caloric contribution of nutrients grouped by date.
-
-        Context Params
-        --------------
-        date_min: date
-            The lower limit (inclusive) of dates to be included in the
-            results.
-        date_max: date
-            The upper limit (inclusive) of dates to be included in the
-            results.
 
         Returns
         -------
