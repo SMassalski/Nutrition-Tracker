@@ -813,6 +813,137 @@ class TestProfileAverageIntakes:
         assert actual == expected
 
 
+class TestProfileMalnutrition:
+    @pytest.fixture(autouse=True)
+    def base_fixtures(self, ingredient_nutrient_1_1, ingredient_nutrient_1_2):
+        """Load base fixtures.
+
+        ingredient_nutrient_1_1
+        ingredient_nutrient_1_2
+        """
+
+    def test_malnutrition_only_uses_recommendations_for_profile(
+        self,
+        saved_profile,
+        meal_ingredients,
+        nutrient_1,
+        nutrient_2,
+    ):
+        models.IntakeRecommendation.objects.create(
+            age_min=0,
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_1,
+            sex="B",
+            amount_min=1000,
+        )
+        models.IntakeRecommendation.objects.create(
+            age_min=0,
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_2,
+            sex="M",
+            amount_min=1000,
+        )
+
+        results = saved_profile.malnutrition()
+
+        assert nutrient_1.id in results
+        assert nutrient_2.id not in results
+
+    def test_malnutrition_threshold_none_includes_all_malconsumed_nutrients(
+        self,
+        saved_profile,
+        meal_ingredients,
+        nutrient_1,
+        nutrient_2,
+    ):
+        models.IntakeRecommendation.objects.create(
+            age_min=0,
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_1,
+            sex="B",
+            amount_min=1000,
+        )
+        models.IntakeRecommendation.objects.create(
+            age_min=0,
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_2,
+            sex="B",
+            amount_min=1000,
+        )
+
+        results = saved_profile.malnutrition()
+
+        assert nutrient_1.id in results
+        assert nutrient_2.id in results
+
+    def test_malnutrition_threshold_limits_malconsumed_nutrients_based_on_magnitude(
+        self,
+        saved_profile,
+        meal_ingredients,
+        nutrient_1,
+        nutrient_2,
+    ):
+        models.IntakeRecommendation.objects.create(
+            age_min=0,
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_1,
+            sex="B",
+            amount_min=500,
+        )
+        models.IntakeRecommendation.objects.create(
+            age_min=0,
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_2,
+            sex="B",
+            amount_min=500,
+        )
+
+        results = saved_profile.malnutrition(threshold=0.95)
+
+        assert nutrient_1.id not in results
+        assert nutrient_2.id in results
+
+    def test_malnutrition_magnitude_under_matches_formula(
+        self,
+        saved_profile,
+        meal_ingredients,
+        nutrient_1,
+    ):
+        models.IntakeRecommendation.objects.create(
+            age_min=0,
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_1,
+            sex="B",
+            amount_min=500,
+        )
+        # (amount_min - intake) / amount_min
+        expected = (500 - 375) / 500
+
+        actual = saved_profile.malnutrition()[nutrient_1.id]
+
+        assert actual == expected
+
+    def test_malnutrition_magnitude_over_matches_formula(
+        self,
+        saved_profile,
+        meal_ingredients,
+        nutrient_1,
+    ):
+        models.IntakeRecommendation.objects.create(
+            age_min=0,
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_1,
+            sex="B",
+            amount_max=250,
+        )
+        # (intake - amount_max) / amount_max
+        expected = (375 - 250) / 250
+
+        actual = saved_profile.malnutrition()[nutrient_1.id]
+
+        assert actual == expected
+
+
 class TestWeightMeasurement:
     """Tests of the `WeightMeasurement` model."""
 

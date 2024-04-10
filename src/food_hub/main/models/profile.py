@@ -618,6 +618,61 @@ class Profile(models.Model):
 
         return ret
 
+    def malnutrition(self, date_min=None, date_max=None, threshold=None):
+        """Get the profile's under- and overconsumed nutrients.
+
+        Parameters
+        ----------
+        date_min: datetime.date
+            The lower limit (inclusive) for dates that will be included
+            in the results.
+        date_max: datetime.date
+            The upper limit (inclusive) for dates that will be included
+            in the results.
+        threshold: float
+            The minimum magnitude the malconsumption must reach to be
+            included in the results.
+            The magnitude is calculated using the following formula:
+                magnitude = abs(intake - limit) / limit
+
+
+        Returns
+        -------
+        dict
+        """
+        intakes = self.average_intakes(date_min, date_max)
+        recommendations = IntakeRecommendation.objects.for_profile(self)
+
+        ret = {}
+
+        for recommendation in recommendations:
+            nutrient = recommendation.nutrient_id
+            intake = intakes.get(nutrient)
+
+            if intake is None:
+                continue
+
+            amount_min = recommendation.profile_amount_min(self)
+
+            if amount_min:
+                under = amount_min - intake
+                if under > 0:
+                    magnitude = under / amount_min
+                    if threshold is None or magnitude >= threshold:
+                        ret[nutrient] = magnitude
+                    continue
+
+            amount_max = recommendation.profile_amount_max(self)
+
+            if amount_max:
+                over = intake - amount_max
+                if over > 0:
+                    magnitude = over / amount_max
+                    if threshold is None or magnitude >= threshold:
+                        ret[nutrient] = magnitude
+
+        return ret
+
 
 class RecommendationQuerySet(models.QuerySet):
     """Manager class for intake recommendations."""
