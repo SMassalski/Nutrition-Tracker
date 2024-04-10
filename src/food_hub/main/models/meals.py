@@ -20,6 +20,96 @@ __all__ = [
 ]
 
 
+class MealIntakeQuerySet(models.QuerySet):
+    """Meal queryset with methods for intake calculations."""
+
+    def date_within(self, date_min=None, date_max=None):
+        """Filter meals to only those from a specified date range.
+
+        Parameters
+        ----------
+        date_min: datetime.date
+            The lower limit (inclusive) for dates that will be included
+            in the results.
+        date_max: datetime.date
+            The upper limit (inclusive) for dates that will be included
+            in the results.
+        """
+        queryset = self
+        if date_min is not None:
+            queryset = queryset.filter(date__gte=date_min)
+        if date_max is not None:
+            queryset = queryset.filter(date__lte=date_max)
+
+        return queryset
+
+    def alias_ingredient_intakes(self, alias: str = "intake"):
+        """
+        Assign an alias to the amount of a nutrient from each
+        ingredient in the meal.
+        """
+        return self.alias(
+            **{
+                alias: F("mealingredient__amount")
+                * F("mealingredient__ingredient__ingredientnutrient__amount")
+            }
+        )
+
+    def annotate_ingredient_nutrient_names(self, alias="nutrient_name"):
+        """
+        Annotate the nutrient name from each ingredient in the meal.
+        """
+        return self.annotate(
+            **{
+                alias: F(
+                    "mealingredient__ingredient__ingredientnutrient__nutrient__name"
+                )
+            }
+        )
+
+    def annotate_ingredient_nutrient_ids(self, alias="nutrient_id"):
+        """Annotate the nutrient id from each ingredient in the meal."""
+        return self.annotate(
+            **{alias: F("mealingredient__ingredient__ingredientnutrient__nutrient")}
+        )
+
+    def alias_recipe_intakes(self, alias="intake"):
+        """
+        Assign an alias to the amount of a nutrient from each
+        recipe in the meal. Values are not adjusted for the weight of
+        the recipe.
+        """
+        return self.alias(
+            **{
+                alias: F("mealrecipe__amount")
+                * F("mealrecipe__recipe__recipeingredient__amount")
+                * F(
+                    "mealrecipe__recipe__recipeingredient__ingredient__ingredientnutrient__amount"
+                )
+            }
+        )
+
+    def annotate_recipe_nutrient_names(self, alias="nutrient_name"):
+        """Annotate the nutrient name from each recipe in the meal."""
+        return self.annotate(
+            **{
+                alias: F(
+                    "mealrecipe__recipe__ingredients__ingredientnutrient__nutrient__name"
+                )
+            }
+        )
+
+    def annotate_recipe_nutrient_ids(self, alias="nutrient_id"):
+        """Annotate the nutrient id from each recipe in the meal."""
+        return self.annotate(
+            **{
+                alias: F(
+                    "mealrecipe__recipe__ingredients__ingredientnutrient__nutrient"
+                )
+            }
+        )
+
+
 class Meal(models.Model):
     """Represents the foods eaten in a single day."""
 
@@ -31,6 +121,8 @@ class Meal(models.Model):
         "main.Ingredient", through="main.MealIngredient"
     )
     recipes = models.ManyToManyField("main.Recipe", through="main.MealRecipe")
+
+    objects = MealIntakeQuerySet.as_manager()
 
     class Meta:
         constraints = [

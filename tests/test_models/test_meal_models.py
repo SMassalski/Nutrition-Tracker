@@ -1,5 +1,8 @@
 """Tests of models related to meal / recipe features."""
+from datetime import date
+
 import pytest
+from django.db.models import F
 from main import models
 
 
@@ -636,5 +639,144 @@ class TestMeal:
         expected = [78.2, 21.8]
 
         actual = list(meal.calorie_ratio.values())
+
+        assert actual == expected
+
+
+class TestMealIntakeQuerySet:
+    def test_date_within_date_min(self, meal, meal_2):
+        results = models.Meal.objects.date_within(date_min=date(2020, 6, 15))
+
+        assert meal in results
+        assert meal_2 not in results
+
+    def test_date_within_date_max(self, meal, meal_2):
+        results = models.Meal.objects.date_within(date_max=date(2020, 6, 1))
+
+        assert meal not in results
+        assert meal_2 in results
+
+    def test_alias_ingredient_intakes(
+        self,
+        meal,
+        meal_2,
+        meal_ingredient,
+        meal_ingredient_2,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+    ):
+        expected = {50, 20, 2}
+
+        queryset = (
+            models.Meal.objects.alias_ingredient_intakes("intake")
+            .annotate(intake=F("intake"))
+            .values("intake")
+        )
+
+        actual = {val["intake"] for val in queryset}
+        assert actual == expected
+
+    def test_annotate_ingredient_nutrient_names(
+        self,
+        meal,
+        meal_2,
+        meal_ingredient,
+        meal_ingredient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+    ):
+        expected = [
+            "test_nutrient",
+            "test_nutrient",
+            "test_nutrient_2",
+            "test_nutrient_2",
+            "test_nutrient_2",
+        ]
+
+        queryset = models.Meal.objects.annotate_ingredient_nutrient_names(
+            "name"
+        ).values("name")
+
+        actual = sorted([val["name"] for val in queryset])
+
+        assert actual == expected
+
+    def test_annotate_ingredient_nutrient_ids(
+        self,
+        meal,
+        meal_2,
+        meal_ingredient,
+        meal_ingredient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+    ):
+        expected = [1, 1, 2, 2, 2]
+
+        queryset = models.Meal.objects.annotate_ingredient_nutrient_ids(
+            "nut_id"
+        ).values("nut_id")
+
+        actual = sorted([val["nut_id"] for val in queryset])
+
+        assert actual == expected
+
+    def test_alias_recipe_intakes(
+        self,
+        meal_recipe,
+        meal_2_recipe,
+        recipe,
+        recipe_2,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+    ):
+        expected = [500, 1000, 1000, 2000, 2000]
+
+        queryset = (
+            models.Meal.objects.alias_recipe_intakes("intake")
+            .annotate(intake=F("intake"))
+            .values("intake")
+        )
+
+        actual = sorted([val["intake"] for val in queryset])
+        assert actual == expected
+
+    def test_annotate_recipe_nutrient_names(
+        self,
+        meal_recipe,
+        meal_2_recipe,
+        recipe,
+        recipe_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+    ):
+        expected = ["test_nutrient"] * 3 + ["test_nutrient_2"] * 5
+
+        queryset = models.Meal.objects.annotate_recipe_nutrient_names("name").values(
+            "name"
+        )
+        actual = sorted([val["name"] for val in queryset])
+
+        assert actual == expected
+
+    def test_annotate_recipe_nutrient_ids(
+        self,
+        meal_recipe,
+        meal_2_recipe,
+        recipe,
+        recipe_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+    ):
+        expected = [1] * 3 + [2] * 5
+
+        queryset = models.Meal.objects.annotate_recipe_nutrient_ids("nut_id").values(
+            "nut_id"
+        )
+
+        actual = sorted([val["nut_id"] for val in queryset])
 
         assert actual == expected

@@ -46,3 +46,27 @@ def recipe_2(meal, ingredient_1):
     recipe_2.recipeingredient_set.create(ingredient=ingredient_1, amount=50)
     meal.mealrecipe_set.create(recipe=recipe_2, amount=100)
     return recipe_2
+
+
+@pytest.fixture
+def meal_ingredient_2(meal, ingredient_2):
+    """A MealIngredient instance.
+
+    meal: meal
+    ingredient: ingredient_2
+    amount: 500
+    """
+    return models.MealIngredient.objects.create(
+        meal=meal, ingredient=ingredient_2, amount=500
+    )
+
+
+@pytest.fixture
+def meal_2_recipe(meal_2, recipe):
+    """A MealRecipe instance.
+
+    meal: meal_2
+    recipe: recipe
+    amount: 200
+    """
+    return models.MealRecipe.objects.create(meal=meal_2, recipe=recipe, amount=200)
