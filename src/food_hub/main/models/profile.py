@@ -264,27 +264,13 @@ class Profile(models.Model):
         -------
         dict[datetime.date, float]
         """
-        queryset = self.meal_set
 
-        # Date filtering
-        if date_min is not None:
-            queryset = queryset.filter(date__gte=date_min)
-        if date_max is not None:
-            queryset = queryset.filter(date__lte=date_max)
-
-        # Core queryset
         queryset = (
-            queryset.annotate(
-                nutrient_id=F(
-                    "mealingredient__ingredient__ingredientnutrient__nutrient"
-                )
-            )
+            self.meal_set.date_within(date_min, date_max)
+            .annotate_ingredient_nutrient_ids()
             .filter(nutrient_id=nutrient_id)
-            .alias(
-                amount=F("mealingredient__amount")
-                * F("mealingredient__ingredient__ingredientnutrient__amount")
-            )
-            .annotate(intake=Sum("amount"))
+            .alias_ingredient_intakes()
+            .annotate(intake=Sum("intake"))
             .values("date", "intake")
         )
 
@@ -308,30 +294,16 @@ class Profile(models.Model):
         -------
         dict[datetime.date, float]
         """
-        queryset = self.meal_set
-
-        # Date filtering
-        if date_min is not None:
-            queryset = queryset.filter(date__gte=date_min)
-        if date_max is not None:
-            queryset = queryset.filter(date__lte=date_max)
 
         queryset = (
-            queryset.annotate(
-                nutrient_id=F(
-                    "mealrecipe__recipe__ingredients__ingredientnutrient__nutrient"
-                ),
+            self.meal_set.date_within(date_min, date_max)
+            .annotate_recipe_nutrient_ids("nutrient_id")
+            .annotate(
                 recipe_id=F("mealrecipe__recipe_id"),
             )
             .filter(nutrient_id=nutrient_id)
-            .alias(
-                nutrient_amount=F("mealrecipe__amount")
-                * F("mealrecipe__recipe__recipeingredient__amount")
-                * F(
-                    "mealrecipe__recipe__recipeingredient__ingredient__ingredientnutrient__amount"
-                )
-            )
-            .annotate(amount=Sum("nutrient_amount"))
+            .alias_recipe_intakes()
+            .annotate(amount=Sum("intake"))
             .values("date", "amount", "recipe_id")
         )
         if not queryset:
@@ -398,14 +370,6 @@ class Profile(models.Model):
         -------
         dict[datetime.date, float]
         """
-        queryset = self.meal_set
-
-        # Date filtering
-        if date_min is not None:
-            queryset = queryset.filter(date__gte=date_min)
-        if date_max is not None:
-            queryset = queryset.filter(date__lte=date_max)
-
         nutrients = Nutrient.objects.filter(
             ~Q(types__parent_nutrient__isnull=False),
             compounds=None,
@@ -415,18 +379,15 @@ class Profile(models.Model):
 
         # Core queryset
         queryset = (
-            queryset.annotate(
-                nutrient=F(
-                    "mealingredient__ingredient__ingredientnutrient__nutrient__name"
-                )
-            )
+            self.meal_set.date_within(date_min, date_max)
+            .annotate_ingredient_nutrient_names("nutrient")
+            .alias_ingredient_intakes()
             .filter(nutrient__in=nutrients)
             .alias(
                 energy=F(
                     "mealingredient__ingredient__ingredientnutrient__nutrient__energy"
                 )
-                * F("mealingredient__amount")
-                * F("mealingredient__ingredient__ingredientnutrient__amount")
+                * F("intake")
             )
             .values("date", "nutrient")
             .annotate(calories=Sum("energy"))
@@ -458,13 +419,6 @@ class Profile(models.Model):
         -------
         dict[datetime.date, float]
         """
-        queryset = self.meal_set
-
-        # Date filtering
-        if date_min is not None:
-            queryset = queryset.filter(date__gte=date_min)
-        if date_max is not None:
-            queryset = queryset.filter(date__lte=date_max)
 
         nutrients = Nutrient.objects.filter(
             ~Q(types__parent_nutrient__isnull=False),
@@ -474,19 +428,13 @@ class Profile(models.Model):
         nutrients = [nutrient["name"] for nutrient in nutrients]
 
         queryset = (
-            queryset.annotate(
-                nutrient=F(
-                    "mealrecipe__recipe__ingredients__ingredientnutrient__nutrient__name"
-                ),
-                recipe_id=F("mealrecipe__recipe_id"),
-            )
+            self.meal_set.date_within(date_min, date_max)
+            .annotate_recipe_nutrient_names("nutrient")
+            .annotate(recipe_id=F("mealrecipe__recipe_id"))
             .filter(nutrient__in=nutrients)
+            .alias_recipe_intakes()
             .alias(
-                nutrient_energy=F("mealrecipe__amount")
-                * F("mealrecipe__recipe__recipeingredient__amount")
-                * F(
-                    "mealrecipe__recipe__recipeingredient__ingredient__ingredientnutrient__amount"
-                )
+                nutrient_energy=F("intake")
                 * F(
                     "mealrecipe__recipe__recipeingredient__ingredient__ingredientnutrient__nutrient__energy"
                 )
