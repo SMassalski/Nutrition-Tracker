@@ -133,7 +133,7 @@ class Meal(models.Model):
 
     @property
     def calories(self):
-        """Calorie contribution of nutrients
+        """The caloric contribution of nutrients.
 
         Does not include nutrients that have a parent in either
         a NutrientType or NutrientComponent relationship.
@@ -149,7 +149,7 @@ class Meal(models.Model):
 
     @property
     def recipe_calories(self):
-        """Calorie contribution of nutrients from recipes."""
+        """The caloric contribution of nutrients from recipes."""
 
         nutrients = Nutrient.objects.filter(
             ~Q(types__parent_nutrient__isnull=False),
@@ -194,7 +194,7 @@ class Meal(models.Model):
 
     @property
     def ingredient_calories(self):
-        """Calorie contribution of nutrients from ingredients."""
+        """The caloric contribution of nutrients from ingredients."""
         subquery = Nutrient.objects.filter(
             ~Q(types__parent_nutrient__isnull=False),
             compounds=None,

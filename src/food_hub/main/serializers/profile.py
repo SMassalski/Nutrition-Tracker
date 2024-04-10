@@ -139,6 +139,7 @@ class ByDateCalorieSerializer(serializers.ModelSerializer):
 
     @cached_property
     def calories(self):
+        """The profile's caloric contribution of nutrients by date."""
         date_min = self.context.get("date_min")
         date_max = self.context.get("date_max")
 

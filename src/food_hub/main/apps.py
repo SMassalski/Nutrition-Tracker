@@ -8,5 +8,6 @@ class MainConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "main"
 
+    # docstr-coverage:excused `config method`
     def ready(self):
         from . import signals

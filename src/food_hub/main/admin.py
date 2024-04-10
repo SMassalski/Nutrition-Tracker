@@ -156,6 +156,7 @@ class MealAdmin(admin.ModelAdmin):
     list_filter = ["date"]
     search_help_text = "Search by owner and date."
 
+    # docstr-coverage:excused `config class`
     class Media:
         js = ["bundle.js"]
 
