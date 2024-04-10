@@ -205,7 +205,7 @@ class ByDateIntakeSerializer(serializers.ModelSerializer):
         date_min = self.context.get("date_min")
         date_max = self.context.get("date_max")
 
-        intakes = profile.intakes_by_date(obj.id, date_min, date_max)
+        intakes = profile.nutrient_intakes_by_date(obj.id, date_min, date_max)
 
         # Don't fill the intakes if the range cannot be determined.
         if len(intakes) == 0 and (date_min is None or date_max is None):
@@ -247,6 +247,6 @@ class ByDateIntakeSerializer(serializers.ModelSerializer):
         profile = self.context["request"].user.profile
         date_min = self.context.get("date_min")
         date_max = self.context.get("date_max")
-        intakes = profile.intakes_by_date(obj.id, date_min, date_max)
+        intakes = profile.nutrient_intakes_by_date(obj.id, date_min, date_max)
 
         return round(sum(intakes.values()) / (len(intakes) or 1), 1)

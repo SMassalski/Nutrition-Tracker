@@ -219,7 +219,7 @@ class Profile(models.Model):
 
         return round(result)
 
-    def intakes_by_date(self, nutrient_id, date_min=None, date_max=None):
+    def nutrient_intakes_by_date(self, nutrient_id, date_min=None, date_max=None):
         """Get the intakes of a nutrient by date.
 
         Parameters
@@ -237,8 +237,10 @@ class Profile(models.Model):
         -------
         dict[datetime.date, float]
         """
-        recipe = self.intakes_from_recipes(nutrient_id, date_min, date_max)
-        ingredient = self.intakes_from_ingredients(nutrient_id, date_min, date_max)
+        recipe = self.nutrient_intakes_from_recipes(nutrient_id, date_min, date_max)
+        ingredient = self.nutrient_intakes_from_ingredients(
+            nutrient_id, date_min, date_max
+        )
 
         # sum of values by key
         return {
@@ -246,7 +248,9 @@ class Profile(models.Model):
             for key in {*recipe.keys(), *ingredient.keys()}
         }
 
-    def intakes_from_ingredients(self, nutrient_id, date_min=None, date_max=None):
+    def nutrient_intakes_from_ingredients(
+        self, nutrient_id, date_min=None, date_max=None
+    ):
         """Get the intakes of a nutrient from ingredients, by date.
 
         Parameters
@@ -276,7 +280,7 @@ class Profile(models.Model):
 
         return {meal["date"]: meal["intake"] for meal in queryset}
 
-    def intakes_from_recipes(self, nutrient_id, date_min=None, date_max=None):
+    def nutrient_intakes_from_recipes(self, nutrient_id, date_min=None, date_max=None):
         """Get the intakes of a nutrient from recipes, by date.
 
         Parameters

@@ -268,7 +268,7 @@ class TestProfileIntakeByDate:
     def test_intakes_from_ingredients_single_meal(
         self, saved_profile, meal, meal_ingredient, meal_ingredient_2, nutrient_2
     ):
-        result = saved_profile.intakes_from_ingredients(nutrient_2.id)
+        result = saved_profile.nutrient_intakes_from_ingredients(nutrient_2.id)
 
         # 20 from meal_ingredient + 50 from meal_ingredient_2
         assert result == {date(2020, 6, 15): 70}
@@ -276,7 +276,7 @@ class TestProfileIntakeByDate:
     def test_intakes_from_ingredients_multiple_meals(
         self, saved_profile, meal_ingredients, nutrient_2
     ):
-        result = saved_profile.intakes_from_ingredients(nutrient_2.id)
+        result = saved_profile.nutrient_intakes_from_ingredients(nutrient_2.id)
 
         # 20 from meal_ingredient
         # + 50 from meal_ingredient_2
@@ -288,7 +288,7 @@ class TestProfileIntakeByDate:
     def test_intakes_from_ingredients_date_min(
         self, saved_profile, meal_ingredients, nutrient_2
     ):
-        result = saved_profile.intakes_from_ingredients(
+        result = saved_profile.nutrient_intakes_from_ingredients(
             nutrient_2.id, date_min=date(2020, 6, 2)
         )
 
@@ -301,7 +301,7 @@ class TestProfileIntakeByDate:
     def test_intakes_from_ingredients_date_max(
         self, saved_profile, meal_ingredients, nutrient_2
     ):
-        result = saved_profile.intakes_from_ingredients(
+        result = saved_profile.nutrient_intakes_from_ingredients(
             nutrient_2.id, date_max=date(2020, 6, 2)
         )
 
@@ -316,7 +316,7 @@ class TestProfileIntakeByDate:
     def test_intakes_from_recipes_single_meal(
         self, saved_profile, meal, meal_recipe, recipe_ingredient, nutrient_2
     ):
-        result = saved_profile.intakes_from_recipes(nutrient_2.id)
+        result = saved_profile.nutrient_intakes_from_recipes(nutrient_2.id)
 
         # recipe final weight: 200, so:
         # 100 (meal_recipe)
@@ -330,7 +330,7 @@ class TestProfileIntakeByDate:
     def test_intakes_from_recipes_multiple_meals(
         self, saved_profile, recipes, nutrient_2
     ):
-        result = saved_profile.intakes_from_recipes(nutrient_2.id)
+        result = saved_profile.nutrient_intakes_from_recipes(nutrient_2.id)
 
         # recipe final weight: 200, so:
         # 100 (meal_recipe)
@@ -350,7 +350,7 @@ class TestProfileIntakeByDate:
         assert result == expected
 
     def test_intakes_from_recipes_date_min(self, saved_profile, recipes, nutrient_2):
-        result = saved_profile.intakes_from_recipes(
+        result = saved_profile.nutrient_intakes_from_recipes(
             nutrient_2.id, date_min=date(2020, 6, 2)
         )
 
@@ -359,7 +359,7 @@ class TestProfileIntakeByDate:
         assert result == expected
 
     def test_intakes_from_recipes_date_max(self, saved_profile, recipes, nutrient_2):
-        result = saved_profile.intakes_from_recipes(
+        result = saved_profile.nutrient_intakes_from_recipes(
             nutrient_2.id, date_max=date(2020, 6, 2)
         )
 
@@ -370,7 +370,7 @@ class TestProfileIntakeByDate:
     def test_intakes_from_recipes_multiple_recipes(
         self, saved_profile, meal, meal_recipe, recipe_2, recipe_ingredient, nutrient_2
     ):
-        result = saved_profile.intakes_from_recipes(nutrient_2.id)
+        result = saved_profile.nutrient_intakes_from_recipes(nutrient_2.id)
 
         expected = {date(2020, 6, 15): 15}
 
@@ -381,14 +381,14 @@ class TestProfileIntakeByDate:
     def test_intakes_by_date_only_ingredients(
         self, saved_profile, meal_ingredients, nutrient_2
     ):
-        result = saved_profile.intakes_by_date(nutrient_2.id)
+        result = saved_profile.nutrient_intakes_by_date(nutrient_2.id)
 
         expected = {date(2020, 6, 15): 70, date(2020, 6, 1): 30}
 
         assert result == expected
 
     def test_intakes_by_date_only_recipes(self, saved_profile, recipes, nutrient_2):
-        result = saved_profile.intakes_by_date(nutrient_2.id)
+        result = saved_profile.nutrient_intakes_by_date(nutrient_2.id)
 
         expected = {
             date(2020, 6, 15): 5,
@@ -400,7 +400,7 @@ class TestProfileIntakeByDate:
     def test_intakes_by_date_both(
         self, saved_profile, recipes, meal_ingredients, nutrient_2
     ):
-        result = saved_profile.intakes_by_date(nutrient_2.id)
+        result = saved_profile.nutrient_intakes_by_date(nutrient_2.id)
 
         expected = {
             date(2020, 6, 15): 75,
@@ -412,7 +412,9 @@ class TestProfileIntakeByDate:
     def test_intakes_by_date_date_min(
         self, saved_profile, recipes, meal_ingredients, nutrient_2
     ):
-        result = saved_profile.intakes_by_date(nutrient_2.id, date_min=date(2020, 6, 2))
+        result = saved_profile.nutrient_intakes_by_date(
+            nutrient_2.id, date_min=date(2020, 6, 2)
+        )
 
         expected = {date(2020, 6, 15): 75}
 
@@ -421,7 +423,9 @@ class TestProfileIntakeByDate:
     def test_intakes_by_date_date_max(
         self, saved_profile, recipes, meal_ingredients, nutrient_2
     ):
-        result = saved_profile.intakes_by_date(nutrient_2.id, date_max=date(2020, 6, 2))
+        result = saved_profile.nutrient_intakes_by_date(
+            nutrient_2.id, date_max=date(2020, 6, 2)
+        )
 
         expected = {date(2020, 6, 1): 40}
 
