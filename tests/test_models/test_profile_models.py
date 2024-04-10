@@ -30,6 +30,16 @@ def meal_2_ingredient_1(meal_2, ingredient_1):
 
 
 @pytest.fixture
+def meal_ingredients(meal_ingredient, meal_ingredient_2, meal_2_ingredient_1):
+    """Load meal ingredient fixtures.
+
+    meal_ingredient
+    meal_ingredient_2
+    meal_2_ingredient_1
+    """
+
+
+@pytest.fixture
 def recipes(meal_recipe, meal_2_recipe, recipe_ingredient):
     """Load recipe fixtures
 
@@ -255,15 +265,6 @@ class TestProfileIntakeByDate:
         ingredient_nutrient_2_2
         """
         pass
-
-    @pytest.fixture
-    def meal_ingredients(self, meal_ingredient, meal_ingredient_2, meal_2_ingredient_1):
-        """Load meal ingredient fixtures.
-
-        meal_ingredient
-        meal_ingredient_2
-        meal_2_ingredient_1
-        """
 
     def test_intakes_from_ingredients_single_meal(
         self, saved_profile, meal, meal_ingredient, meal_ingredient_2, nutrient_2
@@ -626,6 +627,188 @@ class TestCaloriesByDate:
         }
 
         actual = saved_profile.calories_by_date(date_max=date(2020, 6, 2))
+
+        assert actual == expected
+
+
+class TestProfileAverageIntakes:
+    @pytest.fixture(autouse=True)
+    def base_fixture(
+        self, ingredient_nutrient_1_1, ingredient_nutrient_1_2, ingredient_nutrient_2_2
+    ):
+        """Load base fixtures.
+
+        ingredient_nutrient_1_1
+        ingredient_nutrient_1_2
+        ingredient_nutrient_2_2
+        """
+
+    # from ingredients
+
+    def test_ingredient_intakes_multiple_meals(
+        self, saved_profile, meal_ingredients, nutrient_1, nutrient_2
+    ):
+
+        expected = {
+            nutrient_1.id: {date(2020, 6, 1): 450, date(2020, 6, 15): 300},
+            nutrient_2.id: {date(2020, 6, 1): 30, date(2020, 6, 15): 70},
+        }
+
+        actual = saved_profile.ingredient_intakes()
+
+        assert actual == expected
+
+    def test_ingredient_intakes_date_min(
+        self, saved_profile, meal_ingredients, nutrient_1, nutrient_2
+    ):
+
+        expected = {
+            nutrient_1.id: {date(2020, 6, 15): 300},
+            nutrient_2.id: {date(2020, 6, 15): 70},
+        }
+
+        actual = saved_profile.ingredient_intakes(date_min=date(2020, 6, 15))
+
+        assert actual == expected
+
+    def test_ingredient_intakes_date_max(
+        self, saved_profile, meal_ingredients, nutrient_1, nutrient_2
+    ):
+
+        expected = {
+            nutrient_1.id: {date(2020, 6, 1): 450},
+            nutrient_2.id: {date(2020, 6, 1): 30},
+        }
+
+        actual = saved_profile.ingredient_intakes(date_max=date(2020, 6, 1))
+
+        assert actual == expected
+
+    # from recipes
+
+    def test_recipe_intakes_multiple_meals(
+        self, saved_profile, recipes, nutrient_1, nutrient_2
+    ):
+
+        expected = {
+            nutrient_1.id: {date(2020, 6, 1): 150, date(2020, 6, 15): 75},
+            nutrient_2.id: {date(2020, 6, 1): 10, date(2020, 6, 15): 5},
+        }
+
+        actual = saved_profile.recipe_intakes()
+
+        assert actual == expected
+
+    def test_recipe_intakes_multiple_recipes(
+        self, saved_profile, recipes, recipe_2, nutrient_1, nutrient_2
+    ):
+
+        expected = {
+            nutrient_1.id: {date(2020, 6, 1): 150, date(2020, 6, 15): 225},
+            nutrient_2.id: {date(2020, 6, 1): 10, date(2020, 6, 15): 15},
+        }
+
+        actual = saved_profile.recipe_intakes()
+
+        assert actual == expected
+
+    def test_recipe_intakes_date_min(
+        self, saved_profile, recipes, nutrient_1, nutrient_2
+    ):
+
+        expected = {
+            nutrient_1.id: {date(2020, 6, 15): 75},
+            nutrient_2.id: {date(2020, 6, 15): 5},
+        }
+
+        actual = saved_profile.recipe_intakes(date_min=date(2020, 6, 15))
+
+        assert actual == expected
+
+    def test_recipe_intakes_date_max(
+        self, saved_profile, recipes, nutrient_1, nutrient_2
+    ):
+
+        expected = {
+            nutrient_1.id: {date(2020, 6, 1): 150},
+            nutrient_2.id: {date(2020, 6, 1): 10},
+        }
+
+        actual = saved_profile.recipe_intakes(date_max=date(2020, 6, 1))
+
+        assert actual == expected
+
+    # average
+
+    def test_average_intakes_ingredients_only(
+        self, saved_profile, meal_ingredients, nutrient_1, nutrient_2
+    ):
+        expected = {
+            nutrient_1.id: 375,
+            nutrient_2.id: 50,
+        }
+
+        actual = saved_profile.average_intakes()
+
+        assert actual == expected
+
+    def test_average_intakes_recipes_only(
+        self, saved_profile, recipes, nutrient_1, nutrient_2
+    ):
+        expected = {
+            nutrient_1.id: 112.5,
+            nutrient_2.id: 7.5,
+        }
+
+        actual = saved_profile.average_intakes()
+
+        assert actual == expected
+
+    def test_average_intakes_recipes_only_multiple_recipes(
+        self, saved_profile, recipes, recipe_2, nutrient_1, nutrient_2
+    ):
+        expected = {
+            nutrient_1.id: 187.5,
+            nutrient_2.id: 12.5,
+        }
+
+        actual = saved_profile.average_intakes()
+
+        assert actual == expected
+
+    def test_average_intakes_ingredients_and_recipes(
+        self, saved_profile, meal_ingredients, recipes, nutrient_1, nutrient_2
+    ):
+        expected = {
+            nutrient_1.id: 487.5,
+            nutrient_2.id: 57.5,
+        }
+
+        actual = saved_profile.average_intakes()
+
+        assert actual == expected
+
+    def test_average_intakes_date_min(
+        self, saved_profile, meal_ingredients, recipes, nutrient_1, nutrient_2
+    ):
+        expected = {
+            nutrient_1.id: 375,
+            nutrient_2.id: 75,
+        }
+
+        actual = saved_profile.average_intakes(date_min=date(2020, 6, 15))
+
+        assert actual == expected
+
+    def test_average_intakes_date_max(
+        self, saved_profile, meal_ingredients, recipes, nutrient_1, nutrient_2
+    ):
+        expected = {
+            nutrient_1.id: 600,
+            nutrient_2.id: 40,
+        }
+
+        actual = saved_profile.average_intakes(date_max=date(2020, 6, 1))
 
         assert actual == expected
 

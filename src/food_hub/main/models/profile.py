@@ -499,6 +499,125 @@ class Profile(models.Model):
 
         return min(round(100 * intake / self.energy_requirement), 100)
 
+    def ingredient_intakes(self, date_min=None, date_max=None):
+        """Get the intakes of nutrients from ingredients, by date.
+
+        Parameters
+        ----------
+        date_min: datetime.date
+            The lower limit (inclusive) for dates that will be included
+            in the results
+        date_max: datetime.date
+            The upper limit (inclusive) for dates that will be included
+            in the results
+
+        Returns
+        -------
+        dict[datetime.date, float]
+        """
+        queryset = (
+            self.meal_set.date_within(date_min, date_max)
+            .annotate_ingredient_nutrient_ids()
+            .exclude(nutrient_id=None)
+            .alias_ingredient_intakes()
+            .values("nutrient_id", "date")
+            .annotate(intake=Sum("intake"))
+        )
+        ret = {}
+        for item in queryset:
+            if item["nutrient_id"] not in ret:
+                ret[item["nutrient_id"]] = {}
+
+            ret[item["nutrient_id"]][item["date"]] = item["intake"]
+
+        return ret
+
+    def recipe_intakes(self, date_min=None, date_max=None):
+        """Get the intakes of nutrients from recipes, by date.
+
+        Parameters
+        ----------
+        date_min: datetime.date
+            The lower limit (inclusive) for dates that will be included
+            in the results
+        date_max: datetime.date
+            The upper limit (inclusive) for dates that will be included
+            in the results
+
+        Returns
+        -------
+        dict[datetime.date, float]
+        """
+        queryset = (
+            self.meal_set.date_within(date_min, date_max)
+            .annotate_recipe_nutrient_ids("nutrient_id")
+            .annotate(
+                recipe_id=F("mealrecipe__recipe_id"),
+            )
+            .exclude(recipe_id=None)
+            .alias_recipe_intakes()
+            .annotate(amount=Sum("intake"))
+            .values("date", "amount", "recipe_id", "nutrient_id")
+        )
+        if not queryset:
+            return {}
+
+        recipe_queryset = self.recipes.annotate(
+            _weight=Case(
+                When(final_weight=None, then=Sum("recipeingredient__amount")),
+                When(final_weight__isnull=False, then=F("final_weight")),
+            )
+        )
+        recipes = {rec.id: rec for rec in recipe_queryset}
+
+        ret = {}
+        for item in queryset:
+            nutrient = item["nutrient_id"]
+            date = item["date"]
+
+            if nutrient not in ret:
+                ret[nutrient] = {}
+
+            amount = item["amount"] / recipes[item["recipe_id"]]._weight
+            ret[nutrient][date] = ret[nutrient].get(date, 0) + amount
+
+        return ret
+
+    def average_intakes(self, date_min=None, date_max=None):
+        """Get the average intakes of nutrients by date.
+
+        Parameters
+        ----------
+        date_min: datetime.date
+            The lower limit (inclusive) for dates that will be included
+            in the results
+        date_max: datetime.date
+            The upper limit (inclusive) for dates that will be included
+            in the results
+
+        Returns
+        -------
+        dict[datetime.date, float]
+        """
+        recipe = self.recipe_intakes(date_min, date_max)
+        ingredient = self.ingredient_intakes(date_min, date_max)
+
+        ret = {}
+        nutrients = {*recipe.keys(), *ingredient.keys()}
+
+        for nutrient in nutrients:
+            # sum of values by key
+            dates = {
+                *recipe.get(nutrient, {}).keys(),
+                *ingredient.get(nutrient, {}).keys(),
+            }
+            ret[nutrient] = (
+                sum(recipe.get(nutrient, {}).values())
+                + sum(ingredient.get(nutrient, {}).values())
+            ) / len(dates)
+
+        return ret
+
 
 class RecommendationQuerySet(models.QuerySet):
     """Manager class for intake recommendations."""
