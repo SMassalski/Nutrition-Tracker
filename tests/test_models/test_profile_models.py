@@ -943,6 +943,33 @@ class TestProfileMalnutrition:
 
         assert actual == expected
 
+    def test_malnutrition_uses_queryset_from_recommendations_parameter(
+        self,
+        saved_profile,
+        meal_ingredients,
+        nutrient_1,
+        nutrient_2,
+    ):
+        models.IntakeRecommendation.objects.create(
+            age_min=0,
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_1,
+            sex="B",
+            amount_min=500,
+        )
+        models.IntakeRecommendation.objects.create(
+            age_min=0,
+            dri_type=models.IntakeRecommendation.RDA,
+            nutrient=nutrient_2,
+            sex="B",
+            amount_min=500,
+        )
+        queryset = models.IntakeRecommendation.objects.filter(nutrient=nutrient_1)
+
+        results = saved_profile.malnutrition(recommendations=queryset)
+
+        assert nutrient_2.id not in results
+
 
 class TestWeightMeasurement:
     """Tests of the `WeightMeasurement` model."""

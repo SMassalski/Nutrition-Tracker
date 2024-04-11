@@ -618,7 +618,9 @@ class Profile(models.Model):
 
         return ret
 
-    def malnutrition(self, date_min=None, date_max=None, threshold=None):
+    def malnutrition(
+        self, date_min=None, date_max=None, threshold=None, recommendations=None
+    ):
         """Get the profile's under- and overconsumed nutrients.
 
         Parameters
@@ -634,18 +636,22 @@ class Profile(models.Model):
             included in the results.
             The magnitude is calculated using the following formula:
                 magnitude = abs(intake - limit) / limit
-
+        recommendations: QuerySet
+            A IntakeRecommendation queryset to use instead of the
+            default.
+            If None `IntakeRecommendation.objects.for_profile()`
+            is used.
 
         Returns
         -------
         dict
         """
         intakes = self.average_intakes(date_min, date_max)
-        recommendations = IntakeRecommendation.objects.for_profile(self)
+        recs = recommendations or IntakeRecommendation.objects.for_profile(self)
 
         ret = {}
 
-        for recommendation in recommendations:
+        for recommendation in recs:
             nutrient = recommendation.nutrient_id
             intake = intakes.get(nutrient)
 
