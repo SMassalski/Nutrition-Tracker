@@ -32,26 +32,10 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
         <div hx-get="{% url "tracked-nutrient-list" %}" hx-swap="outerHTML" hx-trigger="load"></div>
-        <div class="row">
-            <div class="col">
-                <div class="card card-outline card-info">
-                    <div class="card-header">
-                        <h3 class="card-title">Low Nutrient Intake</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                {% include "main/intake_chart.html" with id=17 name="Iron" %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div hx-get="{% url "malconsumptions" %}?limit=4" hx-swap="outerHTML" hx-trigger="load"></div>
     </div>
 
     <!-- Modals -->

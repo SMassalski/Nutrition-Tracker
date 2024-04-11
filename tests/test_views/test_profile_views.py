@@ -506,3 +506,128 @@ class TestTrackedNutrientViewSet:
         actual = view(request, pk=nutrient_1.id).headers["HX-Trigger"]
 
         assert expected == actual
+
+
+class TestMalconsumptionView:
+    @pytest.fixture
+    def recommendations(self, nutrient_1, nutrient_2):
+        """IntakeRecommendation instances.
+
+        If using the meal_ingredient, ingredient_nutrient_1_1
+        and ingredient_nutrient_1_2, nutrient_1 will be underconsumed.
+
+        age_min: 0
+        dri_type: RDA
+        nutrient: nutrient_1
+        sex: "B"
+        amount_min: 500
+
+        age_min: 0
+        dri_type: RDA
+        nutrient: nutrient_2
+        sex: "B"
+        amount_min: 10
+        """
+        return models.IntakeRecommendation.objects.bulk_create(
+            [
+                models.IntakeRecommendation(
+                    age_min=0,
+                    dri_type=models.IntakeRecommendation.RDA,
+                    nutrient=nutrient_1,
+                    sex="B",
+                    amount_min=500,
+                ),
+                models.IntakeRecommendation(
+                    age_min=0,
+                    dri_type=models.IntakeRecommendation.RDA,
+                    nutrient=nutrient_2,
+                    sex="B",
+                    amount_min=10,
+                ),
+            ]
+        )
+
+    @pytest.fixture
+    def meal(self, meal):
+        meal.date = date.today()
+        meal.save()
+        return meal
+
+    def test_endpoint_ok(self, user, saved_profile, logged_in_api_client):
+        url = reverse("malconsumptions")
+
+        response = logged_in_api_client.get(url)
+
+        assert is_success(response.status_code)
+
+    def test_lists_malconsumed_nutrients(
+        self,
+        user,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1,
+        recommendations,
+    ):
+
+        request = create_api_request("get", user)
+        view = views.MalconsumptionView.as_view()
+
+        response = view(request)
+
+        assert len(response.data["results"]) == 1
+        assert response.data["results"][0]["id"] == nutrient_1.id
+
+    def test_data_fields(
+        self,
+        user,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        recommendations,
+    ):
+        request = create_api_request("get", user)
+        view = views.MalconsumptionView.as_view()
+
+        response = view(request)
+
+        for field in ("id", "name", "magnitude"):
+            assert field in response.data["results"][0]
+
+    def test_exclude_attribute_excludes_nutrients_from_results(
+        self,
+        user,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1,
+        recommendations,
+    ):
+
+        request = create_api_request("get", user)
+        view = views.MalconsumptionView.as_view(exclude=[nutrient_1.name])
+
+        response = view(request)
+
+        assert len(response.data["results"]) == 0
+
+    def test_excludes_meals_older_than_30_days(
+        self,
+        user,
+        meal,
+        meal_ingredient,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        nutrient_1,
+        recommendations,
+    ):
+        meal.date = date.today() - timedelta(days=31)
+        meal.save()
+
+        request = create_api_request("get", user)
+        view = views.MalconsumptionView.as_view()
+
+        response = view(request)
+
+        # Empty because there is no data
+        assert len(response.data["results"]) == 0

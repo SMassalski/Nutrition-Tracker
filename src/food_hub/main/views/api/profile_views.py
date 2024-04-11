@@ -33,6 +33,7 @@ __all__ = (
     "TrackedNutrientViewSet",
     "WeightMeasurementViewSet",
     "LastMonthCalorieView",
+    "MalconsumptionView",
 )
 
 
@@ -267,3 +268,43 @@ class TrackedNutrientViewSet(
             tracking_profiles=self.request.user.profile
         ).order_by(Lower("name"))
         return Response({"nutrients": nutrients})
+
+
+class MalconsumptionView(GenericView):
+    """List malconsumed nutrients.
+
+    Attributes
+    ---------
+    exclude: Iterable
+        Names of nutrients to exclude from the results.
+    """
+
+    template_name = "main/data/malconsumption_cards.html"
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer, BrowsableAPIRenderer]
+    exclude = None
+
+    # docstr-coverage: inherited
+    def get_queryset(self):
+        profile = self.request.user.profile
+        date_min = date.today() - timedelta(days=30)
+        malconsumptions = profile.malnutrition(date_min=date_min)
+
+        nutrients = models.Nutrient.objects.exclude(name__in=self.exclude or [])
+        data = [
+            {"id": n.id, "name": n.name, "magnitude": malconsumptions[n.id]}
+            for n in nutrients
+            if n.id in malconsumptions
+        ]
+
+        return sorted(list(data), key=lambda t: t["magnitude"], reverse=True)
+
+    def get(self, request, *args, **kwargs):
+        """List under- and overconsumed nutrients."""
+
+        data = self.get_queryset()
+
+        page = self.paginate_queryset(data)
+        if page is not None:
+            return self.get_paginated_response(page)
+
+        return Response(data)
