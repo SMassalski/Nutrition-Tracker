@@ -37,10 +37,11 @@ class IsCollectionComponentOwnerPermission(BasePermission):
 
 class IsOwnerPermission(BasePermission):
     """
-    Object permission allowing only the owner of a meal related to the
-    object to view or modify it.
+    Object permission allowing only the owner of the object to view
+    or modify it.
     """
 
     # docstr-coverage: inherited
     def has_object_permission(self, request, view, obj):
-        return obj.owner_id == request.user.profile.id
+        obj_profile = getattr(obj, "owner_id", None) or getattr(obj, "profile_id", None)
+        return obj_profile == request.user.profile.id

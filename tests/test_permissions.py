@@ -114,6 +114,15 @@ class TestIsOwnerPermission:
 
         assert permission.has_object_permission(view.request, view, meal)
 
+    def test_checks_profile_attribute(self, rf, weight_measurement, user):
+        request = rf.get("/")
+        request.user = user
+        view = GenericAPIView()
+        view.setup(request, pk=weight_measurement.id)
+        permission = permissions.IsOwnerPermission()
+
+        assert permission.has_object_permission(view.request, view, weight_measurement)
+
     def test_has_object_permission_num_queries(
         self, rf, django_assert_num_queries, meal, user
     ):
