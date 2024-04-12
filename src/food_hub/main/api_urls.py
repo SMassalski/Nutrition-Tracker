@@ -96,7 +96,7 @@ urlpatterns = [
 router = SimpleRouter()
 router.register("recipes", views.RecipeViewSet, "recipe")
 router.register(
-    "weight-measurements", views.WeightMeasurementViewSet, "weight-measurement"
+    "profile/weight-measurements", views.WeightMeasurementViewSet, "weight-measurement"
 )
 router.register("tracked-nutrients", views.TrackedNutrientViewSet, "tracked-nutrient")
 urlpatterns += router.urls

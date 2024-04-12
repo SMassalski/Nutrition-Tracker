@@ -39,10 +39,11 @@ __all__ = (
 
 
 class WeightMeasurementViewSet(HTMXEventMixin, ModelViewSet):
-    """Add weight measurements to the user's profile."""
+    """CRUD operations on weight measurements."""
 
     serializer_class = serializers.WeightMeasurementSerializer
-    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
+    detail_serializer_class = serializers.WeightMeasurementDetailSerializer
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer, BrowsableAPIRenderer]
     htmx_events = ["weightChanged"]
     permission_classes = [IsOwnerPermission]
 

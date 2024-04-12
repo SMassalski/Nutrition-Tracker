@@ -5,12 +5,14 @@ from functools import cached_property
 from django.db.models import Q
 from main import models
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 from util import pounds_to_kilograms
 
 __all__ = (
     "ProfileSerializer",
     "TrackedNutrientSerializer",
     "WeightMeasurementSerializer",
+    "WeightMeasurementDetailSerializer",
     "ByDateCalorieSerializer",
 )
 
@@ -33,7 +35,7 @@ class WeightMeasurementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.WeightMeasurement
-        fields = ("id", "url", "date", "value", "unit")
+        fields = ("url", "date", "value", "unit")
 
     # docstr-coverage: inherited
     def to_internal_value(self, data):
@@ -47,6 +49,16 @@ class WeightMeasurementSerializer(serializers.ModelSerializer):
         ret.pop("unit", None)  # To avoid unexpected keyword arg error when saving.
 
         return ret
+
+
+class WeightMeasurementDetailSerializer(WeightMeasurementSerializer):
+    """Detail serializer for the WeightMeasurement model."""
+
+    url = None
+
+    class Meta:
+        model = models.WeightMeasurement
+        fields = ("id", "date", "value", "unit")
 
 
 class ProfileSerializer(serializers.ModelSerializer):
