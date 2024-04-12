@@ -5,6 +5,7 @@ from django.db.models import Prefetch
 from django.db.models.functions import Lower
 from django.http import Http404
 from main import models, serializers
+from main.permissions import IsOwnerPermission
 from main.views.generics import (
     GenericView,
     GenericViewSet,
@@ -43,6 +44,7 @@ class WeightMeasurementViewSet(HTMXEventMixin, ModelViewSet):
     serializer_class = serializers.WeightMeasurementSerializer
     renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
     htmx_events = ["weightChanged"]
+    permission_classes = [IsOwnerPermission]
 
     list_template = "main/data/weight_measurement_list.html"
     row_template = "main/data/weight_measurement_list_row.html"

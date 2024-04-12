@@ -5,6 +5,7 @@ import pytest
 from main import models
 from main.serializers import WeightMeasurementSerializer
 from main.views import api as views
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.reverse import reverse
 from rest_framework.status import HTTP_404_NOT_FOUND, is_success
 
@@ -188,6 +189,20 @@ class TestWeightMeasurementViewSet:
         response = self.view_class.as_view({"post": "create"}, detail=False)(request)
 
         assert response.headers["HX-Trigger"] == "weightChanged"
+
+    def test_denies_access_to_non_owners(
+        self, saved_profile, new_user, weight_measurement
+    ):
+        request = create_api_request("get", new_user)
+        request.user = new_user
+
+        # Prevent AttributeError caused by using WSGIRequest
+        request.authenticators = False
+
+        view = self.view_class()
+
+        with pytest.raises(PermissionDenied):
+            view.check_object_permissions(request, weight_measurement)
 
 
 class TestProfileAPIView:
