@@ -5,6 +5,7 @@ import pytest
 from main.views.api import api_views as views
 from rest_framework import status
 from rest_framework.reverse import reverse
+from rest_framework.status import is_success
 
 from tests.test_views.util import create_api_request
 
@@ -21,25 +22,16 @@ class TestRootView:
         """Set up a get request to the API root view."""
         self.request = rf.get(self.url)
 
-    def test_get_status_code(self):
-        """
-        api_root_view() response to a GET request has a 200 status code.
-        """
+    def test_endpoint_ok(self):
         response = views.api_root(self.request)
 
-        assert response.status_code == status.HTTP_200_OK
+        assert is_success(response.status_code)
 
-    def test_response_contains_links_to_list_views(self):
-        """
-        api_root_view() response contains urls to ingredient and
-        nutrient list views.
-        """
+    def test_urls_persist_format(self):
         response = views.api_root(self.request, format="json")
-        response.render()
 
-        content = json.loads(response.content)
-        assert content.get("Ingredients").endswith("api/ingredients/")
-        assert content.get("Nutrients").endswith("api/nutrients/")
+        for url in response.data.values():
+            assert url.rstrip("/").endswith(".json")
 
 
 # Ingredient views

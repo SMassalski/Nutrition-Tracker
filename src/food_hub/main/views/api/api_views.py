@@ -25,12 +25,12 @@ __all__ = (
 
 @api_view(["GET"])
 @renderer_classes([BrowsableAPIRenderer, JSONRenderer])
-def api_root(request, format=None):
+def api_root(request, format="api"):
     """Browsable API root"""
     return Response(
         {
-            "Ingredients": reverse("ingredient-list", request=request),
-            "Nutrients": reverse("nutrient-list", request=request),
+            "Ingredients": reverse("ingredient-list", request=request, format=format),
+            "Nutrients": reverse("nutrient-list", request=request, format=format),
         }
     )
 
