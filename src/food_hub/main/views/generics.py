@@ -187,6 +187,12 @@ class GenericViewSet(ViewSetMixin, GenericView):
 
         return [None]
 
+    # docstr-coverage: inherited
+    def get_serializer_class(self):
+        if self.detail and hasattr(self, "detail_serializer_class"):
+            return self.detail_serializer_class
+        return self.serializer_class
+
 
 class ModelViewSet(
     CreateModelMixin,

@@ -133,6 +133,12 @@ class TestGenericViewSet:
         def list(self, request, *args, **kwargs):
             return Response()
 
+    class Serializer:
+        pass
+
+    class DetailSerializer:
+        pass
+
     def test_get_template_names_template_map_by_action(self):
         expected = "template"
         template_map = {"list": expected}
@@ -208,3 +214,47 @@ class TestGenericViewSet:
         actual = view.get_template_names()[0]
 
         assert actual is None
+
+    def test_get_serializer_class_detail_false(self):
+
+        view = self.ViewSet(
+            detail=False,
+            serializer_class=self.Serializer,
+            detail_serializer_class=self.DetailSerializer,
+        )
+        request = create_api_request("get")
+        view.setup(request)
+        expected = self.Serializer
+
+        actual = view.get_serializer_class()
+
+        assert actual is expected
+
+    def test_get_serializer_class_detail_true(self):
+
+        view = self.ViewSet(
+            detail=True,
+            serializer_class=self.Serializer,
+            detail_serializer_class=self.DetailSerializer,
+        )
+        request = create_api_request("get")
+        view.setup(request)
+        expected = self.DetailSerializer
+
+        actual = view.get_serializer_class()
+
+        assert actual is expected
+
+    def test_get_serializer_class_detail_true_no_detail_serializer(self):
+
+        view = self.ViewSet(
+            detail=True,
+            serializer_class=self.Serializer,
+        )
+        request = create_api_request("get")
+        view.setup(request)
+        expected = self.Serializer
+
+        actual = view.get_serializer_class()
+
+        assert actual is expected
