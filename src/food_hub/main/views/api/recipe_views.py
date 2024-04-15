@@ -3,7 +3,11 @@ from main import models, serializers
 from main.views.api.base_views import ComponentCollectionViewSet, NutrientIntakeView
 from main.views.generics import ModelViewSet
 from rest_framework.filters import SearchFilter
-from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
+from rest_framework.renderers import (
+    BrowsableAPIRenderer,
+    JSONRenderer,
+    TemplateHTMLRenderer,
+)
 from rest_framework.reverse import reverse
 
 __all__ = ("RecipeIngredientViewSet", "RecipeViewSet", "RecipeIntakeView")
@@ -11,14 +15,16 @@ __all__ = ("RecipeIngredientViewSet", "RecipeViewSet", "RecipeIntakeView")
 
 class RecipeIngredientViewSet(ComponentCollectionViewSet):
     """
-    The ComponentCollectionViewSet for the Recipe-Ingredient
-    relationship.
+    List a recipe's ingredients and add ingredients to a recipe.
+
+    Retrieve, update or destroy recipe ingredient entry.
     """
 
     collection_model = models.Recipe
     component_field_name = "ingredients"
     htmx_events = ["recipeComponentsChanged"]
     serializer_class = serializers.RecipeIngredientSerializer
+    detail_serializer_class = serializers.RecipeIngredientDetailSerializer
 
 
 class RecipeIntakeView(NutrientIntakeView):
@@ -29,17 +35,18 @@ class RecipeIntakeView(NutrientIntakeView):
 
 
 class RecipeViewSet(ModelViewSet):
-    """A ModelViewSet for the `Recipe` model.
+    """List, create, retrieve, update or destroy recipes.
 
-    Only lists recipes owned by the request's user.
+    Only recipes owned by the user are accessible.
     """
 
     serializer_class = serializers.RecipeSerializer
+    detail_serializer_class = serializers.RecipeDetailSerializer
     component_list_template_name = "main/data/component_search_result_list.html"
     list_template_name = "main/data/recipe_search_result_list.html"
     modal_form_template = "main/modals/new_recipe_form.html"
     recipe_edit_form_template = "main/data/recipe_detail_form.html"
-    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer, BrowsableAPIRenderer]
     filter_backends = [SearchFilter]
     search_fields = ["name"]
 

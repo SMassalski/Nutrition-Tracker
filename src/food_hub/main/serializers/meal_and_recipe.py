@@ -7,7 +7,9 @@ __all__ = (
     "MealIngredientSerializer",
     "MealRecipeSerializer",
     "RecipeSerializer",
+    "RecipeDetailSerializer",
     "RecipeIngredientSerializer",
+    "RecipeIngredientDetailSerializer",
 )
 
 
@@ -54,14 +56,53 @@ class MealRecipeSerializer(serializers.ModelSerializer):
         fields = ("id", "recipe", "amount")
 
 
-class RecipeSerializer(serializers.ModelSerializer):
+class RecipeIngredientSerializer(serializers.ModelSerializer):
+    """Serializer for the RecipeIngredient model.
+
+    When creating an entry, the recipe_id must be provided in the
+    save method.
+    """
+
+    url = serializers.HyperlinkedIdentityField(
+        view_name="recipe-ingredient-detail", read_only=True
+    )
+    ingredient_name = serializers.CharField(source="ingredient.name", read_only=True)
+
+    class Meta:
+        model = models.RecipeIngredient
+        fields = ("url", "ingredient", "ingredient_name", "amount")
+
+
+class RecipeIngredientDetailSerializer(RecipeIngredientSerializer):
+    """Detail serializer for the RecipeIngredient model."""
+
+    ingredient_url = serializers.HyperlinkedRelatedField(
+        source="ingredient", view_name="ingredient-detail", read_only=True
+    )
+    recipe_url = serializers.HyperlinkedRelatedField(
+        source="recipe", view_name="recipe-detail", read_only=True
+    )
+
+    class Meta:
+        model = models.RecipeIngredient
+        fields = (
+            "id",
+            "recipe_url",
+            "ingredient",
+            "ingredient_url",
+            "ingredient_name",
+            "amount",
+        )
+
+
+class RecipeSerializer(serializers.HyperlinkedModelSerializer):
     """Serializer for the `Recipe` model."""
 
     slug = serializers.ReadOnlyField()
 
     class Meta:
         model = models.Recipe
-        fields = ["id", "name", "final_weight", "slug"]
+        fields = ["url", "name", "final_weight", "slug"]
 
     # docstr-coverage: inherited
     def validate(self, data):
@@ -86,13 +127,16 @@ class RecipeSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class RecipeIngredientSerializer(serializers.ModelSerializer):
-    """RecipeIngredient model serializer.
+class RecipeDetailSerializer(RecipeSerializer):
+    """Detail serializer for the recipe model."""
 
-    When creating an entry, the recipe_id must be provided in the
-    save method.
-    """
+    ingredients = serializers.HyperlinkedIdentityField(
+        "recipe-ingredient-list", lookup_url_kwarg="recipe"
+    )
+    intakes = serializers.HyperlinkedIdentityField(
+        "recipe-intakes", lookup_url_kwarg="recipe"
+    )
 
     class Meta:
-        model = models.RecipeIngredient
-        fields = ("id", "ingredient", "amount")
+        model = models.Recipe
+        fields = ["id", "name", "final_weight", "slug", "intakes", "ingredients"]

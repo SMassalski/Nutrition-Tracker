@@ -67,7 +67,7 @@ urlpatterns = [
         name="current-meal-intakes",
     ),
     path(
-        "recipes/<int:recipe>/intakes",
+        "profile/recipes/<int:recipe>/intakes",
         views.RecipeIntakeView.as_view(),
         name="recipe-intakes",
     ),
@@ -94,7 +94,7 @@ urlpatterns = [
     ),
 ]
 router = SimpleRouter()
-router.register("recipes", views.RecipeViewSet, "recipe")
+router.register("profile/recipes", views.RecipeViewSet, "recipe")
 router.register(
     "profile/weight-measurements", views.WeightMeasurementViewSet, "weight-measurement"
 )
@@ -104,7 +104,7 @@ urlpatterns += router.urls
 collection_router = ModelCollectionRouter()
 collection_router.register("meal", views.MealIngredientViewSet, "meal-ingredient")
 collection_router.register(
-    "recipe",
+    "profile/recipes",
     views.RecipeIngredientViewSet,
     "recipe-ingredient",
 )

@@ -7,7 +7,11 @@ from django.utils.text import slugify
 from main import models, permissions, serializers
 from main.views.generics import ListAPIView, ModelViewSet
 from main.views.mixins import HTMXEventMixin
-from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
+from rest_framework.renderers import (
+    BrowsableAPIRenderer,
+    JSONRenderer,
+    TemplateHTMLRenderer,
+)
 
 __all__ = ("ComponentCollectionViewSet", "NutrientIntakeView")
 
@@ -39,7 +43,7 @@ class ComponentCollectionViewSet(HTMXEventMixin, ModelViewSet):
         requests with unsafe methods.
     """
 
-    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer, BrowsableAPIRenderer]
 
     template_name = "main/data/collection_component_list_table_row.html"
     list_template_name = "main/data/collection_component_list.html"

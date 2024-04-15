@@ -31,6 +31,7 @@ def api_root(request, format="api"):
         {
             "Ingredients": reverse("ingredient-list", request=request, format=format),
             "Nutrients": reverse("nutrient-list", request=request, format=format),
+            "Recipes": reverse("recipe-list", request=request, format=format),
             "Weight Measurements": reverse(
                 "weight-measurement-list", request=request, format=format
             ),
