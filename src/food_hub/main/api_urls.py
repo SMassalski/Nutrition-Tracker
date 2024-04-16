@@ -113,7 +113,7 @@ collection_router.register(
     views.RecipeIngredientViewSet,
     "recipe-ingredient",
 )
-collection_router.register("meal", views.MealRecipeViewSet, "meal-recipe")
+collection_router.register("profile/meals", views.MealRecipeViewSet, "meal-recipe")
 urlpatterns += collection_router.urls
 
 urlpatterns = format_suffix_patterns(urlpatterns, allowed=["json", "html", "api"])
