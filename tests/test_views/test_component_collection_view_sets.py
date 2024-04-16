@@ -77,6 +77,7 @@ class BaseModelCollectionViewsetTests:
             {
                 "amount": 5,
                 self.component_field: getattr(instance, self.component_field).id,
+                self.list_lookup: getattr(instance, self.list_lookup).id,
             },
         )
 
@@ -171,6 +172,7 @@ class BaseModelCollectionViewsetTests:
         data = {
             "amount": 5,
             self.component_field: getattr(instance, self.component_field).id,
+            self.list_lookup: getattr(instance, self.list_lookup).id,
         }
         request = create_api_request(method, user, data)
 
@@ -440,13 +442,14 @@ class BaseModelCollectionViewsetTests:
             view(request, **lookup)
 
     @pytest.mark.parametrize(
-        ("method", "num_queries"), (("get", 2), ("put", 4), ("patch", 4), ("delete", 3))
+        ("method", "num_queries"), (("get", 2), ("put", 5), ("patch", 5), ("delete", 3))
     )
     def test_detail_num_queries(
         self, django_assert_num_queries, instance, user, method, num_queries
     ):
         data = {
             self.component_field: getattr(instance, self.component_field).id,
+            self.list_lookup: getattr(instance, self.list_lookup).id,
             "amount": 10,
         }
         request = create_api_request(method, user, data)
@@ -455,9 +458,11 @@ class BaseModelCollectionViewsetTests:
             # 1) Get instance query
             # 2) Object permission
             # 3) Delete (DELETE request)
-            # 3) Select component from data - needed for the response
+            # 3) Select collection for writable related field (PUT and
+            # PATCH)
+            # 4) Select component from data - needed for the response
             # (PUT and PATCH)
-            # 4) Update (PUT and PATCH)
+            # 5) Update (PUT and PATCH)
             view = self.view_class.as_view(self.detail_method_map, detail=True)
             view(request, pk=instance.id)
 

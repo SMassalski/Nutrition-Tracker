@@ -2,6 +2,8 @@
 from main import models
 from rest_framework import serializers
 
+from .fields import OwnedPrimaryKeyField
+
 __all__ = (
     "CurrentMealSerializer",
     "MealSerializer",
@@ -62,12 +64,14 @@ class MealIngredientDetailSerializer(MealIngredientSerializer):
     ingredient_url = serializers.HyperlinkedRelatedField(
         source="ingredient", view_name="ingredient-detail", read_only=True
     )
+    meal = OwnedPrimaryKeyField(queryset=models.Meal.objects.all())
 
     class Meta:
         model = models.MealIngredient
         fields = (
             "id",
             "meal_url",
+            "meal",
             "ingredient_url",
             "ingredient",
             "ingredient_name",
@@ -99,10 +103,20 @@ class MealRecipeDetailSerializer(MealRecipeSerializer):
     recipe_url = serializers.HyperlinkedRelatedField(
         source="recipe", view_name="recipe-detail", read_only=True
     )
+    meal = OwnedPrimaryKeyField(queryset=models.Meal.objects.all())
+    recipe = OwnedPrimaryKeyField(queryset=models.Recipe.objects.all())
 
     class Meta:
         model = models.MealRecipe
-        fields = ("id", "meal_url", "recipe_url", "recipe", "recipe_name", "amount")
+        fields = (
+            "id",
+            "meal_url",
+            "meal",
+            "recipe_url",
+            "recipe",
+            "recipe_name",
+            "amount",
+        )
 
 
 class MealSerializer(serializers.HyperlinkedModelSerializer):
@@ -157,12 +171,14 @@ class RecipeIngredientDetailSerializer(RecipeIngredientSerializer):
     recipe_url = serializers.HyperlinkedRelatedField(
         source="recipe", view_name="recipe-detail", read_only=True
     )
+    recipe = OwnedPrimaryKeyField(queryset=models.Recipe.objects.all())
 
     class Meta:
         model = models.RecipeIngredient
         fields = (
             "id",
             "recipe_url",
+            "recipe",
             "ingredient",
             "ingredient_url",
             "ingredient_name",
