@@ -4,8 +4,12 @@ from rest_framework import serializers
 
 __all__ = (
     "CurrentMealSerializer",
+    "MealSerializer",
+    "MealDetailSerializer",
     "MealIngredientSerializer",
+    "MealIngredientDetailSerializer",
     "MealRecipeSerializer",
+    "MealRecipeDetailSerializer",
     "RecipeSerializer",
     "RecipeDetailSerializer",
     "RecipeIngredientSerializer",
@@ -39,21 +43,92 @@ class MealIngredientSerializer(serializers.ModelSerializer):
     save method.
     """
 
+    ingredient_name = serializers.CharField(source="ingredient.name", read_only=True)
+    url = serializers.HyperlinkedIdentityField(
+        view_name="meal-ingredient-detail", read_only=True
+    )
+
     class Meta:
         model = models.MealIngredient
-        fields = ("id", "ingredient", "amount")
+        fields = ("url", "ingredient", "ingredient_name", "amount")
+
+
+class MealIngredientDetailSerializer(MealIngredientSerializer):
+    """Detail serializer for the `MealIngredient` model."""
+
+    meal_url = serializers.HyperlinkedRelatedField(
+        source="meal", view_name="meal-detail", read_only=True
+    )
+    ingredient_url = serializers.HyperlinkedRelatedField(
+        source="ingredient", view_name="ingredient-detail", read_only=True
+    )
+
+    class Meta:
+        model = models.MealIngredient
+        fields = (
+            "id",
+            "meal_url",
+            "ingredient_url",
+            "ingredient",
+            "ingredient_name",
+            "amount",
+        )
 
 
 class MealRecipeSerializer(serializers.ModelSerializer):
-    """MealIngredient model serializer.
+    """`MealRecipe` model serializer.
 
     When creating an entry, the meal_id must be provided in the save
     method.
     """
 
+    recipe_name = serializers.CharField(source="recipe.name", read_only=True)
+    url = serializers.HyperlinkedIdentityField(view_name="meal-recipe-detail")
+
     class Meta:
         model = models.MealRecipe
-        fields = ("id", "recipe", "amount")
+        fields = ("url", "recipe", "recipe_name", "amount")
+
+
+class MealRecipeDetailSerializer(MealRecipeSerializer):
+    """Detail serializer for the `MealRecipe` model."""
+
+    meal_url = serializers.HyperlinkedRelatedField(
+        source="meal", view_name="meal-detail", read_only=True
+    )
+    recipe_url = serializers.HyperlinkedRelatedField(
+        source="recipe", view_name="recipe-detail", read_only=True
+    )
+
+    class Meta:
+        model = models.MealRecipe
+        fields = ("id", "meal_url", "recipe_url", "recipe", "recipe_name", "amount")
+
+
+class MealSerializer(serializers.HyperlinkedModelSerializer):
+    """Serializer for the Meal model."""
+
+    class Meta:
+        model = models.Meal
+        fields = ["url", "date"]
+
+
+class MealDetailSerializer(MealSerializer):
+    """Detail serializer for the Meal model."""
+
+    ingredients = serializers.HyperlinkedIdentityField(
+        "meal-ingredient-list", lookup_url_kwarg="meal"
+    )
+    recipes = serializers.HyperlinkedIdentityField(
+        "meal-recipe-list", lookup_url_kwarg="meal"
+    )
+    intakes = serializers.HyperlinkedIdentityField(
+        "meal-intakes", lookup_url_kwarg="meal"
+    )
+
+    class Meta:
+        model = models.Meal
+        fields = ["id", "date", "ingredients", "recipes", "intakes"]
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):

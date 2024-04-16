@@ -36,31 +36,31 @@ urlpatterns = [
     ),
     # Meal and meal ingredients
     path(
-        "meals/current-meal",
+        "profile/meals/current-meal",
         login_required(views.CurrentMealView.as_view()),
         name="current-meal",
     ),
     path(
-        "meals/current/ingredients",
+        "profile/meals/current/ingredients",
         login_required(
             views.CurrentMealRedirectView.as_view(pattern_name="meal-ingredient-list")
         ),
         name="current-meal-ingredients",
     ),
     path(
-        "meals/current/recipes",
+        "profile/meals/current/recipes",
         login_required(
             views.CurrentMealRedirectView.as_view(pattern_name="meal-recipe-list")
         ),
         name="current-meal-recipes",
     ),
     path(
-        "meals/<int:meal>/intakes",
+        "profile/meals/<int:meal>/intakes",
         login_required(views.MealNutrientIntakeView.as_view()),
         name="meal-intakes",
     ),
     path(
-        "meals/current/intakes",
+        "profile/meals/current/intakes",
         login_required(
             views.CurrentMealRedirectView.as_view(pattern_name="meal-intakes")
         ),
@@ -94,6 +94,7 @@ urlpatterns = [
     ),
 ]
 router = SimpleRouter()
+router.register("profile/meals", views.MealViewSet, "meal")
 router.register("profile/recipes", views.RecipeViewSet, "recipe")
 router.register(
     "profile/weight-measurements", views.WeightMeasurementViewSet, "weight-measurement"
@@ -102,7 +103,9 @@ router.register("tracked-nutrients", views.TrackedNutrientViewSet, "tracked-nutr
 urlpatterns += router.urls
 
 collection_router = ModelCollectionRouter()
-collection_router.register("meal", views.MealIngredientViewSet, "meal-ingredient")
+collection_router.register(
+    "profile/meals", views.MealIngredientViewSet, "meal-ingredient"
+)
 collection_router.register(
     "profile/recipes",
     views.RecipeIngredientViewSet,

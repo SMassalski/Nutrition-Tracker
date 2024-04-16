@@ -2,10 +2,13 @@
 from main import models, serializers
 from main.views.api.api_views import IngredientPreviewView
 from main.views.api.base_views import ComponentCollectionViewSet, NutrientIntakeView
+from main.views.generics import ModelViewSet
 from main.views.mixins import MealInteractionMixin
+from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.reverse import reverse
 
 __all__ = (
+    "MealViewSet",
     "MealIngredientViewSet",
     "MealRecipeViewSet",
     "MealNutrientIntakeView",
@@ -18,24 +21,30 @@ from main.views.session_util import get_current_meal_id
 
 class MealIngredientViewSet(MealInteractionMixin, ComponentCollectionViewSet):
     """
-    The ComponentCollectionViewSet for the Meal-Ingredient relationship.
+    List a meal's ingredients and add ingredients to a meal.
+
+    Retrieve, update or destroy meal ingredient entry.
     """
 
     collection_model = models.Meal
     component_field_name = "ingredients"
     htmx_events = ["mealComponentsChanged"]
     serializer_class = serializers.MealIngredientSerializer
+    detail_serializer_class = serializers.MealIngredientDetailSerializer
 
 
 class MealRecipeViewSet(ComponentCollectionViewSet):
     """
-    The ComponentCollectionViewSet for the Meal-Recipe relationship.
+    List a meal's recipes and add recipes to a meal.
+
+    Retrieve, update or destroy meal recipe entry.
     """
 
     collection_model = models.Meal
     component_field_name = "recipes"
     htmx_events = ["mealComponentsChanged"]
     serializer_class = serializers.MealRecipeSerializer
+    detail_serializer_class = serializers.MealRecipeDetailSerializer
 
 
 class MealNutrientIntakeView(NutrientIntakeView):
@@ -75,3 +84,19 @@ class MealRecipePreviewView(MealIngredientPreviewView):
     queryset = models.Recipe.objects.all()
     target_pattern = "meal-recipe-list"
     component_field = "recipe"
+
+
+class MealViewSet(ModelViewSet):
+    """Perform CRUD operations on meals.
+
+    Only meals owned by the user are accessible.
+    """
+
+    serializer_class = serializers.MealSerializer
+    detail_serializer_class = serializers.MealDetailSerializer
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+
+    # docstr-coverage: inherited
+    def get_queryset(self):
+        profile = self.request.user.profile
+        return models.Meal.objects.filter(owner=profile).order_by("date")
