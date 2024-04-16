@@ -45,3 +45,13 @@ class IsOwnerPermission(BasePermission):
     def has_object_permission(self, request, view, obj):
         obj_profile = getattr(obj, "owner_id", None) or getattr(obj, "profile_id", None)
         return obj_profile == request.user.profile.id
+
+
+class CreateWithoutProfilePermission(BasePermission):
+    """
+    Allow POST method only if the user hasn't yet created a profile.
+    """
+
+    # docstr-coverage: inherited
+    def has_permission(self, request, view):
+        return request.method != "POST" or not hasattr(request.user, "profile")

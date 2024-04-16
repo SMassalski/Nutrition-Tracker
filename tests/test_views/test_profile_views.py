@@ -7,7 +7,7 @@ from main.serializers import WeightMeasurementSerializer
 from main.views import api as views
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.reverse import reverse
-from rest_framework.status import HTTP_404_NOT_FOUND, is_success
+from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND, is_success
 
 from tests.test_views.util import create_api_request
 
@@ -324,6 +324,13 @@ class TestProfileAPIView:
 
         response = view(request)
         assert is_success(response.status_code)
+
+    def test_post_not_allowed_if_profile_exists(self, data, saved_profile):
+        request = create_api_request("post", saved_profile.user, data)
+        view = self.view_class.as_view()
+
+        response = view(request)
+        assert response.status_code == HTTP_403_FORBIDDEN
 
     # PATCH method
 

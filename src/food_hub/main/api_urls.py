@@ -83,7 +83,7 @@ urlpatterns = [
         name="last-month-intake",
     ),
     path(
-        "calories/last-month",
+        "profile/last-month-calories",
         views.LastMonthCalorieView.as_view(),
         name="last-month-calories",
     ),
@@ -99,7 +99,9 @@ router.register("profile/recipes", views.RecipeViewSet, "recipe")
 router.register(
     "profile/weight-measurements", views.WeightMeasurementViewSet, "weight-measurement"
 )
-router.register("tracked-nutrients", views.TrackedNutrientViewSet, "tracked-nutrient")
+router.register(
+    "profile/tracked-nutrients", views.TrackedNutrientViewSet, "tracked-nutrient"
+)
 urlpatterns += router.urls
 
 collection_router = ModelCollectionRouter()

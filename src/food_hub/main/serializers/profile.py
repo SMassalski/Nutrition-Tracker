@@ -64,6 +64,15 @@ class WeightMeasurementDetailSerializer(WeightMeasurementSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     """Serializer for the `Profile` model."""
 
+    urls = [
+        ("meals", "meal-list"),
+        ("recipes", "recipe-list"),
+        ("tracked nutrients", "tracked-nutrient-list"),
+        ("last month calorie intakes", "last-month-calories"),
+        ("malconsumed nutrients", "malconsumptions"),
+        ("weight measurements", "weight-measurement-list"),
+    ]
+
     POUNDS = "LBS"
     KILOGRAMS = "KG"
     unit_choices = [(POUNDS, "lbs"), (KILOGRAMS, "kg")]
@@ -76,6 +85,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     height = serializers.IntegerField(min_value=0)
     weight = serializers.IntegerField(min_value=0)
 
+    energy_requirement = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = models.Profile
         fields = (
@@ -86,6 +97,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "weight_unit",
             "activity_level",
             "sex",
+            "energy_requirement",
         )
 
     # docstr-coverage: inherited
@@ -101,6 +113,17 @@ class ProfileSerializer(serializers.ModelSerializer):
         ret.pop("weight_unit", None)
         return ret
 
+    # docstr-coverage: inherited
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+
+        format_ = self.context.get("format")
+        request = self.context.get("request")
+        for label, view_name in self.urls:
+            ret[label] = reverse(view_name, request=request, format=format_)
+
+        return ret
+
 
 class TrackedNutrientSerializer(serializers.ModelSerializer):
     """Serializer for the `Profile.tracked_nutrients` through model.
@@ -110,10 +133,16 @@ class TrackedNutrientSerializer(serializers.ModelSerializer):
     """
 
     nutrient_name = serializers.CharField(source="nutrient.name", read_only=True)
+    nutrient_url = serializers.HyperlinkedRelatedField(
+        source="nutrient", view_name="nutrient-detail", read_only=True
+    )
+    url = serializers.HyperlinkedIdentityField(
+        view_name="tracked-nutrient-detail", read_only=True
+    )
 
     class Meta:
         model = models.Profile.tracked_nutrients.through
-        fields = ["id", "nutrient", "nutrient_name"]
+        fields = ["url", "nutrient", "nutrient_url", "nutrient_name"]
 
     # docstr-coverage: inherited
     def validate_nutrient(self, value):

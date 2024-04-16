@@ -5,7 +5,7 @@ from django.db.models import Prefetch
 from django.db.models.functions import Lower
 from django.http import Http404
 from main import models, serializers
-from main.permissions import IsOwnerPermission
+from main.permissions import CreateWithoutProfilePermission, IsOwnerPermission
 from main.views.generics import (
     GenericView,
     GenericViewSet,
@@ -27,6 +27,7 @@ from rest_framework.renderers import (
     TemplateHTMLRenderer,
 )
 from rest_framework.response import Response
+from rest_framework.reverse import reverse
 
 __all__ = (
     "LastMonthIntakeView",
@@ -112,13 +113,18 @@ class ProfileApiView(
     CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericView
 ):
     """
-    View allowing users to perform create, update and retrieve
-    operations on the `Profile` model.
+    Create, update or retrieve the user's profile.
     """
 
     serializer_class = serializers.ProfileSerializer
-    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer, BrowsableAPIRenderer]
     template_name = "main/data/profile_information_form.html"
+
+    # Creating a profile by a user, that already has one, would be
+    # prevented in validation by nature of the user-profile relation
+    # being a one-to-one relation. The permission is here to hide the
+    # creation form in the DRF browsable API.
+    permission_classes = [CreateWithoutProfilePermission]
 
     redirect_url_field = "next"
 
@@ -232,7 +238,7 @@ class TrackedNutrientViewSet(
 ):
     """View set for operations on the profile's tracked nutrients."""
 
-    renderer_classes = (TemplateHTMLRenderer, JSONRenderer)
+    renderer_classes = (TemplateHTMLRenderer, JSONRenderer, BrowsableAPIRenderer)
     serializer_class = serializers.TrackedNutrientSerializer
     template_name = "main/data/tracked_nutrients_card.html"
     pagination_class = None
@@ -274,7 +280,7 @@ class TrackedNutrientViewSet(
 
 
 class MalconsumptionView(GenericView):
-    """List malconsumed nutrients.
+    """List under- and overconsumed nutrients and the degree.
 
     Attributes
     ---------
@@ -294,7 +300,14 @@ class MalconsumptionView(GenericView):
 
         nutrients = models.Nutrient.objects.exclude(name__in=self.exclude or [])
         data = [
-            {"id": n.id, "name": n.name, "magnitude": malconsumptions[n.id]}
+            {
+                "id": n.id,
+                "nutrient_url": reverse(
+                    "nutrient-detail", args=[n.id], request=self.request
+                ),
+                "name": n.name,
+                "magnitude": malconsumptions[n.id],
+            }
             for n in nutrients
             if n.id in malconsumptions
         ]
