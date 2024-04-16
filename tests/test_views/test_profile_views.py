@@ -163,7 +163,9 @@ class TestWeightMeasurementViewSet:
 
         request = create_api_request("get", user, format="json")
 
-        response = self.view_class.as_view({"get": "last_month"}, detail=False)(request)
+        response = self.view_class.as_view({"get": "last_month_weights"}, detail=False)(
+            request
+        )
 
         assert date_.strftime("%b %d") not in response.data
 
@@ -177,7 +179,9 @@ class TestWeightMeasurementViewSet:
 
         request = create_api_request("get", user, format="json")
 
-        response = self.view_class.as_view({"get": "last_month"}, detail=False)(request)
+        response = self.view_class.as_view({"get": "last_month_weights"}, detail=False)(
+            request
+        )
 
         assert response.data[date_.strftime("%b %d")] == 80.1
 

@@ -95,11 +95,15 @@ class WeightMeasurementViewSet(HTMXEventMixin, ModelViewSet):
             ret["success"] = data["serializer"].is_valid()
         return ret
 
-    @action(methods=["get"], detail=False, renderer_classes=[JSONRenderer])
-    def last_month(self, request, *_args, **_kwargs):
+    @action(
+        methods=["get"],
+        detail=False,
+        renderer_classes=[JSONRenderer, BrowsableAPIRenderer],
+    )
+    def last_month_weights(self, request, *_args, **_kwargs):
         """
-        List the average weight measurement value each day within the
-        last 30 days.
+        List the average weight measurement value for each day with at
+        least one measurement, within the last 30 days.
         """
         weights = request.user.profile.weight_by_date(
             date_max=date.today(), date_min=date.today() - timedelta(days=30)
