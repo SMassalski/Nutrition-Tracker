@@ -14,17 +14,17 @@ __all__ = (
     "IngredientNutrientSerializer",
     "IngredientSerializer",
     "IngredientDetailSerializer",
-    "RecommendationSerializer",
+    "RecommendationIntakeSerializer",
     "NutrientTypeSerializer",
     "NutrientIntakeSerializer",
-    "SimpleRecommendationSerializer",
+    "RecommendationSerializer",
     "ByDateIntakeSerializer",
 )
 
 
-class SimpleRecommendationSerializer(serializers.ModelSerializer):
+class RecommendationSerializer(serializers.ModelSerializer):
     """
-    A simple serializer for the IntakeRecommendation model.
+    A serializer for the IntakeRecommendation model.
 
     Requires a `request` in the context.
     The request must be authenticated for a user with a profile.
@@ -82,7 +82,7 @@ class NutrientDetailSerializer(serializers.ModelSerializer):
     last_month_intakes = serializers.HyperlinkedIdentityField(
         view_name="last-month-intake"
     )
-    recommendations = SimpleRecommendationSerializer(many=True)
+    recommendations = RecommendationSerializer(many=True)
     components = NutrientSerializer(many=True)
 
     class Meta:
@@ -136,8 +136,8 @@ class IngredientDetailSerializer(serializers.ModelSerializer):
         fields = ["dataset", "external_id", "name", "nutrients"]
 
 
-class RecommendationSerializer(serializers.ModelSerializer):
-    """A model serializer for IntakeRecommendations.
+class RecommendationIntakeSerializer(RecommendationSerializer):
+    """A model serializer for IntakeRecommendations with intake data.
 
     Requires a request authenticated with a user with a profile in the
     context. Additionally, some fields require `intakes`
@@ -171,8 +171,8 @@ class NutrientIntakeSerializer(serializers.ModelSerializer):
     the Prefetch object with a modified queryset.
     """
 
-    recommendations = RecommendationSerializer(many=True)
     types = NutrientTypeSerializer(many=True)
+    recommendations = RecommendationIntakeSerializer(many=True)
     intake = serializers.SerializerMethodField()
 
     class Meta:
@@ -208,7 +208,7 @@ class ByDateIntakeSerializer(serializers.ModelSerializer):
     """
 
     intakes = serializers.SerializerMethodField()
-    recommendations = SimpleRecommendationSerializer(many=True)
+    recommendations = RecommendationSerializer(many=True)
     unit = serializers.CharField(source="pretty_unit")
     avg = serializers.SerializerMethodField()
 

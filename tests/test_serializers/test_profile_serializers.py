@@ -129,14 +129,14 @@ class TestSimpleRecommendationSerializer:
         return recommendation
 
     def test_get_amount_min(self, context, recommendation):
-        serializer = serializers.SimpleRecommendationSerializer(
+        serializer = serializers.RecommendationSerializer(
             recommendation, context=context
         )
 
         assert serializer.get_amount_min(recommendation) == 400
 
     def test_get_amount_max(self, context, recommendation):
-        serializer = serializers.SimpleRecommendationSerializer(
+        serializer = serializers.RecommendationSerializer(
             recommendation, context=context
         )
 
