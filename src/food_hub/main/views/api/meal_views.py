@@ -48,7 +48,7 @@ class MealRecipeViewSet(ComponentCollectionViewSet):
 
 
 class MealNutrientIntakeView(NutrientIntakeView):
-    """NutrientIntakeView for the meal model."""
+    """List dietary intakes from the meal."""
 
     collection_model = models.Meal
     lookup_url_kwarg = "meal"

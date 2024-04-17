@@ -147,7 +147,7 @@ class NutrientIntakeView(ListAPIView):
 
     collection_model = models.Meal
     lookup_url_kwarg = "pk"
-    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer, BrowsableAPIRenderer]
     pagination_class = None
     template_name = "main/data/nutrient_tables.html"
     permission_classes = [permissions.IsOwnerPermission]
@@ -166,6 +166,7 @@ class NutrientIntakeView(ListAPIView):
         self.check_object_permissions(self.request, self.obj)
         return self.obj.get_intakes()
 
+    # docstr-coverage: inherited
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
         ctx["intakes"] = self.intakes
@@ -173,19 +174,24 @@ class NutrientIntakeView(ListAPIView):
 
     # docstr-coverage: inherited
     def get_queryset(self):
-        return (
-            models.Nutrient.objects.select_related("child_type")
-            .prefetch_related(
-                "types",
-                Prefetch(
-                    "recommendations",
-                    queryset=models.IntakeRecommendation.objects.for_profile(
-                        self.request.user.profile
-                    ),
+
+        queryset = models.Nutrient.objects.prefetch_related(
+            Prefetch(
+                "recommendations",
+                queryset=models.IntakeRecommendation.objects.for_profile(
+                    self.request.user.profile
                 ),
-            )
-            .order_by("name")
+            ),
         )
+
+        if self.uses_template_renderer:
+            return (
+                queryset.select_related("child_type")
+                .prefetch_related("types")
+                .order_by("name")
+            )
+
+        return queryset
 
     # docstr-coverage: inherited
     def get_template_context(self, data):

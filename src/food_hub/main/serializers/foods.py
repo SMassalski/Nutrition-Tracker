@@ -36,7 +36,15 @@ class RecommendationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.IntakeRecommendation
-        fields = ("id", "dri_type", "amount_min", "amount_max")
+        fields = (
+            "id",
+            "dri_type",
+            "amount_min",
+            "amount_max",
+            "age_min",
+            "age_max",
+            "sex",
+        )
 
     @property
     def profile(self):
@@ -154,7 +162,14 @@ class RecommendationIntakeSerializer(RecommendationSerializer):
 
     class Meta:
         model = models.IntakeRecommendation
-        fields = ("id", "dri_type", "displayed_amount", "progress", "over_limit")
+        fields = (
+            "id",
+            "dri_type",
+            "amount_min",
+            "amount_max",
+            "progress",
+            "over_limit",
+        )
 
     # docstr-coverage: inherited
     def to_representation(self, instance: models.IntakeRecommendation):
@@ -166,7 +181,7 @@ class RecommendationIntakeSerializer(RecommendationSerializer):
         return super().to_representation(instance)
 
 
-class NutrientIntakeSerializer(serializers.ModelSerializer):
+class NutrientIntakeSerializer(serializers.HyperlinkedModelSerializer):
     """A model serializer for Nutrients with intake information.
 
     Requires a request authenticated with a user with a profile in the
@@ -186,14 +201,10 @@ class NutrientIntakeSerializer(serializers.ModelSerializer):
         model = models.Nutrient
         fields = (
             "id",
+            "url",
             "name",
-            "unit",
-            "pretty_unit",
-            "energy",
-            "recommendations",
-            "types",
-            "child_type",
             "intake",
+            "recommendations",
         )
 
     def get_intake(self, obj: models.Nutrient):

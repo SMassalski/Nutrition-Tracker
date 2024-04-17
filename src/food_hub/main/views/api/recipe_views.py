@@ -28,7 +28,7 @@ class RecipeIngredientViewSet(ComponentCollectionViewSet):
 
 
 class RecipeIntakeView(NutrientIntakeView):
-    """NutrientIntakeView for the recipe model."""
+    """List dietary intakes from the recipe per 100g."""
 
     collection_model = models.Recipe
     lookup_url_kwarg = "recipe"
