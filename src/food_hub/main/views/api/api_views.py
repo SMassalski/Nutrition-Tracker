@@ -1,7 +1,7 @@
 """Main app's api views."""
-
+from django.db.models import Prefetch
 from main import serializers
-from main.models import Ingredient, Nutrient
+from main.models import Ingredient, IntakeRecommendation, Nutrient
 from main.views.generics import ListAPIView, RetrieveAPIView
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.filters import SearchFilter
@@ -75,17 +75,29 @@ class IngredientDetailView(RetrieveAPIView):
 
 
 class NutrientView(ListAPIView):
-    """List of nutrients."""
+    """List nutrients."""
 
     queryset = Nutrient.objects.all()
     serializer_class = serializers.NutrientSerializer
 
 
 class NutrientDetailView(RetrieveAPIView):
-    """Nutrient details."""
+    """Retrieve nutrient data."""
 
-    queryset = Nutrient.objects.all()
     serializer_class = serializers.NutrientDetailSerializer
+
+    # docstr-coverage: inherited
+    def get_queryset(self):
+        queryset = Nutrient.objects.select_related("child_type").prefetch_related(
+            "types",
+            Prefetch(
+                "recommendations",
+                queryset=IntakeRecommendation.objects.for_profile(
+                    self.request.user.profile
+                ),
+            ),
+        )
+        return queryset
 
 
 class IngredientPreviewView(RetrieveAPIView):

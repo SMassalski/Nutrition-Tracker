@@ -22,8 +22,52 @@ __all__ = (
 )
 
 
+class SimpleRecommendationSerializer(serializers.ModelSerializer):
+    """
+    A simple serializer for the IntakeRecommendation model.
+
+    Requires a `request` in the context.
+    The request must be authenticated for a user with a profile.
+    """
+
+    amount_min = serializers.SerializerMethodField()
+    amount_max = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.IntakeRecommendation
+        fields = ("id", "dri_type", "amount_min", "amount_max")
+
+    def get_amount_min(self, obj: models.IntakeRecommendation) -> float:
+        """Get the amount min adjusted for the profile."""
+        profile = self.context["request"].user.profile
+        return obj.profile_amount_min(profile)
+
+    def get_amount_max(self, obj: models.IntakeRecommendation) -> float:
+        """Get the amount min adjusted for the profile."""
+        profile = self.context["request"].user.profile
+        return obj.profile_amount_max(profile)
+
+
+class NutrientTypeSerializer(serializers.ModelSerializer):
+    """A model serializer for NutrientTypes."""
+
+    parent_nutrient_url = serializers.HyperlinkedRelatedField(
+        source="parent_nutrient", view_name="nutrient-detail", read_only=True
+    )
+
+    class Meta:
+        model = models.NutrientType
+        fields = (
+            "id",
+            "name",
+            "displayed_name",
+            "parent_nutrient_id",
+            "parent_nutrient_url",
+        )
+
+
 class NutrientSerializer(serializers.HyperlinkedModelSerializer):
-    """Serializer for nutrient list view."""
+    """Serializer for the `Nutrient` model."""
 
     class Meta:
         model = models.Nutrient
@@ -31,11 +75,29 @@ class NutrientSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class NutrientDetailSerializer(serializers.ModelSerializer):
-    """Serializer for nutrient detail view."""
+    """Detail serializer for the `Nutrient` model."""
+
+    types = NutrientTypeSerializer(many=True)
+    child_type = serializers.CharField(source="child_type.name")
+    last_month_intakes = serializers.HyperlinkedIdentityField(
+        view_name="last-month-intake"
+    )
+    recommendations = SimpleRecommendationSerializer(many=True)
+    components = NutrientSerializer(many=True)
 
     class Meta:
         model = models.Nutrient
-        fields = ["name", "unit"]
+        fields = [
+            "id",
+            "name",
+            "unit",
+            "energy",
+            "types",
+            "child_type",
+            "components",
+            "recommendations",
+            "last_month_intakes",
+        ]
 
 
 class IngredientNutrientSerializer(serializers.ModelSerializer):
@@ -96,14 +158,6 @@ class RecommendationSerializer(serializers.ModelSerializer):
         return super().to_representation(instance)
 
 
-class NutrientTypeSerializer(serializers.ModelSerializer):
-    """A model serializer for NutrientTypes."""
-
-    class Meta:
-        model = models.NutrientType
-        fields = ("id", "name", "displayed_name", "parent_nutrient_id")
-
-
 class NutrientIntakeSerializer(serializers.ModelSerializer):
     """A model serializer for Nutrients with intake information.
 
@@ -141,32 +195,6 @@ class NutrientIntakeSerializer(serializers.ModelSerializer):
         if intakes is None:
             return None
         return intakes.get(obj.id, 0)
-
-
-class SimpleRecommendationSerializer(serializers.ModelSerializer):
-    """
-    A simple serializer for the IntakeRecommendation model.
-
-    Requires a `request` in the context.
-    The request must be authenticated for a user with a profile.
-    """
-
-    amount_min = serializers.SerializerMethodField()
-    amount_max = serializers.SerializerMethodField()
-
-    class Meta:
-        model = models.IntakeRecommendation
-        fields = ("id", "dri_type", "amount_min", "amount_max")
-
-    def get_amount_min(self, obj: models.IntakeRecommendation) -> float:
-        """Get the amount min adjusted for the profile."""
-        profile = self.context["request"].user.profile
-        return obj.profile_amount_min(profile)
-
-    def get_amount_max(self, obj: models.IntakeRecommendation) -> float:
-        """Get the amount min adjusted for the profile."""
-        profile = self.context["request"].user.profile
-        return obj.profile_amount_max(profile)
 
 
 class ByDateIntakeSerializer(serializers.ModelSerializer):
