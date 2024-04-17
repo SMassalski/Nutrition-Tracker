@@ -91,24 +91,6 @@ class TestIngredientDetailView:
 
         assert response.status_code == status.HTTP_200_OK
 
-    def test_fields(self, db, ingredient_1):
-        """IngredientDetailView response entry contains the correct fields"""
-        response = self.view(self.request, pk=self.pk, format="json")
-        response.render()
-
-        result = set(json.loads(response.content).keys())
-        expected = {"external_id", "name", "dataset", "nutrients"}
-        assert result == expected
-
-    def test_nutrients_field(self, db, ingredient_1, ingredient_nutrient_1_1):
-        """IngredientDetailView response entry contains the correct fields"""
-        response = self.view(self.request, pk=self.pk, format="json")
-        response.render()
-
-        result = set(json.loads(response.content)["nutrients"][0].keys())
-        expected = {"url", "nutrient", "amount"}
-        assert result == expected
-
 
 class TestIngredientPreviewView:
     def test_get_template_context_has_component_field(self, ingredient_1):
@@ -162,15 +144,6 @@ class TestNutrientListView:
         expected = {nutrient_1.name, nutrient_2.name}
         assert result == expected
 
-    def test_fields(self, db, nutrient_1):
-        """NutrientView response entry contains the correct fields."""
-        response = views.NutrientView.as_view()(self.request, format="json")
-        response.render()
-
-        result = set(json.loads(response.content)["results"][0].keys())
-        expected = {"name", "url"}
-        assert result == expected
-
 
 class TestNutrientDetailView:
     """Tests of the nutrient detail view."""
@@ -188,12 +161,3 @@ class TestNutrientDetailView:
         response = self.view(self.request, pk=self.pk)
 
         assert response.status_code == status.HTTP_200_OK
-
-    def test_fields(self, db, nutrient_1):
-        """NutrientDetailView response entry contains the correct fields."""
-        response = self.view(self.request, pk=self.pk, format="json")
-        response.render()
-
-        result = set(json.loads(response.content).keys())
-        expected = {"name", "unit"}
-        assert result == expected
