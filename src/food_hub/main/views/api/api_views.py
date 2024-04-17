@@ -67,7 +67,7 @@ class IngredientView(ListAPIView):
 
 
 class IngredientDetailView(RetrieveAPIView):
-    """Ingredient details."""
+    """Retrieve ingredient data."""
 
     queryset = Ingredient.objects.all()
     serializer_class = serializers.IngredientDetailSerializer

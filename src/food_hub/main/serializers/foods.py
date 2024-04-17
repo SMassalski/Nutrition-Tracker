@@ -44,22 +44,24 @@ class IngredientNutrientSerializer(serializers.ModelSerializer):
     Ingredient side.
     """
 
-    url = serializers.HyperlinkedRelatedField(
+    nutrient_url = serializers.HyperlinkedRelatedField(
         view_name="nutrient-detail", read_only=True, source="nutrient"
     )
-    nutrient = NutrientDetailSerializer()
+    nutrient_name = serializers.CharField(source="nutrient.name")
 
     class Meta:
         model = models.IngredientNutrient
-        fields = ["url", "nutrient", "amount"]
+        fields = ["nutrient_url", "nutrient_name", "amount"]
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     """Serializer for ingredient list view."""
 
+    url = serializers.HyperlinkedIdentityField(view_name="ingredient-detail")
+
     class Meta:
         model = models.Ingredient
-        fields = ["id", "name"]
+        fields = ["url", "name"]
 
 
 class IngredientDetailSerializer(serializers.ModelSerializer):
@@ -69,7 +71,7 @@ class IngredientDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Ingredient
-        fields = ["external_id", "name", "dataset", "nutrients"]
+        fields = ["dataset", "external_id", "name", "nutrients"]
 
 
 class RecommendationSerializer(serializers.ModelSerializer):
