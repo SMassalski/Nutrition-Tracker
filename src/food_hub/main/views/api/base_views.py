@@ -166,6 +166,11 @@ class NutrientIntakeView(ListAPIView):
         self.check_object_permissions(self.request, self.obj)
         return self.obj.get_intakes()
 
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["intakes"] = self.intakes
+        return ctx
+
     # docstr-coverage: inherited
     def get_queryset(self):
         return (
