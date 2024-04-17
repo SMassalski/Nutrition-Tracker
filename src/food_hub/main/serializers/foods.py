@@ -27,7 +27,8 @@ class RecommendationSerializer(serializers.ModelSerializer):
     A serializer for the IntakeRecommendation model.
 
     Requires a `request` in the context.
-    The request must be authenticated for a user with a profile.
+    If request is authenticated with a user with a profile the amount
+    values are adjusted for the profile.
     """
 
     amount_min = serializers.SerializerMethodField()
@@ -37,15 +38,22 @@ class RecommendationSerializer(serializers.ModelSerializer):
         model = models.IntakeRecommendation
         fields = ("id", "dri_type", "amount_min", "amount_max")
 
+    @property
+    def profile(self):
+        """The request user's profile."""
+        return getattr(self.context["request"].user, "profile", None)
+
     def get_amount_min(self, obj: models.IntakeRecommendation) -> float:
-        """Get the amount min adjusted for the profile."""
-        profile = self.context["request"].user.profile
-        return obj.profile_amount_min(profile)
+        """Get the amount min adjusted for the profile if available."""
+        if self.profile:
+            return obj.profile_amount_min(self.profile)
+        return obj.amount_min
 
     def get_amount_max(self, obj: models.IntakeRecommendation) -> float:
-        """Get the amount min adjusted for the profile."""
-        profile = self.context["request"].user.profile
-        return obj.profile_amount_max(profile)
+        """Get the amount min adjusted for the profile if available."""
+        if self.profile:
+            return obj.profile_amount_max(self.profile)
+        return obj.amount_max
 
 
 class NutrientTypeSerializer(serializers.ModelSerializer):
@@ -171,7 +179,6 @@ class NutrientIntakeSerializer(serializers.ModelSerializer):
     the Prefetch object with a modified queryset.
     """
 
-    types = NutrientTypeSerializer(many=True)
     recommendations = RecommendationIntakeSerializer(many=True)
     intake = serializers.SerializerMethodField()
 

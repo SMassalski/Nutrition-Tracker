@@ -113,7 +113,7 @@ class TestProfileSerializer:
         assert not serializer.is_valid()
 
 
-class TestSimpleRecommendationSerializer:
+class TestRecommendationSerializer:
     @pytest.fixture
     def recommendation(self, recommendation):
         """An unsaved IntakeRecommendation instance.
@@ -128,19 +128,41 @@ class TestSimpleRecommendationSerializer:
         recommendation.dri_type = models.IntakeRecommendation.RDAKG
         return recommendation
 
-    def test_get_amount_min(self, context, recommendation):
+    def test_get_amount_min_adjusted_for_profile(self, context, recommendation):
         serializer = serializers.RecommendationSerializer(
             recommendation, context=context
         )
 
         assert serializer.get_amount_min(recommendation) == 400
 
-    def test_get_amount_max(self, context, recommendation):
+    def test_get_amount_max_adjusted_for_profile(self, context, recommendation):
         serializer = serializers.RecommendationSerializer(
             recommendation, context=context
         )
 
         assert serializer.get_amount_max(recommendation) == 400
+
+    def test_get_amount_min_no_profile_not_adjusted_for_profile(
+        self, recommendation, user, rf
+    ):
+        request = rf.get("")
+        request.user = user
+        serializer = serializers.RecommendationSerializer(
+            recommendation, context={"request": request}
+        )
+
+        assert serializer.get_amount_min(recommendation) == 5
+
+    def test_get_amount_max_no_profile_not_adjusted_for_profile(
+        self, recommendation, user, rf
+    ):
+        request = rf.get("")
+        request.user = user
+        serializer = serializers.RecommendationSerializer(
+            recommendation, context={"request": request}
+        )
+
+        assert serializer.get_amount_max(recommendation) == 5
 
 
 class TestByDateIntakeSerializer:
