@@ -161,3 +161,21 @@ class TestNutrientDetailView:
         response = self.view(self.request, pk=self.pk)
 
         assert response.status_code == status.HTTP_200_OK
+
+    def test_recommendations_are_filtered_for_profile(
+        self, many_recommendations, user, saved_profile
+    ):
+        request = create_api_request("get", user)
+
+        response = self.view(request, pk=self.pk)
+
+        assert len(response.data["recommendations"]) == 1
+
+    def test_recommendations_are_not_filtered_for_users_without_profile(
+        self, many_recommendations, user
+    ):
+        request = create_api_request("get", user)
+
+        response = self.view(request, pk=self.pk)
+
+        assert len(response.data["recommendations"]) == 3

@@ -89,14 +89,19 @@ class NutrientDetailView(RetrieveAPIView):
     # docstr-coverage: inherited
     def get_queryset(self):
         queryset = Nutrient.objects.select_related("child_type").prefetch_related(
-            "types",
-            Prefetch(
-                "recommendations",
-                queryset=IntakeRecommendation.objects.for_profile(
-                    self.request.user.profile
-                ),
-            ),
+            "types"
         )
+        if hasattr(self.request.user, "profile"):
+            queryset = queryset.prefetch_related(
+                Prefetch(
+                    "recommendations",
+                    queryset=IntakeRecommendation.objects.for_profile(
+                        self.request.user.profile
+                    ),
+                )
+            )
+        else:
+            queryset = queryset.prefetch_related("recommendations")
         return queryset
 
 
