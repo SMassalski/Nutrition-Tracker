@@ -1,13 +1,12 @@
 """Models related to meal / recipe features."""
 import re
+from datetime import date
 from typing import Dict
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Case, F, OuterRef, Q, Subquery, Sum, When
-from django.utils import timezone
-from django.utils.functional import cached_property
 from django.utils.text import slugify
 from main.models.nutrient import Nutrient
 
@@ -113,10 +112,8 @@ class MealIntakeQuerySet(models.QuerySet):
 class Meal(models.Model):
     """Represents the foods eaten in a single day."""
 
-    owner = models.ForeignKey(
-        "main.Profile", on_delete=models.CASCADE
-    )  # , related_name="meals")
-    date = models.DateField(default=timezone.now)
+    owner = models.ForeignKey("main.Profile", on_delete=models.CASCADE)
+    date = models.DateField(default=date.today)
     ingredients = models.ManyToManyField(
         "main.Ingredient", through="main.MealIngredient"
     )
