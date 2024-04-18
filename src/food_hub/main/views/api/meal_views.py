@@ -1,5 +1,6 @@
 """API views associated with the `Meal` model."""
 from main import models, serializers
+from main.permissions import HasProfilePermission
 from main.views.api.api_views import IngredientPreviewView
 from main.views.api.base_views import ComponentCollectionViewSet, NutrientIntakeView
 from main.views.generics import ModelViewSet
@@ -95,6 +96,7 @@ class MealViewSet(ModelViewSet):
     serializer_class = serializers.MealSerializer
     detail_serializer_class = serializers.MealDetailSerializer
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+    permission_classes = [HasProfilePermission]
 
     # docstr-coverage: inherited
     def get_queryset(self):

@@ -194,6 +194,8 @@ class TestWeightMeasurementViewSet:
 
         assert response.headers["HX-Trigger"] == "weightChanged"
 
+    # Permissions
+
     def test_denies_access_to_non_owners(
         self, saved_profile, new_user, weight_measurement
     ):
@@ -207,6 +209,17 @@ class TestWeightMeasurementViewSet:
 
         with pytest.raises(PermissionDenied):
             view.check_object_permissions(request, weight_measurement)
+
+    @pytest.mark.parametrize("method", ("get", "post"))
+    def test_only_allows_users_with_profile(self, user, method):
+        request = create_api_request(method, user)
+        view = views.WeightMeasurementViewSet.as_view(
+            detail=False, actions={"get": "list", "post": "create"}
+        )
+
+        response = view(request)
+
+        assert response.status_code == HTTP_403_FORBIDDEN
 
 
 class TestProfileAPIView:
@@ -414,6 +427,16 @@ class TestLastMonthIntakeView:
         assert response.data["recommendations"][0]["amount_min"] == 400
         assert response.data["recommendations"][0]["amount_max"] == 400
 
+    # Permissions
+
+    def test_only_allows_users_with_profile(self, user):
+        request = create_api_request("get", user)
+        view = views.LastMonthIntakeView.as_view()
+
+        response = view(request)
+
+        assert response.status_code == HTTP_403_FORBIDDEN
+
 
 class TestLastMonthCalorieView:
     def test_returns_calories_for_the_last_30_days(self, user, saved_profile):
@@ -426,6 +449,16 @@ class TestLastMonthCalorieView:
         response = view(request)
 
         assert response.data["caloric_intake"]["dates"] == expected
+
+    # Permissions
+
+    def test_only_allows_users_with_profile(self, user):
+        request = create_api_request("get", user)
+        view = views.LastMonthCalorieView.as_view()
+
+        response = view(request)
+
+        assert response.status_code == HTTP_403_FORBIDDEN
 
 
 class TestTrackedNutrientViewSet:
@@ -532,6 +565,19 @@ class TestTrackedNutrientViewSet:
         actual = view(request, pk=nutrient_1.id).headers["HX-Trigger"]
 
         assert expected == actual
+
+    # Permissions
+
+    @pytest.mark.parametrize("method", ("get", "post"))
+    def test_only_allows_users_with_profile(self, user, method):
+        request = create_api_request(method, user)
+        view = views.TrackedNutrientViewSet.as_view(
+            detail=False, actions={"get": "list", "post": "create"}
+        )
+
+        response = view(request)
+
+        assert response.status_code == HTTP_403_FORBIDDEN
 
 
 class TestMalconsumptionView:
@@ -657,3 +703,13 @@ class TestMalconsumptionView:
 
         # Empty because there is no data
         assert len(response.data["results"]) == 0
+
+    # Permissions
+
+    def test_only_allows_users_with_profile(self, user):
+        request = create_api_request("get", user)
+        view = views.MalconsumptionView.as_view()
+
+        response = view(request)
+
+        assert response.status_code == HTTP_403_FORBIDDEN

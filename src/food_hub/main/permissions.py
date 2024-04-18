@@ -1,5 +1,6 @@
 """Main app's DRF permissions."""
 from rest_framework.permissions import BasePermission
+from rest_framework.reverse import reverse
 
 
 class IsCollectionOwnerPermission(BasePermission):
@@ -55,3 +56,24 @@ class CreateWithoutProfilePermission(BasePermission):
     # docstr-coverage: inherited
     def has_permission(self, request, view):
         return request.method != "POST" or not hasattr(request.user, "profile")
+
+
+class HasProfilePermission(BasePermission):
+    """Allow access only to users with a profile."""
+
+    message = "Only users with a profile are allowed."
+
+    # docstr-coverage: inherited
+    def has_permission(self, request, view):
+        if hasattr(request.user, "profile"):
+            return True
+
+        # Add profile creation information
+        url = reverse(
+            "profile",
+            request=request,
+            format=getattr(view, "format_kwarg", None) or "api",
+        )
+        self.message += f" You can create a profile at {url}"
+
+        return False

@@ -5,7 +5,11 @@ from django.db.models import Prefetch
 from django.db.models.functions import Lower
 from django.http import Http404
 from main import models, serializers
-from main.permissions import CreateWithoutProfilePermission, IsOwnerPermission
+from main.permissions import (
+    CreateWithoutProfilePermission,
+    HasProfilePermission,
+    IsOwnerPermission,
+)
 from main.views.generics import (
     GenericView,
     GenericViewSet,
@@ -46,7 +50,7 @@ class WeightMeasurementViewSet(HTMXEventMixin, ModelViewSet):
     detail_serializer_class = serializers.WeightMeasurementDetailSerializer
     renderer_classes = [TemplateHTMLRenderer, JSONRenderer, BrowsableAPIRenderer]
     htmx_events = ["weightChanged"]
-    permission_classes = [IsOwnerPermission]
+    permission_classes = [IsOwnerPermission, HasProfilePermission]
 
     list_template = "main/data/weight_measurement_list.html"
     row_template = "main/data/weight_measurement_list_row.html"
@@ -197,6 +201,7 @@ class LastMonthIntakeView(RetrieveAPIView):
 
     serializer_class = serializers.ByDateIntakeSerializer
     renderer_classes = (BrowsableAPIRenderer, JSONRenderer)
+    permission_classes = [HasProfilePermission]
 
     # docstr-coverage: inherited
     def get_serializer_context(self):
@@ -224,6 +229,7 @@ class LastMonthCalorieView(RetrieveAPIView):
 
     serializer_class = serializers.ByDateCalorieSerializer
     renderer_classes = (BrowsableAPIRenderer, JSONRenderer)
+    permission_classes = [HasProfilePermission]
 
     # docstr-coverage: inherited
     def get_serializer_context(self):
@@ -247,6 +253,7 @@ class TrackedNutrientViewSet(
     template_name = "main/data/tracked_nutrients_card.html"
     pagination_class = None
     htmx_events = ["trackedNutrientsChanged"]
+    permission_classes = [HasProfilePermission]
 
     template_map = {
         "create": "main/data/tracked_nutrient_list_row.html",
@@ -295,6 +302,7 @@ class MalconsumptionView(GenericView):
     template_name = "main/data/malconsumption_cards.html"
     renderer_classes = [TemplateHTMLRenderer, JSONRenderer, BrowsableAPIRenderer]
     exclude = None
+    permission_classes = [HasProfilePermission]
 
     # docstr-coverage: inherited
     def get_queryset(self):

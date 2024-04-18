@@ -3,11 +3,18 @@ from main import permissions
 from main.models import Meal
 from main.views.api.base_views import ComponentCollectionViewSet
 from rest_framework.generics import GenericAPIView
+from rest_framework.response import Response
+from rest_framework.test import APIRequestFactory
 
 
 class ViewSet(ComponentCollectionViewSet):
     component_field_name = "ingredients"
     collection_model = Meal
+
+
+class View(GenericAPIView):
+    def get(self, request, *args, **kwargs):
+        return Response()
 
 
 class TestIsCollectionOwnerPermission:
@@ -135,3 +142,33 @@ class TestIsOwnerPermission:
             view.setup(request, pk=meal.id)
             permission = permissions.IsOwnerPermission()
             permission.has_object_permission(view.request, view, meal)
+
+
+class TestHasProfilePermission:
+    def test_user_has_profile_allowed(self, rf, user, saved_profile):
+        request = rf.get("/")
+        request.user = user
+        view = GenericAPIView()
+        view.setup(request)
+        permission = permissions.HasProfilePermission()
+
+        assert permission.has_permission(request, view)
+
+    def test_user_doesnt_have_profile_denied(self, rf, user):
+        request = rf.get("/")
+        request.user = user
+        view = GenericAPIView()
+        view.setup(request)
+        permission = permissions.HasProfilePermission()
+
+        assert not permission.has_permission(request, view)
+
+    def test_message_url_persists_request_format(self, rf, user):
+        request = APIRequestFactory().get("/")
+        request.user = user
+        request.authenticators = False
+        view = View.as_view(permission_classes=[permissions.HasProfilePermission])
+
+        message = view(request, format="json").data["detail"]
+
+        assert message.rstrip("/").endswith(".json")

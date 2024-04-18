@@ -2,7 +2,11 @@
 import pytest
 from django.conf import settings
 from main import models
-from main.views.api.meal_views import MealIngredientPreviewView, MealNutrientIntakeView
+from main.views.api.meal_views import (
+    MealIngredientPreviewView,
+    MealNutrientIntakeView,
+    MealViewSet,
+)
 from rest_framework.reverse import reverse
 from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND, is_success
 
@@ -315,3 +319,19 @@ class TestMealIngredientPreviewView:
         response = MealIngredientPreviewView().as_view()(request, pk=ingredient_1.pk)
 
         assert response.status_code == HTTP_404_NOT_FOUND
+
+
+class TestMealViewSet:
+
+    # Permissions
+
+    @pytest.mark.parametrize("method", ("get", "post"))
+    def test_only_allows_users_with_profile(self, user, method):
+        request = create_api_request(method, user)
+        view = MealViewSet.as_view(
+            detail=False, actions={"get": "list", "post": "create"}
+        )
+
+        response = view(request)
+
+        assert response.status_code == HTTP_403_FORBIDDEN

@@ -27,18 +27,22 @@ __all__ = (
 @renderer_classes([BrowsableAPIRenderer, JSONRenderer])
 def api_root(request, format="api"):
     """Browsable API root"""
-    return Response(
-        {
-            "Ingredients": reverse("ingredient-list", request=request, format=format),
-            "Nutrients": reverse("nutrient-list", request=request, format=format),
-            "Profile": reverse("profile", request=request, format=format),
+    data = {
+        "Ingredients": reverse("ingredient-list", request=request, format=format),
+        "Nutrients": reverse("nutrient-list", request=request, format=format),
+        "Profile": reverse("profile", request=request, format=format),
+    }
+
+    if hasattr(request.user, "profile"):
+        data |= {
             "Meals": reverse("meal-list", request=request, format=format),
             "Recipes": reverse("recipe-list", request=request, format=format),
             "Weight Measurements": reverse(
                 "weight-measurement-list", request=request, format=format
             ),
         }
-    )
+
+    return Response(data)
 
 
 class IngredientView(ListAPIView):

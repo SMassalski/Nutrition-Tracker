@@ -1,5 +1,6 @@
 """API views associated with the `Recipe` model."""
 from main import models, serializers
+from main.permissions import HasProfilePermission
 from main.views.api.base_views import ComponentCollectionViewSet, NutrientIntakeView
 from main.views.generics import ModelViewSet
 from rest_framework.filters import SearchFilter
@@ -49,6 +50,7 @@ class RecipeViewSet(ModelViewSet):
     renderer_classes = [TemplateHTMLRenderer, JSONRenderer, BrowsableAPIRenderer]
     filter_backends = [SearchFilter]
     search_fields = ["name"]
+    permission_classes = [HasProfilePermission]
 
     template_map = {
         "create": modal_form_template,

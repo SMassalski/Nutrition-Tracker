@@ -407,3 +407,17 @@ class TestRecipeViewSet:
         response = view(request, pk=recipe.id)
 
         assert response.headers["HX-Redirect"] == reverse("recipe")
+
+    # Permissions
+
+    @pytest.mark.parametrize("method", ("get", "post"))
+    def test_only_allows_users_with_profile(self, user, method):
+        data = {"name": "name", "final_weight": 1}
+        request = create_api_request(method, user, data)
+        view = RecipeViewSet.as_view(
+            detail=False, actions={"get": "list", "post": "create"}
+        )
+
+        response = view(request)
+
+        assert response.status_code == HTTP_403_FORBIDDEN
