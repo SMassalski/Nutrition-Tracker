@@ -322,6 +322,22 @@ class TestMealIngredientPreviewView:
 
 
 class TestMealViewSet:
+    @pytest.mark.parametrize("method", ("get", "post"))
+    def test_list_endpoint_ok(self, logged_in_api_client, saved_profile, method):
+        url = reverse("meal-list")
+
+        response = getattr(logged_in_api_client, method)(url)
+
+        assert is_success(response.status_code)
+
+    @pytest.mark.parametrize("method", ("get", "patch", "delete"))
+    def test_detail_endpoint_ok(self, logged_in_api_client, meal, method):
+        data = {"date": "2022-04-04"}
+        url = reverse("meal-detail", args=[meal.id])
+
+        response = getattr(logged_in_api_client, method)(url, data=data)
+
+        assert is_success(response.status_code)
 
     # Create
 
