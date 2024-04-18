@@ -96,6 +96,9 @@ class MealViewSet(ModelViewSet):
     serializer_class = serializers.MealSerializer
     detail_serializer_class = serializers.MealDetailSerializer
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+
+    # Unowned objects are hidden through queryset filtering,
+    # so IsOwnerPermission isn't necessary
     permission_classes = [HasProfilePermission]
 
     # docstr-coverage: inherited

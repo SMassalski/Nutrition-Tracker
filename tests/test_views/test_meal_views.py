@@ -335,3 +335,15 @@ class TestMealViewSet:
         response = view(request)
 
         assert response.status_code == HTTP_403_FORBIDDEN
+
+    @pytest.mark.parametrize("method", ("get", "patch", "delete"))
+    def test_hides_meal_for_users_that_dont_own_the_meal(self, new_user, meal, method):
+        request = create_api_request(method, new_user)
+        view = MealViewSet.as_view(
+            detail=True,
+            actions={"get": "retrieve", "patch": "partial_update", "delete": "destroy"},
+        )
+
+        response = view(request, pk=meal.id)
+
+        assert response.status_code == HTTP_404_NOT_FOUND

@@ -253,6 +253,9 @@ class TrackedNutrientViewSet(
     template_name = "main/data/tracked_nutrients_card.html"
     pagination_class = None
     htmx_events = ["trackedNutrientsChanged"]
+
+    # Unowned objects are hidden through queryset filtering,
+    # so IsOwnerPermission isn't necessary
     permission_classes = [HasProfilePermission]
 
     template_map = {

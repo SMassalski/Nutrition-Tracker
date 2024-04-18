@@ -50,6 +50,9 @@ class RecipeViewSet(ModelViewSet):
     renderer_classes = [TemplateHTMLRenderer, JSONRenderer, BrowsableAPIRenderer]
     filter_backends = [SearchFilter]
     search_fields = ["name"]
+
+    # Unowned objects are hidden through queryset filtering,
+    # so IsOwnerPermission isn't necessary
     permission_classes = [HasProfilePermission]
 
     template_map = {

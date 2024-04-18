@@ -579,6 +579,22 @@ class TestTrackedNutrientViewSet:
 
         assert response.status_code == HTTP_403_FORBIDDEN
 
+    def test_hides_instance_for_users_that_dont_own_it(
+        self, new_user, nutrient_1, saved_profile
+    ):
+        TrackedNutrient = models.Profile.tracked_nutrients.through
+        instance = TrackedNutrient.objects.create(
+            profile=saved_profile, nutrient=nutrient_1
+        )
+        request = create_api_request("delete", new_user)
+        view = views.TrackedNutrientViewSet.as_view(
+            detail=True, actions={"delete": "destroy"}
+        )
+
+        response = view(request, pk=instance.id)
+
+        assert response.status_code == HTTP_404_NOT_FOUND
+
 
 class TestMalconsumptionView:
     @pytest.fixture

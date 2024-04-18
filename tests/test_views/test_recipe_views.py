@@ -4,7 +4,7 @@ from django.conf import settings
 from main import models
 from main.views.api.recipe_views import RecipeIntakeView, RecipeViewSet
 from rest_framework.reverse import reverse
-from rest_framework.status import HTTP_403_FORBIDDEN, is_success
+from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND, is_success
 from rest_framework.test import APIRequestFactory, force_authenticate
 
 from tests.test_views.util import create_api_request, is_pagination_on
@@ -421,3 +421,17 @@ class TestRecipeViewSet:
         response = view(request)
 
         assert response.status_code == HTTP_403_FORBIDDEN
+
+    @pytest.mark.parametrize("method", ("get", "patch", "delete"))
+    def test_hides_recipe_for_users_that_dont_own_the_recipe(
+        self, new_user, recipe, method
+    ):
+        request = create_api_request(method, new_user)
+        view = RecipeViewSet.as_view(
+            detail=True,
+            actions={"get": "retrieve", "patch": "partial_update", "delete": "destroy"},
+        )
+
+        response = view(request, pk=recipe.id)
+
+        assert response.status_code == HTTP_404_NOT_FOUND
