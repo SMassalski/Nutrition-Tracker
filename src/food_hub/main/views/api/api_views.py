@@ -31,13 +31,15 @@ def api_root(request, format="api"):
     }
 
     if hasattr(request.user, "profile"):
-        data |= {
-            "Meals": reverse("meal-list", request=request, format=format),
-            "Recipes": reverse("recipe-list", request=request, format=format),
-            "Weight Measurements": reverse(
-                "weight-measurement-list", request=request, format=format
-            ),
-        }
+        data.update(
+            {
+                "Meals": reverse("meal-list", request=request, format=format),
+                "Recipes": reverse("recipe-list", request=request, format=format),
+                "Weight Measurements": reverse(
+                    "weight-measurement-list", request=request, format=format
+                ),
+            }
+        )
 
     return Response(data)
 

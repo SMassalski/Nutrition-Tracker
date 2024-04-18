@@ -27,11 +27,29 @@ class TestRootView:
 
         assert is_success(response.status_code)
 
+    def test_endpoint_ok_user_with_profile(self, saved_profile):
+        self.request.user = saved_profile.user
+
+        response = views.api_root(self.request)
+
+        assert is_success(response.status_code)
+
     def test_urls_persist_format(self):
         response = views.api_root(self.request, format="json")
 
         for url in response.data.values():
             assert url.rstrip("/").endswith(".json")
+
+    def test_limits_response_urls_if_user_has_no_profile(self, user, new_user):
+        self.request.user = user
+
+        no_profile_response = views.api_root(self.request)
+
+        self.request.user = new_user
+
+        with_profile_response = views.api_root(self.request)
+
+        assert len(no_profile_response.data) < len(with_profile_response.data)
 
 
 # Ingredient views
