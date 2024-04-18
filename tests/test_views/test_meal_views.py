@@ -323,6 +323,18 @@ class TestMealIngredientPreviewView:
 
 class TestMealViewSet:
 
+    # Create
+
+    def test_create_uses_users_profile(self, user, saved_profile):
+        request = create_api_request("post", user)
+
+        view = MealViewSet.as_view(detail=False, actions={"post": "create"})
+
+        view(request)
+
+        meal = models.Meal.objects.first()
+        assert meal.owner == saved_profile
+
     # Permissions
 
     @pytest.mark.parametrize("method", ("get", "post"))
