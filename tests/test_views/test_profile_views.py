@@ -555,14 +555,17 @@ class TestTrackedNutrientViewSet:
         assert expected == actual
 
     def test_delete_response_has_event_header(self, user, saved_profile, nutrient_1):
-        saved_profile.tracked_nutrients.add(nutrient_1)
+        TrackedNutrient = models.Profile.tracked_nutrients.through
+        instance = TrackedNutrient.objects.create(
+            profile=saved_profile, nutrient=nutrient_1
+        )
         request = create_api_request("delete", user)
         view = main.views.api.profile_views.TrackedNutrientViewSet.as_view(
             {"delete": "destroy"}
         )
         expected = "trackedNutrientsChanged"
 
-        actual = view(request, pk=nutrient_1.id).headers["HX-Trigger"]
+        actual = view(request, pk=instance.id).headers["HX-Trigger"]
 
         assert expected == actual
 
