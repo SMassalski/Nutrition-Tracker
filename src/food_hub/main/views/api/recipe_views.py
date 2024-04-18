@@ -1,14 +1,11 @@
 """API views associated with the `Recipe` model."""
 from main import models, serializers
 from main.permissions import HasProfilePermission
+from main.renderers import BrowsableAPIRenderer
 from main.views.api.base_views import ComponentCollectionViewSet, NutrientIntakeView
 from main.views.generics import ModelViewSet
 from rest_framework.filters import SearchFilter
-from rest_framework.renderers import (
-    BrowsableAPIRenderer,
-    JSONRenderer,
-    TemplateHTMLRenderer,
-)
+from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.reverse import reverse
 
 __all__ = ("RecipeIngredientViewSet", "RecipeViewSet", "RecipeIntakeView")

@@ -5,13 +5,10 @@ from django.db.models import F, Prefetch
 from django.shortcuts import get_object_or_404
 from django.utils.text import slugify
 from main import models, permissions, serializers
+from main.renderers import BrowsableAPIRenderer
 from main.views.generics import ListAPIView, ModelViewSet
 from main.views.mixins import HTMXEventMixin
-from rest_framework.renderers import (
-    BrowsableAPIRenderer,
-    JSONRenderer,
-    TemplateHTMLRenderer,
-)
+from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 
 __all__ = ("ComponentCollectionViewSet", "NutrientIntakeView")
 

@@ -10,6 +10,7 @@ from main.permissions import (
     HasProfilePermission,
     IsOwnerPermission,
 )
+from main.renderers import BrowsableAPIRenderer
 from main.views.generics import (
     GenericView,
     GenericViewSet,
@@ -25,11 +26,7 @@ from main.views.mixins import (
 )
 from rest_framework.decorators import action
 from rest_framework.mixins import DestroyModelMixin
-from rest_framework.renderers import (
-    BrowsableAPIRenderer,
-    JSONRenderer,
-    TemplateHTMLRenderer,
-)
+from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 

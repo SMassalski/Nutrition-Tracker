@@ -2,14 +2,11 @@
 from django.db.models import Prefetch
 from main import serializers
 from main.models import Ingredient, IntakeRecommendation, Nutrient
+from main.renderers import BrowsableAPIRenderer
 from main.views.generics import ListAPIView, RetrieveAPIView
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.filters import SearchFilter
-from rest_framework.renderers import (
-    BrowsableAPIRenderer,
-    JSONRenderer,
-    TemplateHTMLRenderer,
-)
+from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 

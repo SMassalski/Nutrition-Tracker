@@ -1,11 +1,12 @@
 """API views associated with the `Meal` model."""
 from main import models, serializers
 from main.permissions import HasProfilePermission
+from main.renderers import BrowsableAPIRenderer
 from main.views.api.api_views import IngredientPreviewView
 from main.views.api.base_views import ComponentCollectionViewSet, NutrientIntakeView
 from main.views.generics import ModelViewSet
 from main.views.mixins import MealInteractionMixin
-from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
+from rest_framework.renderers import JSONRenderer
 from rest_framework.reverse import reverse
 
 __all__ = (
