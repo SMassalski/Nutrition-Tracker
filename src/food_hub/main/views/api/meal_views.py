@@ -107,7 +107,7 @@ class MealViewSet(ModelViewSet):
         profile = self.request.user.profile
         return models.Meal.objects.filter(owner=profile).order_by("date")
 
-    # docstr-coverage; inherited
+    # docstr-coverage: inherited
     def perform_create(self, serializer):
         profile = self.request.user.profile
         serializer.save(owner=profile)
