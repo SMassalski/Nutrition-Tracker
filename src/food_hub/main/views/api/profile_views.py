@@ -26,6 +26,7 @@ from main.views.mixins import (
 )
 from rest_framework.decorators import action
 from rest_framework.mixins import DestroyModelMixin
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
@@ -129,7 +130,7 @@ class ProfileApiView(
     # prevented in validation by nature of the user-profile relation
     # being a one-to-one relation. The permission is here to hide the
     # creation form in the DRF browsable API.
-    permission_classes = [CreateWithoutProfilePermission]
+    permission_classes = [CreateWithoutProfilePermission, IsAuthenticated]
 
     redirect_url_field = "next"
 

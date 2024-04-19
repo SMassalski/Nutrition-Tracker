@@ -370,6 +370,25 @@ class TestProfileAPIView:
 
         assert response.data["success"] is False
 
+    # Permissions
+
+    @pytest.mark.parametrize("method", ("get", "post"))
+    def test_unauthenticated_requests_not_allowed(self, data, method):
+        request = create_api_request(method, data=data)
+        view = self.view_class.as_view()
+
+        response = view(request)
+
+        assert response.status_code == HTTP_403_FORBIDDEN
+
+    def test_patch_unauthenticated_requests_not_allowed(self, data):
+        request = create_api_request("patch", data=data)
+        view = self.view_class.as_view()
+
+        response = view(request)
+
+        assert response.status_code == HTTP_403_FORBIDDEN
+
 
 class TestLastMonthIntakeView:
     def test_endpoint_ok(self, logged_in_api_client, nutrient_1, saved_profile):
