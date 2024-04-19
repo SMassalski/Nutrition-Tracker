@@ -302,6 +302,52 @@ class TestMeal:
 
         assert result == expected
 
+    def test_recipe_intake_multiple_occurrences_of_the_same_recipe(
+        self,
+        meal,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        meal_recipe,
+        recipe,
+    ):
+        models.MealRecipe.objects.create(meal=meal, recipe=recipe, amount=100)
+
+        expected = {
+            nutrient_1.id: 1.5,
+            nutrient_2.id: 20,
+        }
+
+        result = meal.recipe_intakes()
+
+        assert result == expected
+
+    def test_recipe_intake_multiple_occurrences_of_the_same_recipe_no_final_weight(
+        self,
+        meal,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        meal_recipe,
+        recipe,
+    ):
+        models.MealRecipe.objects.create(meal=meal, recipe=recipe, amount=100)
+        recipe.final_weight = None
+        recipe.save()
+
+        expected = {
+            nutrient_1.id: 1.5,
+            nutrient_2.id: 20,
+        }
+
+        result = meal.recipe_intakes()
+
+        assert result == expected
+
     def test_recipe_intakes_multiple_recipes(
         self,
         meal,
@@ -455,6 +501,48 @@ class TestMeal:
         # nutrient_1: 100 * 100 * 0.015 * 10 / 200
         # nutrient_2: 100 * 100 * 0.2  * 4 / 200
         expected = {nutrient_1.name: 7.5, nutrient_2.name: 40}
+
+        actual = meal.recipe_calories
+
+        assert actual == expected
+
+    def test_recipe_calories_multiple_occurrences_of_the_same_recipe(
+        self,
+        meal,
+        recipe,
+        meal_recipe,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        models.MealRecipe.objects.create(meal=meal, recipe=recipe, amount=100)
+        expected = {nutrient_1.name: 15, nutrient_2.name: 80}
+
+        actual = meal.recipe_calories
+
+        assert actual == expected
+
+    def test_recipe_calories_multiple_occurrences_of_the_same_recipe_no_final_weight(
+        self,
+        meal,
+        recipe,
+        meal_recipe,
+        nutrient_1,
+        nutrient_2,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+        ingredient_nutrient_2_2,
+        nutrient_1_energy,
+        nutrient_2_energy,
+    ):
+        models.MealRecipe.objects.create(meal=meal, recipe=recipe, amount=100)
+        recipe.final_weight = None
+        recipe.save()
+        expected = {nutrient_1.name: 15, nutrient_2.name: 80}
 
         actual = meal.recipe_calories
 

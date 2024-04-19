@@ -172,7 +172,7 @@ class Meal(models.Model):
         if not queryset:
             return {}
 
-        recipe_queryset = self.recipes.annotate(
+        recipe_queryset = Recipe.objects.filter(id__in=self.recipes.all()).annotate(
             _weight=Case(
                 When(final_weight=None, then=Sum("recipeingredient__amount")),
                 When(final_weight__isnull=False, then=F("final_weight")),
@@ -265,7 +265,7 @@ class Meal(models.Model):
         if not queryset:
             return {}
 
-        recipe_queryset = self.recipes.annotate(
+        recipe_queryset = Recipe.objects.filter(id__in=self.recipes.all()).annotate(
             _weight=Case(
                 When(final_weight=None, then=Sum("recipeingredient__amount")),
                 When(final_weight__isnull=False, then=F("final_weight")),
