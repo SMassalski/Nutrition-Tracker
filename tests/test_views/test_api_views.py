@@ -109,6 +109,19 @@ class TestIngredientDetailView:
 
         assert response.status_code == status.HTTP_200_OK
 
+    def test_num_queries(
+        self,
+        django_assert_num_queries,
+        ingredient_nutrient_1_1,
+        ingredient_nutrient_1_2,
+    ):
+
+        with django_assert_num_queries(3):
+            # 1) Fetch ingredient
+            # 2) Fetch ingredient nutrients
+            # 3) Fetch nutrients
+            _ = self.view(self.request, pk=self.pk)
+
 
 class TestIngredientPreviewView:
     def test_get_template_context_has_component_field(self, ingredient_1):
