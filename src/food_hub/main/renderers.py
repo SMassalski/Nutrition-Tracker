@@ -13,8 +13,13 @@ class BrowsableAPIRenderer(BrowsableRenderer):
 
     # docstr-coverage: inherited
     def get_breadcrumbs(self, request):
-        ret = super().get_breadcrumbs(request)
-        ret = [
-            (name, reverse(resolve(url).url_name, format="api")) for name, url in ret
-        ]
+        breadcrumbs = super().get_breadcrumbs(request)
+
+        ret = []
+        for name, url in breadcrumbs:
+            match = resolve(url)
+            match.kwargs.pop("format", None)
+            ret.append(
+                (name, reverse(match.view_name, kwargs=match.kwargs, format="api"))
+            )
         return ret
