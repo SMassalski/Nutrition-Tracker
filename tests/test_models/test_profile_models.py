@@ -970,6 +970,29 @@ class TestProfileMalnutrition:
 
         assert nutrient_2.id not in results
 
+    def test_num_queries_for_nutrients_with_energy_lookup(
+        self,
+        django_assert_num_queries,
+        many_recommendations,
+        nutrient_1_energy,
+        nutrient_2_energy,
+        saved_profile,
+        meal_ingredients,
+        meal_recipe,
+        recipe_ingredient,
+    ):
+        for rec in many_recommendations:
+            rec.dri_type = models.IntakeRecommendation.AMDR
+            rec.save()
+
+        with django_assert_num_queries(4):
+            # 1) recipe_intakes: fetch intakes
+            # 2) recipe_intakes: fetch recipes for weights
+            # 3) ingredient_intakes: fetch intakes
+            # 4) malnutrition: fetch recommendations and nutrients
+
+            saved_profile.malnutrition()
+
 
 class TestWeightMeasurement:
     """Tests of the `WeightMeasurement` model."""

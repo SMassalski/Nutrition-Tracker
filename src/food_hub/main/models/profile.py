@@ -647,7 +647,9 @@ class Profile(models.Model):
         dict
         """
         intakes = self.average_intakes(date_min, date_max)
-        recs = recommendations or IntakeRecommendation.objects.for_profile(self)
+        recs = recommendations or IntakeRecommendation.objects.for_profile(
+            self
+        ).select_related("nutrient")
 
         ret = {}
 
