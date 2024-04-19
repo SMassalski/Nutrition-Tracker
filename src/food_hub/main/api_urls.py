@@ -9,6 +9,17 @@ from .views import api as views
 
 urlpatterns = [
     path("", views.api_root, name="api-root"),
+    # Nutrients
+    path("nutrients/", views.NutrientView.as_view(), name="nutrient-list"),
+    path(
+        "nutrients/<int:pk>", views.NutrientDetailView.as_view(), name="nutrient-detail"
+    ),
+    path(
+        "nutrients/<int:pk>/intakes",
+        views.LastMonthIntakeView.as_view(),
+        name="last-month-intake",
+    ),
+    # Ingredients
     path("ingredients/", views.IngredientView.as_view(), name="ingredient-list"),
     path(
         "ingredients/<int:pk>",
@@ -21,20 +32,11 @@ urlpatterns = [
         name="meal-ingredient-preview",
     ),
     path(
-        "recipes/<int:pk>/meal-preview",
-        views.MealRecipePreviewView.as_view(),
-        name="meal-recipe-preview",
-    ),
-    path(
         "ingredients/<int:pk>/recipe-preview",
         views.IngredientPreviewView.as_view(),
         name="recipe-ingredient-preview",
     ),
-    path("nutrients/", views.NutrientView.as_view(), name="nutrient-list"),
-    path(
-        "nutrients/<int:pk>", views.NutrientDetailView.as_view(), name="nutrient-detail"
-    ),
-    # Meal and meal ingredients
+    # Meal
     path(
         "profile/meals/current-meal",
         login_required(views.CurrentMealView.as_view()),
@@ -66,22 +68,19 @@ urlpatterns = [
         ),
         name="current-meal-intakes",
     ),
+    # Recipes
     path(
         "profile/recipes/<int:recipe>/intakes",
         views.RecipeIntakeView.as_view(),
         name="recipe-intakes",
     ),
     path(
-        "add-meal-component/tabs",
-        views.MealComponentTabView.as_view(),
-        name="add-meal-component-tabs",
+        "profile/recipes/<int:pk>/meal-preview",
+        views.MealRecipePreviewView.as_view(),
+        name="meal-recipe-preview",
     ),
+    # Profile
     path("profile/", views.ProfileApiView.as_view(), name="profile"),
-    path(
-        "nutrients/<int:pk>/intakes",
-        views.LastMonthIntakeView.as_view(),
-        name="last-month-intake",
-    ),
     path(
         "profile/last-month-calories",
         views.LastMonthCalorieView.as_view(),
@@ -92,7 +91,15 @@ urlpatterns = [
         views.MalconsumptionView.as_view(),
         name="malconsumptions",
     ),
+    # Misc
+    path(
+        "add-meal-component/tabs",
+        views.MealComponentTabView.as_view(),
+        name="add-meal-component-tabs",
+    ),
 ]
+
+# Standard ViewSets
 router = SimpleRouter()
 router.register("profile/meals", views.MealViewSet, "meal")
 router.register("profile/recipes", views.RecipeViewSet, "recipe")
@@ -104,6 +111,7 @@ router.register(
 )
 urlpatterns += router.urls
 
+# Component Collection ViewSets
 collection_router = ModelCollectionRouter()
 collection_router.register(
     "profile/meals", views.MealIngredientViewSet, "meal-ingredient"
