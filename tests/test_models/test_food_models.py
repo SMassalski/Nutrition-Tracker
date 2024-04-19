@@ -110,6 +110,35 @@ class TestIngredient:
 
         assert actual == expected
 
+    def test_calorie_ratio_no_calories_doesnt_divide_by_zero(
+        self,
+        ingredient_1,
+        nutrient_1_energy,
+        ingredient_nutrient_1_1,
+    ):
+        ingredient_nutrient_1_1.amount = 0
+        ingredient_nutrient_1_1.save()
+
+        try:
+            _ = ingredient_1.calorie_ratio
+
+        except ZeroDivisionError:
+            pytest.fail(
+                "Ingredient.calorie_ratio raised ZeroDivision, for an"
+                "ingredient that doesn't have any caloric nutrients."
+            )
+
+    def test_calorie_ratio_no_caloric_nutrients_returns_calories(
+        self,
+        ingredient_1,
+        nutrient_1_energy,
+        ingredient_nutrient_1_1,
+    ):
+        ingredient_nutrient_1_1.amount = 0
+        ingredient_nutrient_1_1.save()
+
+        assert ingredient_1.calorie_ratio == {"test_nutrient": 0}  # ingredient.calories
+
 
 # noinspection PyUnusedLocal
 class TestIntakeRecommendation:

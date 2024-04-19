@@ -83,9 +83,16 @@ class Ingredient(models.Model):
 
         Does not include nutrients that have a parent in either
         a NutrientType or NutrientComponent relationship.
+
+        For non-caloric ingredients the property is equivalent to the
+        `calories` property.
         """
         ret = self.calories
         total = sum(ret.values())
+
+        if total == 0:
+            return ret
+
         return {
             k: round(v / total * 100, 1)
             for k, v in sorted(ret.items(), key=lambda x: x[1], reverse=True)
