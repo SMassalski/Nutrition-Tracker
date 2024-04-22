@@ -9,7 +9,7 @@
                         </div>
                         {{ calories|json_script:"total-macronutrient-data" }}
                         <script>
-                            MacrosPieChart(
+                            charts.MacrosPieChart(
                             "total-macro-pie-chart",
                             JSON.parse(document.getElementById('total-macronutrient-data').textContent)
                             );

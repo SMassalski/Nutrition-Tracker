@@ -1,12 +1,7 @@
 import "jquery";
 import 'bootstrap';
-import {
-    fetchLastMonthCalorie,
-    fetchLastMonthIntake,
-    fetchLastMonthWeight,
-    MacrosPieChart
-} from './chart_util.js';
-import autoConvertHeight from './util.js'
+import * as charts from './chart_util.js';
+import * as util from './util.js'
 
 // HTMX
 window.htmx = require('htmx.org');
@@ -24,9 +19,6 @@ window.setUpGrid = function setUpGrid() {
     });
 }
 
-window.autoConvertHeight = autoConvertHeight;
-
-window.MacrosPieChart = MacrosPieChart;
-window.fetchLastMonthCalorie = fetchLastMonthCalorie;
-window.fetchLastMonthIntake = fetchLastMonthIntake;
-window.fetchLastMonthWeight = fetchLastMonthWeight;
+// Local
+window.util = util;
+window.charts = charts;

@@ -5,6 +5,6 @@
     </canvas>
 </div>
 <script>
-   fetchLastMonthIntake("{% url "last-month-intake" pk=id format='json'%}", "{{ name|slugify }}{%if id_suf%}-{% endif %}{{ id_suf|slugify }}-chart");
+   charts.fetchLastMonthIntake("{% url "last-month-intake" pk=id format='json'%}", "{{ name|slugify }}{%if id_suf%}-{% endif %}{{ id_suf|slugify }}-chart");
 
 </script>

@@ -19,7 +19,7 @@
                             </div>
                             {{ calories|json_script:"macronutrient-data" }}
                             <script>
-                                MacrosPieChart(
+                                charts.MacrosPieChart(
                                 "macro-pie-chart",
                                 JSON.parse(document.getElementById('macronutrient-data').textContent)
                                 );

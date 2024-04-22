@@ -72,12 +72,12 @@
 {% block scripts %}
 <script>
     // Load
-    fetchLastMonthWeight("{% url "weight-measurement-last-month-weights" format='json'%}", "weight-chart");
-    fetchLastMonthCalorie("{% url "last-month-calories" format='json'%}", "macro-chart");
+    charts.fetchLastMonthWeight("{% url "weight-measurement-last-month-weights" format='json'%}", "weight-chart");
+    charts.fetchLastMonthCalorie("{% url "last-month-calories" format='json'%}", "macro-chart");
 
     // weightChanged
     $("body").on("weightChanged", function() {
-        fetchLastMonthWeight("{% url "weight-measurement-last-month-weights" format='json'%}", "weight-chart");
+        charts.fetchLastMonthWeight("{% url "weight-measurement-last-month-weights" format='json'%}", "weight-chart");
     });
 </script>
 {% endblock scripts %}
