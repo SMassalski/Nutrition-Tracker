@@ -1,6 +1,40 @@
 /**
- * Chart wrappers for easy themed charts.
+ * Charts.js wrappers for easy themed charts.
  */
+ import {
+    Chart,
+    LineController,
+    LineElement,
+    PointElement,
+    PieController,
+    ArcElement,
+    CategoryScale,
+    LinearScale,
+    Tooltip,
+    Title,
+    Legend,
+    BarController,
+    BarElement
+ } from 'chart.js';
+import annotationPlugin from 'chartjs-plugin-annotation';
+
+Chart.register(
+    BarController,
+    BarElement,
+    LineController,
+    LineElement,
+    PointElement,
+    PieController,
+    ArcElement,
+    CategoryScale,
+    LinearScale,
+    Tooltip,
+    Title,
+    Legend,
+    annotationPlugin
+);
+
+
 const style = getComputedStyle(document.documentElement)
 const palette = style.getPropertyValue("--chart_palette").split(", ") || ["#33658A", "#86BBD8", "#2B8C69", "#F6AE2D", "#F26419"];
 const primary = style.getPropertyValue("--chart_primary") || palette[0] || "#86BBD8";
@@ -19,9 +53,9 @@ const colorMap = {
  */
 const MacrosPieChart = function(elementId, data) {
 
-    labels = Object.keys(data)
-    colors = [];
-    for (i=0; i < labels.length; i++) {
+    let labels = Object.keys(data)
+    let colors = [];
+    for (let i=0; i < labels.length; i++) {
         colors[i] = colorMap[labels[i]];
     }
 
@@ -146,7 +180,7 @@ const monthIntakeChart = function({elementId, data, target_min, target_max, avg,
     }
 
     // Annotations
-    annotations = {}
+    let annotations = {}
 
     if (target_min !== null ) {
         annotations.min_target = {
@@ -225,8 +259,8 @@ const monthIntakeChart = function({elementId, data, target_min, target_max, avg,
 
 const fetchLastMonthIntake = function (url, chartId) {
     $.get(url, function(data) {
-        amount_min = null;
-        amount_max = null;
+        let amount_min = null;
+        let amount_max = null;
         for (let i=0; i < data.recommendations.length; i++) {
 
             // Recommendation selection
@@ -309,7 +343,7 @@ const fetchLastMonthCalorie = function (url, chartId) {
         const ctx = document.getElementById(chartId);
         const values = Object.values(data.caloric_intake);
         const avg = data.avg;
-        datasets = [];
+        let datasets = [];
 
         Object.keys(data.caloric_intake.values).forEach(element => {
             datasets.push({
@@ -373,3 +407,5 @@ const fetchLastMonthCalorie = function (url, chartId) {
         });
     });
 }
+
+export {MacrosPieChart, fetchLastMonthCalorie, fetchLastMonthIntake, fetchLastMonthWeight};

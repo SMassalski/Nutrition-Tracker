@@ -1,39 +1,11 @@
 import "jquery";
 import 'bootstrap';
 import {
-    Chart,
-    LineController,
-    LineElement,
-    PointElement,
-    PieController,
-    ArcElement,
-    CategoryScale,
-    LinearScale,
-    Tooltip,
-    Title,
-    Legend,
-    BarController,
-    BarElement
- } from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
-
-// Chart.js
-Chart.register(
-    BarController,
-    BarElement,
-    LineController,
-    LineElement,
-    PointElement,
-    PieController,
-    ArcElement,
-    CategoryScale,
-    LinearScale,
-    Tooltip,
-    Title,
-    Legend,
-    annotationPlugin
-    );
-window.Chart = Chart;
+    fetchLastMonthCalorie,
+    fetchLastMonthIntake,
+    fetchLastMonthWeight,
+    MacrosPieChart
+} from './chart_util.js';
 
 // HTMX
 window.htmx = require('htmx.org');
@@ -49,7 +21,6 @@ window.setUpGrid = function setUpGrid() {
         columnWidth: ".grid-item",
         itemSelector: ".grid-item",
     });
-    console.log("setUpGrid() called")
 }
 
 
@@ -80,3 +51,9 @@ window.autoConvertHeight = function autoConvertHeight(cm_selector, ft_selector, 
         cm_field.val(Math.round((parseInt(ft_field.val()) + parseInt(in_field.val()) / 12) * 30.48));
     });
 }
+
+
+window.MacrosPieChart = MacrosPieChart;
+window.fetchLastMonthCalorie = fetchLastMonthCalorie;
+window.fetchLastMonthIntake = fetchLastMonthIntake;
+window.fetchLastMonthWeight = fetchLastMonthWeight;

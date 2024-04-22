@@ -49,7 +49,6 @@ use_tooltips
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
         <link rel="stylesheet" href="{% static 'bundle.css' %}">
         <script src="{% static 'bundle.js' %}"></script>
-        <script src="{% static 'charts_wrapper.js' %}"></script>
         {% block top-scripts %}{% endblock top-scripts %}
     </head>
     <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
