@@ -154,8 +154,8 @@ const monthIntakeChart = function({elementId, data, target_min, target_max, avg,
 
     const ctx = document.getElementById(elementId);
     const values = Object.values(data);
-    // Max of the array of values and targets + 10
-    const yMax = Math.max(values.reduce((a, b) => Math.max(a, b), -Infinity), target_min || 0, target_max || 0) + 10
+    let yMax = Math.max(...values, target_min||0, target_max||0) * 1.1;
+    yMax = Math.round(yMax * 10) / 10;
 
     const options = {
         responsive: true,
@@ -296,8 +296,9 @@ const fetchLastMonthWeight = function (url, chartId) {
         }
         const ctx = document.getElementById(chartId);
         const values = Object.values(data);
-        const yMax = Math.max(values.reduce((a, b) => Math.max(a, b), -Infinity)) + 5
-        const yMin = Math.min(values.reduce((a, b) => Math.min(a, b), Infinity)) - 5
+
+        const yMax = Math.max(...values) + 5
+        const yMin = Math.min(...values) - 5
 
         const options = {
             responsive: true,
@@ -345,13 +346,20 @@ const fetchLastMonthCalorie = function (url, chartId) {
         const avg = data.avg;
         let datasets = [];
 
+        let totalCalories = new Array(data.caloric_intake.dates.length);
+        totalCalories.fill(0);
+
         Object.keys(data.caloric_intake.values).forEach(element => {
+            let values = data.caloric_intake.values[element];
             datasets.push({
                 label: element,
-                data: data.caloric_intake.values[element],
+                data: values,
                 backgroundColor: colorMap[element]
             });
+            totalCalories = totalCalories.map((element, idx) => element + values[idx]);
         });
+
+        const yMax = Math.max(...totalCalories) * 1.1;
 
         const options = {
             responsive: true,
@@ -359,9 +367,8 @@ const fetchLastMonthCalorie = function (url, chartId) {
             //Scales
             scales: {
                 y: {
-                    // min: yMin,
-                    // max: yMax,
-                    stacked: true
+                    stacked: true,
+                    max: yMax
                 },
                 x: {
                     stacked: true
