@@ -78,70 +78,49 @@ const MacrosPieChart = function(elementId, data) {
     });
 }
 
+/**
+ * Generate a line annotation options object.
+ * @param {Number} value - The y value of the annotation.
+ * @param {string} label - The label prefix.
+ * The final label will be '<label>: <value>'.
+ * @param {string} color - The color of the line and label
+ * @param {boolean} dashed - If true the annotation line will be dashed
+ * @param {string|Number} labelPosition - Either "start", "center",
+ * "end" or a percent position
+ * @returns {Object} - The generated options.
+ */
+const makeAnnotation = function(value, label, color, dashed=false, labelPosition="center") {
+
+    // Set line dash
+    let lineDash = [];
+    if (dashed) {
+        lineDash= [5, 5];
+    }
+
+    return {
+        type: 'line',
+        yMin: value,
+        yMax: value,
+        borderColor: color,
+        borderWidth: 1,
+        borderDash: lineDash,
+        label: {
+            content: label + ": " + value.toFixed(1),
+            display: true,
+            backgroundColor: color,
+            color: "white",
+            position: labelPosition
+        },
+    }
+}
 
 /**
- * Draw a chart.js line chart in a canvas element
- * @param {string} elementId - The id of the canvas.
- * @param {Object} data - Mapping in the format of {<label>: <value>}.
+ * Generate the 'average' annotation options object.
+ * @param {Number} value - The value of the average.
+ * @returns {Object} - The generated options.
  */
-const lineChart = function({elementId, data, target, title}) {
-
-    const ctx = document.getElementById(elementId);
-    const values = Object.values(data);
-    // Max of the array of values and set target + 2
-    const yMax = Math.max(values.reduce((a, b) => Math.max(a, b), -Infinity), target || 0) + 2
-
-    const options = {
-        responsive: true,
-
-        //Scales
-        scales: {
-            y: {
-                beginAtZero: true,
-
-                max: yMax
-            }
-        },
-
-        // Title
-        plugins: {
-            legend: false,
-            title: {
-                display: !!(title),
-                text: title
-            }
-        }
-
-    }
-
-    // Target line annotation
-    if( target ) {
-        options.plugins.annotation = {
-            annotations: {
-                line1: {
-                    type: 'line',
-                    yMin: target,
-                    yMax: target,
-                    borderColor: annotation_color,
-                    borderWidth: 1,
-                }
-            }
-        }
-    }
-
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: Object.keys(data), //This will need to be thinned
-            datasets: [
-                {
-                    data: values,
-                    backgroundColor: primary
-                }
-            ]
-        },
-        options: options
-    });
+const makeAvgAnnotation = function(value) {
+    return makeAnnotation(value, "Avg", primary, true, "start");
 }
 
 
@@ -183,58 +162,14 @@ const monthIntakeChart = function({elementId, data, target_min, target_max, avg,
     let annotations = {}
 
     if (target_min !== null ) {
-        annotations.min_target = {
-            type: 'line',
-            yMin: target_min,
-            yMax: target_min,
-            borderColor: annotation_color,
-            borderWidth: 1,
-            label: {
-                content: "Min: " + target_min.toFixed(1),
-                display: true,
-                backgroundColor: 'rgba(0, 0, 0, 0)',
-                color: annotation_color,
-                yAdjust: -10,
-            },
-        }
+        annotations.min_target = makeAnnotation(target_min, "Min", annotation_color);
     }
-
     if (target_max !== null ) {
-        annotations.max_target = {
-            type: 'line',
-            yMin: target_max,
-            yMax: target_max,
-            borderColor: annotation_color,
-            borderWidth: 1,
-            label: {
-                content: "Max: " + target_max.toFixed(1),
-                display: true,
-                backgroundColor: 'rgba(0, 0, 0, 0)',
-                color: annotation_color,
-                yAdjust: 700 / yMax, // Empirically determined value
-            },
-        }
+        annotations.max_target = makeAnnotation(target_max, "Max", annotation_color);
     }
-
     if (avg !== null ) {
-        annotations.average = {
-            type: 'line',
-            yMin: avg,
-            yMax: avg,
-            borderColor: "#33658A",
-            borderWidth: 1,
-            borderDash: [5, 5],
-            label: {
-                content: "Avg: " + avg.toFixed(1),
-                display: true,
-                backgroundColor: 'rgba(0, 0, 0, 0)',
-                color: "#33658A",
-                position: "start",
-                yAdjust: -10,
-            },
-        }
+        annotations.average = makeAvgAnnotation(avg);
     }
-
     if( Object.keys(annotations).length != 0 ) {
         options.plugins.annotation = {
             annotations: annotations
@@ -385,22 +320,7 @@ const fetchLastMonthCalorie = function (url, chartId) {
             },
 
             annotations: {
-                average: {
-                    type: 'line',
-                    yMin: avg,
-                    yMax: avg,
-                    borderColor: "#33658A",
-                    borderWidth: 1,
-                    borderDash: [5, 5],
-                    label: {
-                        content: "Avg: " + avg.toFixed(1),
-                        display: true,
-                        backgroundColor: 'rgba(0, 0, 0, 0)',
-                        color: "#33658A",
-                        position: "start",
-                        yAdjust: -10,
-                    }
-                }
+                average: makeAvgAnnotation(avg)
             }
         }
 
