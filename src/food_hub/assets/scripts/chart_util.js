@@ -47,7 +47,7 @@ const colorMap = {
 }
 
 /**
- * Draw a chart.js pie chart in a canvas element
+ * Draw a pie chart in a canvas element colored based on the label.
  * @param {string} elementId - The id of the canvas.
  * @param {Object} data - Mapping in the format of {<label>: <value>}.
  */
@@ -125,8 +125,12 @@ const makeAvgAnnotation = function(value) {
 
 
 /**
- * Draw a chart.js line chart in a canvas element
+ * Draw a line chart in the canvas element with optional annotations for
+ * the min, max, and avg values.
  * @param {string} elementId - The id of the canvas.
+ * @param {Number} target_min - The value for the min annotation
+ * @param {Number} target_max- The value for the max annotation
+ * @param {Number} avg - The value for the avg annotation
  * @param {Object} data - Mapping in the format of {<label>: <value>}.
  */
 const monthIntakeChart = function({elementId, data, target_min, target_max, avg, title}) {
@@ -138,16 +142,12 @@ const monthIntakeChart = function({elementId, data, target_min, target_max, avg,
 
     const options = {
         responsive: true,
-
-        //Scales
         scales: {
             y: {
                 beginAtZero: true,
                 max: yMax
             }
         },
-
-        // Title
         plugins: {
             legend: false,
             title: {
@@ -191,7 +191,11 @@ const monthIntakeChart = function({elementId, data, target_min, target_max, avg,
     });
 }
 
-
+/**
+ * Fetch data from url and draw a monthIntakeChart in a canvas element.
+ * @param {string} url - The url from where the data can be retrieved.
+ * @param {string} chartId - The id of the canvas element.
+ */
 const fetchLastMonthIntake = function (url, chartId) {
     $.get(url, function(data) {
         let amount_min = null;
@@ -219,11 +223,17 @@ const fetchLastMonthIntake = function (url, chartId) {
     });
 }
 
-
+/**
+ * Fetch data from url and draw a line chart in a canvas element.
+ *
+ * Redraw if chart already exists.
+ * @param {string} url - The url from where the data can be retrieved.
+ * @param {string} chartId - The id of the canvas element.
+ */
 const fetchLastMonthWeight = function (url, chartId) {
     const chart = Chart.getChart(chartId)
     $.get(url, function(data) {
-        if (chart) {
+        if (chart) {  // Update chart if exists
             chart.data.datasets[0].data = Object.values(data);
             chart.data.labels = Object.keys(data);
             chart.update();
@@ -237,16 +247,12 @@ const fetchLastMonthWeight = function (url, chartId) {
 
         const options = {
             responsive: true,
-
-            //Scales
             scales: {
                 y: {
                     min: yMin,
                     max: yMax,
                 }
             },
-
-            // Title
             plugins: {
                 legend: false,
                 title: {
@@ -264,7 +270,7 @@ const fetchLastMonthWeight = function (url, chartId) {
                 datasets: [
                     {
                         data: values,
-                        backgroundColor: primary
+                        backgroundColor: chartPrimary
                     }
                 ]
             },
@@ -273,11 +279,16 @@ const fetchLastMonthWeight = function (url, chartId) {
     });
 }
 
-
+/**
+ * Fetch data from url and draw a calorie chart in a canvas element.
+ *
+ * The chart is a stacked bar chart with an average annotation.
+ * @param {string} url - The url from where the data can be retrieved.
+ * @param {string} chartId - The id of the canvas element.
+ */
 const fetchLastMonthCalorie = function (url, chartId) {
     $.get(url, function(data) {
         const ctx = document.getElementById(chartId);
-        const values = Object.values(data.caloric_intake);
         const avg = data.avg;
         let datasets = [];
 
@@ -298,8 +309,6 @@ const fetchLastMonthCalorie = function (url, chartId) {
 
         const options = {
             responsive: true,
-
-            //Scales
             scales: {
                 y: {
                     stacked: true,
@@ -309,8 +318,6 @@ const fetchLastMonthCalorie = function (url, chartId) {
                     stacked: true
                 }
             },
-
-            // Title
             plugins: {
                 legend: true,
                 title: {
