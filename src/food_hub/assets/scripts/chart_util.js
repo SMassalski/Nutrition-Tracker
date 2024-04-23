@@ -37,13 +37,14 @@ Chart.register(
 
 const style = getComputedStyle(document.documentElement)
 const palette = style.getPropertyValue("--chart_palette").split(", ") || ["#33658A", "#86BBD8", "#2B8C69", "#F6AE2D", "#F26419"];
-const primary = style.getPropertyValue("--chart_primary") || palette[0] || "#86BBD8";
+const [primary, info, success, warning, danger, ...rest] = palette;
+const chartPrimary = style.getPropertyValue("--chart_primary") || palette[1] || "#86BBD8";
 const annotation_color = style.getPropertyValue("--chart_annotation") || palette[palette.length - 1] || "#F26419";
 const colorMap = {
-      "Lipid": palette[3],
-      "Protein": palette[0],
-      "Carbohydrate": palette[1],
-      "Alcohol": palette[2]
+      "Lipid": warning,
+      "Protein": primary,
+      "Carbohydrate": info,
+      "Alcohol": success
 }
 
 /**
@@ -183,7 +184,7 @@ const monthIntakeChart = function({elementId, data, target_min, target_max, avg,
             datasets: [
                 {
                     data: values,
-                    backgroundColor: primary
+                    backgroundColor: chartPrimary
                 }
             ]
         },
