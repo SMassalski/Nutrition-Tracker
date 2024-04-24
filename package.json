@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/SMassalski/Nutrient-Tracker#readme",
   "devDependencies": {
+    "css-minimizer-webpack-plugin": "^6.0.0",
     "expose-loader": "^4.0.0",
     "sass": "^1.57.1",
     "sass-loader": "^13.2.0",
