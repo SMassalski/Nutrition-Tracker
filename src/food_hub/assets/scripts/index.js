@@ -13,7 +13,6 @@ import 'bootstrap/js/dist/tab';
 // import 'bootstrap/js/dist/toast';
 import 'bootstrap/js/dist/tooltip';
 
-import * as charts from './chart_util.js';
 import * as util from './util.js'
 
 // HTMX
@@ -34,4 +33,3 @@ window.setUpGrid = function setUpGrid() {
 
 // Local
 window.util = util;
-window.charts = charts;

@@ -3,11 +3,14 @@ const webpack = require('webpack');
 
 module.exports = {
     mode: "production",
-    entry: ['./src/food_hub/assets/scripts/index.js', './src/food_hub/assets/style/style.scss'],
+    entry: {
+        index: './src/food_hub/assets/scripts/index.js',
+        chart: './src/food_hub/assets/scripts/chart_util.js',
+        style: './src/food_hub/assets/style/style.scss'
+        },
     output: {
-        filename: 'bundle.js',
+        filename: '[name].bundle.js',
         path: path.resolve(__dirname, './src/food_hub/static'),
-        library: "lib"
     },
     module : {
         rules : [

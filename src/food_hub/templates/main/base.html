@@ -48,7 +48,8 @@ use_tooltips
         <title>{% block title %}{% endblock title %}</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
         <link rel="stylesheet" href="{% static 'bundle.css' %}">
-        <script src="{% static 'bundle.js' %}"></script>
+        <script src="{% static 'index.bundle.js' %}"></script>
+        <script src="{% static 'chart.bundle.js' %}"></script>
         {% block top-scripts %}{% endblock top-scripts %}
     </head>
     <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>

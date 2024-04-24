@@ -343,4 +343,4 @@ const fetchLastMonthCalorie = function (url, chartId) {
     });
 }
 
-export {MacrosPieChart, fetchLastMonthCalorie, fetchLastMonthIntake, fetchLastMonthWeight};
+window.charts = {MacrosPieChart, fetchLastMonthCalorie, fetchLastMonthIntake, fetchLastMonthWeight};
