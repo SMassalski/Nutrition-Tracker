@@ -184,13 +184,17 @@ $progress-danger-background: #ffece6;
             background-color: white;
         }
         &.hover-passive {
-            td {color: gray;}
-            &:hover td {
-                background-color: white;
+            cursor: auto;
+            td {
                 color: gray;
+                border: 0;
+            }
+            &:hover td {
+                    box-shadow: none;
+                    color: gray;
+                }
             }
         }
-    }
 
     &.bordered {
         padding: 0;
@@ -346,6 +350,7 @@ ul.url-list {
         padding-right: 3px;
         cursor: pointer;
         color: $primary !important;
+        text-decoration: none;
         &:active {
             color: tint-color($primary, 50%) !important;
         }
