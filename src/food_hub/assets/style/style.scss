@@ -307,6 +307,16 @@ $progress-danger-background: #ffece6;
 // Chart
 .chart-container {
     position: relative;
+    height: 40vh;
+    margin-bottom: 1.5rem;
+
+    &.chart-small {
+        height: 25vh;
+
+        @include media-breakpoint-down(md) {
+            height: 40vh;
+        }
+    }
 }
 
 // Tiny links below a form (like to registration and password reset under the login form)

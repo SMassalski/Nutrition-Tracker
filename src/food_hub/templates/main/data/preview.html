@@ -7,14 +7,10 @@
         <div class="container">
             <div class="row-md mt-4">
                 <div class="container">
-                    {% comment %}
-                    TODO: Make the chart change values instead of redrawing it every time
-                    TODO: The chart needs to indicate what its actually showing (kcal / 100g)
-                    {% endcomment %}
                     <div class="row" style="min-height: 250px;">
                         <!-- Ingredient macronutrients -->
                         <div class="col-md-6 mb-2">
-                            <div class="chart-container" style="height: 250px">
+                            <div class="chart-container chart-small">
                                 <canvas id="macro-pie-chart"></canvas>
                             </div>
                             {{ calories|json_script:"macronutrient-data" }}

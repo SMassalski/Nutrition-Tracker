@@ -75,6 +75,7 @@ const MacrosPieChart = function(elementId, data) {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
         }
     });
 }
@@ -143,6 +144,7 @@ const monthIntakeChart = function({elementId, data, target_min, target_max, avg,
 
     const options = {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
             y: {
                 beginAtZero: true,
@@ -248,6 +250,7 @@ const fetchLastMonthWeight = function (url, chartId) {
 
         const options = {
             responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 y: {
                     min: yMin,
@@ -310,6 +313,7 @@ const fetchLastMonthCalorie = function (url, chartId) {
 
         const options = {
             responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 y: {
                     stacked: true,
