@@ -76,6 +76,12 @@ const MacrosPieChart = function(elementId, data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: "Calories by Nutrient (kcal/100g)"
+                }
+            }
         }
     });
 }
@@ -158,7 +164,6 @@ const monthIntakeChart = function({elementId, data, target_min, target_max, avg,
                 text: title
             }
         }
-
     }
 
     // Annotations
@@ -215,13 +220,18 @@ const fetchLastMonthIntake = function (url, chartId) {
             amount_max = data.recommendations[i].amount_max;
         };
 
+        let title = data.name || "";
+        if (title && data.unit) {
+            title += " (" + data.unit + ")";
+        }
+
         monthIntakeChart({
             elementId: chartId,
             data: data.intakes,
             target_min: amount_min,
             target_max: amount_max,
             avg: data.avg,
-            title: data.name
+            title: title
         });
     });
 }
@@ -327,7 +337,7 @@ const fetchLastMonthCalorie = function (url, chartId) {
                 legend: true,
                 title: {
                     display: true,
-                    text: "Caloric Intake"
+                    text: "Caloric Intake (kcal)"
                 }
             },
 
