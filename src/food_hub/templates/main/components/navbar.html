@@ -1,4 +1,9 @@
 <nav class="main-header navbar navbar-expand">
+    {% if not has_sidebar %}
+    <a class="navbar-brand" href="/">
+        Nutrient Tracker
+    </a>
+    {% endif %}
     <!-- Left -->
     <ul class="navbar-nav me-auto">
         {% comment %}

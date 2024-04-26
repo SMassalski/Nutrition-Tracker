@@ -60,7 +60,7 @@ use_tooltips
         {% include "main/components/sidebar.html"%}
         {% endif %}
         <!-- Navbar -->
-        {% include "main/components/navbar.html" %}
+        {% include "main/components/navbar.html" with has_sidebar=user.is_authenticated %}
         <div class="container-fluid p-0">
             <div class="content-wrapper{% if not user.is_authenticated %} no-sidebar{% endif %}">
 
