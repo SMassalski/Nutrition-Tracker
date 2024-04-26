@@ -4,9 +4,6 @@
 @import "../../../../node_modules/bootstrap/scss/mixins";
 
 @include media-breakpoint-down(md) {
-    div.content-wrapper {
-        padding-left: calc(2rem + 72px) !important;
-    }
     .sidebar {
         width: 72px !important;
 
@@ -135,6 +132,11 @@
 
 .content-wrapper {
     padding-left: calc(2rem + 60px) !important;
+    @include media-breakpoint-down(md) {
+        padding-left: calc(0.5rem + 72px) !important;
+        padding-right: 0.5rem !important;
+
+    }
 }
 
 .nav-sidebar .nav-link p {

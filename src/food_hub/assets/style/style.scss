@@ -92,6 +92,11 @@ $progress-danger-background: #ffece6;
     height: 100vh;
     background-color: #f4f6f9;
     padding: 2.5rem 2rem 3rem 2rem;
+
+    @include media-breakpoint-down(md) {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
 }
 
 // Cards
