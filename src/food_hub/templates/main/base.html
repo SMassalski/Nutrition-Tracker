@@ -62,7 +62,7 @@ use_tooltips
         <!-- Navbar -->
         {% include "main/components/navbar.html" %}
         <div class="container-fluid p-0">
-            <div class="content-wrapper">
+            <div class="content-wrapper{% if not user.is_authenticated %} no-sidebar{% endif %}">
 
                 <div class="content-header">
                     {% block content-header %}{% endblock content-header %}

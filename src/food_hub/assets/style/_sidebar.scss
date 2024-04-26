@@ -137,6 +137,14 @@
         padding-right: 0.5rem !important;
 
     }
+    &.no-sidebar {
+        padding-left: 2rem !important;
+        @include media-breakpoint-down(md) {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+
+        }
+    }
 }
 
 .nav-sidebar .nav-link p {

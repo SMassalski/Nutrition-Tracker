@@ -91,7 +91,7 @@ $progress-danger-background: #ffece6;
     overflow: scroll;
     height: 100vh;
     background-color: #f4f6f9;
-    padding: 2.5rem 2rem 3rem 2rem;
+    padding: 2.5rem 2rem 10rem 2rem;
 
     @include media-breakpoint-down(md) {
         padding-left: 0.5rem;
