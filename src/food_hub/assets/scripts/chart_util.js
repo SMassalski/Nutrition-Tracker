@@ -55,6 +55,9 @@ const colorMap = {
 const MacrosPieChart = function(elementId, data) {
 
     let labels = Object.keys(data)
+    if (labels.length == 0) {
+        return;
+    }
     let colors = [];
     for (let i=0; i < labels.length; i++) {
         colors[i] = colorMap[labels[i]];
