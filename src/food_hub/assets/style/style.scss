@@ -286,13 +286,6 @@ $progress-danger-background: #ffece6;
         text-decoration: none;
     }
 
-    .sub-panel {
-        a {
-            color: $secondary;
-        }
-        border-top: 1px solid $border_gray;
-    }
-
     .d-flex {
         justify-content: space-evenly;
     }
@@ -307,6 +300,59 @@ $progress-danger-background: #ffece6;
         align-items: center;
     }
 
+    .nav-link:hover {
+        color: $primary;
+    }
+}
+
+// Nav links and icons with responsive labels
+.nav-link {
+    display: flex;
+    justify-content: center;
+    min-width: 54px;
+    align-items: center;
+    .nav-main-label {
+        padding-left: 0.25rem;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        display: inline-block;
+
+        @include media-breakpoint-down(md) {
+            display: none;
+        }
+    }
+    .nav-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        height: 100%;
+
+        @include media-breakpoint-down(md) {
+            justify-content: space-between;
+        }
+
+        i {
+            display: flex;
+            justify-content: center;
+
+            @include media-breakpoint-down(md) {
+                padding-bottom: 0.25rem;
+            }
+        }
+
+        .nav-bottom-label {
+            display: none;
+            font-size: 0.6rem;
+            text-align: center;
+            height: 100%;
+
+            @include media-breakpoint-down(md) {
+                display: inline-flex;
+            }
+        }
+    }
 }
 
 // Chart
