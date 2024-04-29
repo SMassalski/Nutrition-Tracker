@@ -281,6 +281,11 @@ $progress-danger-background: #ffece6;
 
 // Top Panel
 .top-panel {
+
+    &.container {
+        padding: 0;
+    }
+
     a {
         color: $primary;
         text-decoration: none;
@@ -294,14 +299,25 @@ $progress-danger-background: #ffece6;
         i {
             cursor: pointer;
             font-size: 1.2rem;
+            min-width: 1.5rem;
         }
         color: $primary;
         display: inline-flex;
         align-items: center;
     }
 
+    h4 {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
     .nav-link:hover {
         color: $primary;
+    }
+
+    .nav-icon {
+        max-width: 4rem;
     }
 }
 
