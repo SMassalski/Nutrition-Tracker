@@ -4,7 +4,10 @@ $border_gray: #ced4da !default;
     border-bottom: 1px solid $border_gray;
     z-index: 9;
     top: 0;
-    position: sticky;
+    position: fixed !important;
+    width: 100%;
+    background-color: white;
+    min-height: 52px;
 
     &.navbar {
         padding: 0.5rem 0.5rem;
