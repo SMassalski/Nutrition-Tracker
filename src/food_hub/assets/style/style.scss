@@ -86,17 +86,32 @@ $progress-success: #89da99;
 $progress-danger: #e4937b;
 $progress-danger-background: #ffece6;
 
+html {
+    overflow-y: scroll;
+    height: 100%;
+}
+
+body {
+    overflow-y: scroll;
+    height: 100%;
+    width: 100%;
+}
+
 // Content
 .content-wrapper {
-    overflow: scroll;
-    height: 100vh;
+    overflow-x: hidden;
+    height: 100%;
     background-color: #f4f6f9;
-    padding: 2.5rem 2rem 10rem 2rem;
+    padding: 1rem 2rem 6rem 2rem;
     margin-top: 52px;
 
     @include media-breakpoint-down(md) {
         padding-left: 0.5rem;
         padding-right: 0.5rem;
+        @include media-breakpoint-down(xs) {
+            padding-left: 0;
+            padding-right: 0;
+        }
     }
 }
 
@@ -433,4 +448,8 @@ ul.url-list {
             color: tint-color($primary, 50%) !important;
         }
     }
+}
+
+.bg-dark .nav-link {
+    color: white;
 }

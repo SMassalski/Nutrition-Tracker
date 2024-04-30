@@ -7,6 +7,10 @@
     .sidebar {
         width: 72px !important;
 
+        @include media-breakpoint-down(sm) {
+            display: none !important;
+        }
+
         &:hover {
             width: 72px !important;
             .brand-link span {
@@ -27,9 +31,7 @@
             span {
                 display: none;
             }
-
         }
-
     }
 }
 
@@ -54,7 +56,6 @@
         overflow-y: auto;
         flex-wrap: nowrap;
 
-
         .nav-link {
             white-space: nowrap;
             color: white;
@@ -65,10 +66,7 @@
             &:hover {
                 background-color: #132e40;
             }
-
-
         }
-
     }
     .nav-icon {
         min-width: 44px;
@@ -115,19 +113,45 @@
     padding-left: calc(2rem + 60px) !important;
     @include media-breakpoint-down(md) {
         padding-left: calc(0.5rem + 72px) !important;
-        padding-right: 0.5rem !important;
-
+        @include media-breakpoint-down(sm) {
+            padding-left: 0 !important;
+        }
     }
+
     &.no-sidebar {
         padding-left: 2rem !important;
         @include media-breakpoint-down(md) {
             padding-left: 0.5rem !important;
-            padding-right: 0.5rem !important;
-
+            @include media-breakpoint-down(sm) {
+                padding-left: 0 !important;
+            }
         }
     }
 }
 
 .nav-sidebar .nav-link p {
     margin-left: 0.5rem;
+}
+
+.bottom-bar {
+    position: fixed !important;
+    transition: top 0.25s ease-out;
+    top: calc(100 * var(--vh, 1vh) - 52px);
+
+    // Arbitrarly high to cover stuff under the bar while resizing
+    height: 300px;
+
+    width: 100%;
+    padding-top: 0.25rem !important;
+    display: none !important;
+    z-index: 10;
+    align-items: start !important;
+    @include media-breakpoint-down(sm) {
+        display: flex !important;
+    }
+
+    ul.navbar-nav{
+        width: 100%;
+        justify-content: space-around;
+    }
 }
