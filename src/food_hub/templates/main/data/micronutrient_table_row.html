@@ -6,7 +6,7 @@
 {% if rec %}
 <tr class="{% if subrow and not ignore_subrow %} subrow{% endif %}{% if nutrient.highlight %} highlighted{% endif %}">
     <td>{{ nutrient.obj.name }}</td>
-    <td>
+    <td class="progress-data">
         {# No progress bar for ALAP recommendations #}
         {% if rec.dri_type == "ALAP" %}
         <span>As little as possible</span>
@@ -26,7 +26,7 @@
 {% else %}
 <tr{% if subrow and not ignore_subrow %} class="subrow"{% endif %}>
     <td>{{ nutrient.obj.name }}</td>
-    <td></td>
+    <td class="progress-data"></td>
     <td>{{ nutrient.intake| floatformat }}</td>
     <td>{{ nutrient.obj.pretty_unit }}</td>
 </tr>

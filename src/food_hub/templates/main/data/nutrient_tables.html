@@ -1,7 +1,7 @@
 <div class="row" hx-on::load="setUpGrid();">
-    <div class="col-12">
+    <div class="col-12" id="macro-summary">
         <div class="card bordered" style="box-shadow: none;">
-            <div class="card-body">
+            <div class="card-body px-1">
                 <div class="row">
                     <div class="col-md-6 col-12">
                         <div class="chart-container chart-small d-flex justify-content-center">
@@ -29,7 +29,7 @@
                             <tbody id="macronutrient-table">
                                 <tr>
                                     <td>Energy</td>
-                                    <td>
+                                    <td class="progress-data">
 
                                         <div class="progress position-relative">
                                             <div class="progress-bar {% if energy_progress == 100 %}pb-success{% endif %}"

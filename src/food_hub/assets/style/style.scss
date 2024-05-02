@@ -227,6 +227,17 @@ body {
 
     &.intake-table {
 
+        @include media-breakpoint-down(sm) {
+            font-size: 0.875rem
+        }
+
+        // Hide progressbars for very narrow screens
+        @media (max-width: 340px) {
+            .nutrient-progress, .progress-data {
+                display: none;
+            }
+        }
+
         thead {
             tr {
                 background-color: #E9ECEF;
@@ -432,6 +443,7 @@ ul.url-list {
 .bordered {
     border: 1px solid $border_gray;
     border-radius: .3rem;
+    overflow-x: hidden;
     table {
         margin-bottom: 0;
     }
@@ -446,6 +458,25 @@ ul.url-list {
         text-decoration: none;
         &:active {
             color: tint-color($primary, 50%) !important;
+        }
+    }
+}
+
+.nutrient-tables{
+    &.card-body {
+        // Bottom padding accounts for the bottom margin of cards
+        padding: 1.25rem 0.75rem 0.25rem;
+
+        @include media-breakpoint-down(lg) {
+            padding: 1.25rem;
+            padding-bottom: 0.25rem;
+        }
+    }
+
+    .grid-item, #macro-summary {
+        padding: 0 0.5rem;
+        @include media-breakpoint-down(lg) {
+            padding: 0;
         }
     }
 }

@@ -105,8 +105,8 @@
     <div class="row">
         <div class="col-12">
             <div class="card card-outline card-secondary">
-                <div class="card-body">
-                    <div class="container-fluid mt-3">
+                <div class="card-body nutrient-tables">
+                    <div class="container-fluid">
                         <div hx-get="{% url 'current-meal-intakes' %}"
                         hx-trigger="currentMealChanged from:body, mealComponentsChanged from:body, load">
                         </div>

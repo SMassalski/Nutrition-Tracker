@@ -9,8 +9,6 @@
                     <div class="container top-panel" id="top-panel-recipe-form"
                     hx-get="{% url 'recipe-detail' recipe.id %}"
                     hx-trigger="load">
-
-
                     </div>
                 </div>
             </div>
@@ -35,7 +33,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="ingredient-list" hx-get="{% url 'recipe-ingredient-list' recipe.id %}" hx-trigger="load">
-
                                 </tbody>
                             </table>
                         </div>
@@ -88,8 +85,8 @@
                 <div class="card-header">
                     <h3 class="card-title">Nutrients per 100g</h3>
                 </div>
-                <div class="card-body">
-                    <div class="container-fluid mt-3">
+                <div class="card-body nutrient-tables">
+                    <div class="container-fluid">
                         <div hx-get="{% url 'recipe-intakes' recipe.id %}"
                         hx-trigger="recipeComponentsChanged from:body, load">
                         </div>
