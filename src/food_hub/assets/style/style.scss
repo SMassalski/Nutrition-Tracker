@@ -312,7 +312,7 @@ $progress-danger-background: #ffece6;
         text-overflow: ellipsis;
     }
 
-    .nav-link:hover {
+    .nav-link:hover, .nav-link:focus {
         color: $primary;
     }
 
