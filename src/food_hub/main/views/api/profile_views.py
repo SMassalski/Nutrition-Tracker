@@ -53,15 +53,14 @@ class WeightMeasurementViewSet(HTMXEventMixin, ModelViewSet):
     list_template = "main/data/weight_measurement_list.html"
     row_template = "main/data/weight_measurement_list_row.html"
     row_form_template = "main/data/weight_measurement_list_form_row.html"
-    modal_template = "main/modals/add_weight_measurement.html"
-    add_template = "main/data/weight_measurement_add.html"
+    modal_template = "main/modals/add_weight_measurement_modal.html"
 
     template_name = row_template
 
     template_map = {
         "list": list_template,
         "retrieve": {"form": row_form_template, "default": row_template},
-        "create": {"modal": modal_template, "default": add_template},
+        "create": {"modal": modal_template, "default": row_template},
         "update": row_template,
         "partial_update": row_template,
         "destroy": "main/blank.html",
@@ -86,7 +85,7 @@ class WeightMeasurementViewSet(HTMXEventMixin, ModelViewSet):
                 headers["HX-Reselect"] = "#add-weight-measurement"
                 headers["HX-Reswap"] = "outerHTML"
             else:
-                headers["HX-Reswap"] = "innerHTML"
+                headers["HX-Reswap"] = "none"
 
         return headers
 

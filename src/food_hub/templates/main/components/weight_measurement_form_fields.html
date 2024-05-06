@@ -1,0 +1,22 @@
+{# weight_measurements page #}
+<div class="form-group row mb-3">
+    <label for="weight-input" class="col col-form-label">Weight</label>
+    <div class="col-8 col-sm">
+        <div class="input-group">
+            <input class="form-control" name="value" type="number" id="weight-input"
+            min="0.1" step="0.1" style="min-width: 55%;" required>
+            <select name="unit" id="weight-unit-select" class="form-select">
+                <option value="KG" selected>kg</option>
+                <option value="LBS">lbs</option>
+            </select>
+        </div>
+    </div>
+</div>
+{% if with_date_field %}
+<div class="form-group row mb-3">
+    <label for="date-input" class="col col-form-label">Date</label>
+    <div class="col">
+        <input class="form-control" name="date" type="date" id="date-input" required>
+    </div>
+</div>
+{% endif %}

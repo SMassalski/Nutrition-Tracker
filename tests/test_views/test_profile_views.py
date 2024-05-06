@@ -45,8 +45,13 @@ class TestWeightMeasurementViewSet:
                 "form",
                 "main/data/weight_measurement_list_form_row.html",
             ),
-            ("post", "create", None, "main/data/weight_measurement_add.html"),
-            ("post", "create", "modal", "main/modals/add_weight_measurement.html"),
+            ("post", "create", None, "main/data/weight_measurement_list_row.html"),
+            (
+                "post",
+                "create",
+                "modal",
+                "main/modals/add_weight_measurement_modal.html",
+            ),
             ("put", "update", None, "main/data/weight_measurement_list_row.html"),
             (
                 "patch",
@@ -105,14 +110,14 @@ class TestWeightMeasurementViewSet:
         success = response.data.get("success")
         assert success is False
 
-    def test_create_invalid_request_inner_html_reswap_in_response_header(
+    def test_create_invalid_request_none_reswap_in_response_header(
         self, user, saved_profile
     ):
         request = create_api_request("post", user, {})
 
         response = self.view_class.as_view({"post": "create"}, detail=False)(request)
 
-        assert response.headers["HX-Reswap"] == "innerHTML"
+        assert response.headers["HX-Reswap"] == "none"
 
     def test_create_invalid_request_modal_template_outer_html_reswap_in_response_header(
         self, user, saved_profile
