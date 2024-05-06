@@ -484,3 +484,45 @@ ul.url-list {
 .bg-dark .nav-link {
     color: white;
 }
+
+#weight-list {
+    tr.table-form {
+        td .input-group {
+            flex-wrap: nowrap;
+            input {
+                min-width: 60%;
+            }
+        }
+        .action-buttons {
+            min-width: 60px;
+        }
+        @include media-breakpoint-down(sm) {
+
+            @media (max-width: 380px) {
+
+                td {
+                    padding: 0.25rem;
+                    padding-left: 0;
+                    &:first-child {
+                        padding-left: 0.25rem !important;
+                    }
+                    input {
+                        padding: 0.125rem;
+                    }
+                    select {
+                        padding: 0.125rem;
+
+                        // Move arrow rightward
+                        background-position: right 0.2rem center;
+                    }
+                }
+                .action-buttons {
+                    min-width: 0;
+                    a {
+                        padding: 0;
+                    }
+                }
+            }
+        }
+    }
+}

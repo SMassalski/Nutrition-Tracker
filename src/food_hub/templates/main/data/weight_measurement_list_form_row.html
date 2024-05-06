@@ -1,21 +1,17 @@
 <tr id="weight-list-row-{{ obj.id }}" class="table-form">
     <td id="data-date-{{ obj.id }}">
-        <input class="form-control" value="{{ obj.date|date:"Y-m-d" }}"
+        <input class="form-control form-control-sm" value="{{ obj.date|date:"Y-m-d" }}"
         type="date" name="date" id="date-field" required>
     </td>
     <td id="data-weight-{{ obj.id }}">
-        <div class="row">
-            <div class="col">
-                <input class="form-control" value="{{ obj.value }}"
+        <div class="input-group">
+                <input class="form-control form-control-sm" value="{{ obj.value }}"
                 type="number" min="0.1" step="0.1" name="value" id="value-field"
-                placeholder="Value (kg)" required>
-            </div>
-            <div class="col-3">
-                <select name="unit" id="weight-unit-select" class="form-select">
+                placeholder="Value" required>
+                <select name="unit" id="weight-unit-select" class="form-select form-select-sm">
                     <option value="KG" selected>kg</option>
                     <option value="LBS">lbs</option>
                 </select>
-            </div>
         </div>
     </td>
     {# actions #}
