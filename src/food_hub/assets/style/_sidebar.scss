@@ -48,6 +48,10 @@
     width: 60px;
     transition: width 0.6s;
 
+    &.bg-dark .nav-link:hover {
+        background-color: mix($primary, $dark, 5%);
+    }
+
     ul.nav-pills{
         padding: 0 0.5rem;
         flex-direction: column;
@@ -63,9 +67,6 @@
             justify-content: start;
 
             padding: 8px 0;
-            &:hover {
-                background-color: #132e40;
-            }
         }
     }
     .nav-icon {
