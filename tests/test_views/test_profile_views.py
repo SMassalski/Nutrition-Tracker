@@ -1,10 +1,10 @@
 from datetime import date, timedelta
 
-import main.views
+import core.views
 import pytest
-from main import models
-from main.serializers import WeightMeasurementSerializer
-from main.views import api as views
+from core import models
+from core.serializers import WeightMeasurementSerializer
+from core.views import api as views
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.reverse import reverse
 from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND, is_success
@@ -37,29 +37,29 @@ class TestWeightMeasurementViewSet:
     @pytest.mark.parametrize(
         ("method", "action", "template_param", "expected"),
         (
-            ("get", "list", None, "main/data/weight_measurement_list.html"),
-            ("get", "retrieve", None, "main/data/weight_measurement_list_row.html"),
+            ("get", "list", None, "core/data/weight_measurement_list.html"),
+            ("get", "retrieve", None, "core/data/weight_measurement_list_row.html"),
             (
                 "get",
                 "retrieve",
                 "form",
-                "main/data/weight_measurement_list_form_row.html",
+                "core/data/weight_measurement_list_form_row.html",
             ),
-            ("post", "create", None, "main/data/weight_measurement_list_row.html"),
+            ("post", "create", None, "core/data/weight_measurement_list_row.html"),
             (
                 "post",
                 "create",
                 "modal",
-                "main/modals/add_weight_measurement_modal.html",
+                "core/modals/add_weight_measurement_modal.html",
             ),
-            ("put", "update", None, "main/data/weight_measurement_list_row.html"),
+            ("put", "update", None, "core/data/weight_measurement_list_row.html"),
             (
                 "patch",
                 "partial_update",
                 None,
-                "main/data/weight_measurement_list_row.html",
+                "core/data/weight_measurement_list_row.html",
             ),
-            ("delete", "destroy", None, "main/blank.html"),
+            ("delete", "destroy", None, "core/blank.html"),
         ),
     )
     def test_get_template_names(
@@ -229,7 +229,7 @@ class TestWeightMeasurementViewSet:
 
 class TestProfileAPIView:
 
-    view_class = main.views.api.profile_views.ProfileApiView
+    view_class = core.views.api.profile_views.ProfileApiView
 
     @pytest.fixture
     def data(self):
@@ -417,7 +417,7 @@ class TestLastMonthIntakeView:
         meal_2.date = date.today() - timedelta(days=40)
         meal_2.save()
         request = create_api_request("get", user)
-        view = main.views.api.profile_views.LastMonthIntakeView.as_view()
+        view = core.views.api.profile_views.LastMonthIntakeView.as_view()
         date_str = meal.date.strftime("%b %d")
         expected = {
             (date.today() - timedelta(days=30 - i)).strftime("%b %d"): None
@@ -444,7 +444,7 @@ class TestLastMonthIntakeView:
         recommendation.dri_type = recommendation.RDAKG
         recommendation.save()
         request = create_api_request("get", user)
-        view = main.views.api.profile_views.LastMonthIntakeView.as_view()
+        view = core.views.api.profile_views.LastMonthIntakeView.as_view()
 
         response = view(request, pk=nutrient_1.id)
 
@@ -527,15 +527,15 @@ class TestTrackedNutrientViewSet:
     @pytest.mark.parametrize(
         ("action", "template_qp", "expected"),  # Template query param
         (
-            ("list", None, "main/data/tracked_nutrients_card.html"),
-            ("list", "list", "main/data/tracked_nutrient_list.html"),
-            ("create", None, "main/data/tracked_nutrient_list_row.html"),
-            ("form", None, "main/components/tracked_nutrients_row_form.html"),
-            ("form", "add", "main/data/tracked_nutrient_list.html"),
+            ("list", None, "core/data/tracked_nutrients_card.html"),
+            ("list", "list", "core/data/tracked_nutrient_list.html"),
+            ("create", None, "core/data/tracked_nutrient_list_row.html"),
+            ("form", None, "core/components/tracked_nutrients_row_form.html"),
+            ("form", "add", "core/data/tracked_nutrient_list.html"),
         ),
     )
     def test_get_template(self, action, template_qp, expected):
-        view = main.views.api.profile_views.TrackedNutrientViewSet(action=action)
+        view = core.views.api.profile_views.TrackedNutrientViewSet(action=action)
 
         query_params = {"template": template_qp} if template_qp else None
         request = create_api_request("get", query_params=query_params)
@@ -547,7 +547,7 @@ class TestTrackedNutrientViewSet:
 
     def test_list_wraps_data_in_dict(self, user, saved_profile):
         request = create_api_request("get", user)
-        view = main.views.api.profile_views.TrackedNutrientViewSet.as_view(
+        view = core.views.api.profile_views.TrackedNutrientViewSet.as_view(
             {"get": "list"}
         )
 
@@ -559,7 +559,7 @@ class TestTrackedNutrientViewSet:
         self, user, saved_profile, nutrient_1
     ):
         request = create_api_request("post", user, data={"nutrient": nutrient_1.id})
-        view = main.views.api.profile_views.TrackedNutrientViewSet.as_view(
+        view = core.views.api.profile_views.TrackedNutrientViewSet.as_view(
             {"post": "create"}
         )
 
@@ -569,7 +569,7 @@ class TestTrackedNutrientViewSet:
 
     def test_create_response_has_event_header(self, user, saved_profile, nutrient_1):
         request = create_api_request("post", user, data={"nutrient": nutrient_1.id})
-        view = main.views.api.profile_views.TrackedNutrientViewSet.as_view(
+        view = core.views.api.profile_views.TrackedNutrientViewSet.as_view(
             {"post": "create"}
         )
         expected = "trackedNutrientsChanged"
@@ -584,7 +584,7 @@ class TestTrackedNutrientViewSet:
             profile=saved_profile, nutrient=nutrient_1
         )
         request = create_api_request("delete", user)
-        view = main.views.api.profile_views.TrackedNutrientViewSet.as_view(
+        view = core.views.api.profile_views.TrackedNutrientViewSet.as_view(
             {"delete": "destroy"}
         )
         expected = "trackedNutrientsChanged"

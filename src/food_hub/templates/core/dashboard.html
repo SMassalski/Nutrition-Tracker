@@ -1,0 +1,102 @@
+{% extends "core/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div hx-ext="response-targets">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="container top-panel">
+                            <div class="row">
+                                <div class="col">
+                                    <div class="d-flex">
+                                        <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#trackedNutrientsModal">
+                                            <div class="nav-icon">
+                                                <i class="fa-solid fa-thumbtack"></i>
+                                                <span class="nav-bottom-label">Track Nutrient</span>
+                                            </div>
+                                            <span class="nav-main-label">Track Nutrient</span>
+                                        </a>
+                                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profile-information-modal">
+                                            <div class="nav-icon">
+                                                <i class="fa-solid fa-address-book"></i>
+                                                <span class="nav-bottom-label">Profile Information</span>
+                                            </div>
+                                            <span class="nav-main-label">Profile Information</span>
+                                        </a>
+                                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#add-weight-measurement">
+                                            <div class="nav-icon">
+                                                <i class="fa-solid fa-balance-scale"></i>
+                                                <span class="nav-bottom-label">Add Weight Measurement</span>
+                                            </div>
+                                            <span class="nav-main-label">Add Weight Measurement</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="card card-outline card-secondary">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <canvas id="macro-chart">
+                                    </canvas>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <canvas id="weight-chart">
+                                    </canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div hx-get="{% url "tracked-nutrient-list" %}" hx-swap="outerHTML" hx-trigger="load"></div>
+        <div hx-get="{% url "malconsumptions" %}?limit=4" hx-swap="outerHTML" hx-trigger="load"></div>
+    </div>
+
+    <!-- Modals -->
+    {% include "core/modals/tracked_nutrients.html" with modal_id="trackedNutrientsModal" size="large" %}
+    {% include "core/modals/add_weight_measurement_modal.html" with modal_id="add-weight-measurement" size="large" %}
+
+    {# Profile information modal #}
+    <div class="modal" id="profile-information-modal" tabindex="-1" role="dialog"
+        aria-labelledby="profile-information-modal" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Profile Information</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div hx-get="{% url "profile" %}" hx-trigger="load"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+    // Load
+    charts.fetchLastMonthWeight("{% url "weight-measurement-last-month-weights" format='json'%}", "weight-chart");
+    charts.fetchLastMonthCalorie("{% url "last-month-calories" format='json'%}", "macro-chart");
+
+    // weightChanged
+    $("body").on("weightChanged", function() {
+        charts.fetchLastMonthWeight("{% url "weight-measurement-last-month-weights" format='json'%}", "weight-chart");
+    });
+</script>
+{% endblock scripts %}

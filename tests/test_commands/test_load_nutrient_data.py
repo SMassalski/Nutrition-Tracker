@@ -1,9 +1,7 @@
 """Tests of the load_nutrient_data command."""
 import pytest
-from django.core.management import call_command
-from django.db import IntegrityError
-from main import models
-from main.management.commands.loadnutrientdata import (
+from core import models
+from core.management.commands.loadnutrientdata import (
     Command,
     create_nutrient_components,
     create_nutrient_types,
@@ -11,6 +9,8 @@ from main.management.commands.loadnutrientdata import (
     create_recommendations,
     get_nutrient_types,
 )
+from django.core.management import call_command
+from django.db import IntegrityError
 
 
 @pytest.fixture

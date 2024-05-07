@@ -1,9 +1,9 @@
-"""Tests of main app's view decorators."""
+"""Tests of core app's view decorators."""
 import pytest
+from core.decorators import profile_required
 from django.contrib.auth.models import AnonymousUser
 from django.http.response import HttpResponse
 from django.views import View
-from main.decorators import profile_required
 from rest_framework.status import is_redirect, is_success
 
 

@@ -1,7 +1,7 @@
 """Tests of ComponentCollectionViewSet subclasses."""
 import pytest
-from main.views.api.meal_views import MealIngredientViewSet, MealRecipeViewSet
-from main.views.api.recipe_views import RecipeIngredientViewSet
+from core.views.api.meal_views import MealIngredientViewSet, MealRecipeViewSet
+from core.views.api.recipe_views import RecipeIngredientViewSet
 from rest_framework.reverse import reverse
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, is_success
 
@@ -223,8 +223,8 @@ class BaseModelCollectionViewsetTests:
     @pytest.mark.parametrize(
         ("method", "template"),
         (
-            ("get", "main/data/collection_component_list.html"),
-            ("post", "main/data/collection_component_list_table_row.html"),
+            ("get", "core/data/collection_component_list.html"),
+            ("post", "core/data/collection_component_list_table_row.html"),
         ),
     )
     def test_list_get_template_names(
@@ -253,7 +253,7 @@ class BaseModelCollectionViewsetTests:
         view.setup(request, pk=instance.id)
 
         template = view.get_template_names()[0]
-        assert template == "main/data/collection_component_list_table_row.html"
+        assert template == "core/data/collection_component_list_table_row.html"
 
     def test_delete_get_template_names_non_get_http_methods(
         self,
@@ -266,14 +266,14 @@ class BaseModelCollectionViewsetTests:
         view.setup(request, pk=instance.id)
 
         template = view.get_template_names()[0]
-        assert template == "main/blank.html"
+        assert template == "core/blank.html"
 
     @pytest.mark.parametrize(
         ("template", "expected"),
         (
-            ("regular", "main/data/collection_component_list_table_row.html"),
-            ("form", "main/data/collection_component_list_row_form.html"),
-            (None, "main/data/collection_component_list_table_row.html"),
+            ("regular", "core/data/collection_component_list_table_row.html"),
+            ("form", "core/data/collection_component_list_row_form.html"),
+            (None, "core/data/collection_component_list_table_row.html"),
         ),
     )
     def test_detail_get_template_names_get_http_method(

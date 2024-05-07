@@ -1,12 +1,12 @@
 """Tests of meal-related views."""
 import pytest
-from django.conf import settings
-from main import models
-from main.views.api.meal_views import (
+from core import models
+from core.views.api.meal_views import (
     MealIngredientPreviewView,
     MealNutrientIntakeView,
     MealViewSet,
 )
+from django.conf import settings
 from rest_framework.reverse import reverse
 from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND, is_success
 
@@ -307,7 +307,7 @@ class TestMealIngredientPreviewView:
         """IngredientPreview uses the preview template."""
         response = client_with_meal.get(self.url)
 
-        assert response.templates[0].name == "main/data/preview.html"
+        assert response.templates[0].name == "core/data/preview.html"
 
     def test_returns_404_if_no_current_meal_entry_exists(self, user, ingredient_1):
         """

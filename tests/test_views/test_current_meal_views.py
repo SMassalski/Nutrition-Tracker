@@ -2,9 +2,9 @@
 from datetime import date
 
 import pytest
+from core import models
+from core.views.api import current_meal_views as views
 from django.http import Http404
-from main import models
-from main.views.api import current_meal_views as views
 from rest_framework.reverse import reverse
 from rest_framework.status import is_redirect, is_success
 

@@ -1,6 +1,6 @@
 import pytest
+from core import models, serializers
 from django.db import IntegrityError
-from main import models, serializers
 
 
 class TestCurrentMealSerializer:

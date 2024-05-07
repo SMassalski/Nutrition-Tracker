@@ -34,7 +34,7 @@ def add_session_and_meal(request, meal):
     ----------
     request: django.http.request.HttpRequest
         The request the session will be added to.
-    meal: main.models.Meal
+    meal: core.models.Meal
         The meal of which the date will be used as the
         `current_meal_date`.
 

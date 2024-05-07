@@ -2,8 +2,8 @@
 from datetime import date
 
 import pytest
+from core import models
 from django.db.models import F
-from main import models
 
 
 @pytest.fixture

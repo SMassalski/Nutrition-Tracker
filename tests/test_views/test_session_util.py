@@ -2,9 +2,7 @@
 from datetime import datetime, timedelta
 
 import pytest
-from django.http import Http404
-from django.utils import timezone
-from main.views.session_util import (
+from core.views.session_util import (
     LAST_INTERACT_KEY,
     NoCurrentMealException,
     NoSessionException,
@@ -12,6 +10,8 @@ from main.views.session_util import (
     is_meal_expired,
     ping_meal_interact,
 )
+from django.http import Http404
+from django.utils import timezone
 
 from .util import add_session, add_session_and_meal
 

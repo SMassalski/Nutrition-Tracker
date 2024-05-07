@@ -1,10 +1,11 @@
 import pytest
+from authentication.models import User
+from core.admin import MealAdmin, RecipeAdmin, WeightMeasurementAdmin
+from core.models import Meal, Recipe, WeightMeasurement
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import Permission
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
-from main.admin import MealAdmin, RecipeAdmin, WeightMeasurementAdmin
-from main.models import Meal, Recipe, User, WeightMeasurement
 from rest_framework.status import is_success
 
 

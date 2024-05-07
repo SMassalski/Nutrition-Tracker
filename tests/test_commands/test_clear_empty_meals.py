@@ -1,7 +1,7 @@
 """Tests of the `clearemptymeals` command."""
+from core.models import Meal
 from django.contrib.sessions.backends.db import SessionStore
 from django.core.management import call_command
-from main.models import Meal
 
 
 class TestCommand:

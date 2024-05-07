@@ -7,15 +7,15 @@ differently based on the differences in the way they are stored
 in the FDC data and the app's database.
 """
 import pytest
-from django.db import IntegrityError
-from main import models
+from core import models
 
 # noinspection PyProtectedMember
-from main.management.commands._fdc_helpers import (
+from core.management.commands._fdc_helpers import (
     create_compound_nutrient_amounts,
     get_fdc_data_source,
     handle_nonstandard,
 )
+from django.db import IntegrityError
 
 # FDC ids of nutrients that need to be handled differently
 CYSTEINE = 1232

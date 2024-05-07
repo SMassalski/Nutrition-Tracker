@@ -1,8 +1,8 @@
 """Tests of authentication views."""
 import pytest
+from authentication.models import User
 from authentication.views import register_user
 from django.contrib.auth.models import AnonymousUser
-from main.models import User
 from rest_framework import status
 from rest_framework.reverse import reverse
 

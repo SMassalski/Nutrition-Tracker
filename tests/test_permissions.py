@@ -1,7 +1,7 @@
-"""Tests of main app's DRF permissions."""
-from main import permissions
-from main.models import Meal
-from main.views.api.base_views import ComponentCollectionViewSet
+"""Tests of core app's DRF permissions."""
+from core import permissions
+from core.models import Meal
+from core.views.api.base_views import ComponentCollectionViewSet
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.test import APIRequestFactory

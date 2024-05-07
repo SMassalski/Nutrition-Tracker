@@ -1,5 +1,5 @@
 import pytest
-from main import serializers
+from core import serializers
 
 
 class TestNutrientIntakeSerializer:

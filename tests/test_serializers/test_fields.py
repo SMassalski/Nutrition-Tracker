@@ -1,5 +1,5 @@
-from main.models import Meal
-from main.serializers.fields import OwnedPrimaryKeyField
+from core.models import Meal
+from core.serializers.fields import OwnedPrimaryKeyField
 from rest_framework.serializers import Serializer as SerializerBase
 
 

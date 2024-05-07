@@ -1,7 +1,7 @@
 import datetime
 
 import pytest
-from main import models, serializers
+from core import models, serializers
 
 
 class TestWeightMeasurementSerializer:

@@ -1,0 +1,186 @@
+<div class="row" hx-on::load="setUpGrid();">
+    <div class="col-12" id="macro-summary">
+        <div class="card bordered" style="box-shadow: none;">
+            <div class="card-body px-1">
+                <div class="row">
+                    <div class="col-md-6 col-12">
+                        <div class="chart-container chart-small d-flex justify-content-center">
+                            <canvas id="total-macro-pie-chart"></canvas>
+                        </div>
+                        {{ calories|json_script:"total-macronutrient-data" }}
+                        <script>
+                            charts.MacrosPieChart(
+                            "total-macro-pie-chart",
+                            JSON.parse(document.getElementById('total-macronutrient-data').textContent)
+                            );
+                        </script>
+                    </div>
+                <div class="col-lg-6 col-12">
+                    <div class="">
+                        <table class="table table-sm intake-table">
+                            <thead>
+                                <tr>
+                                    <th class="nutrient-label p-0"></th>
+                                    <th class="nutrient-progress p-0"></th>
+                                    <th class="nutrient-amount p-0"></th>
+                                    <th class="nutrient-unit p-0"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="macronutrient-table">
+                                <tr>
+                                    <td>Energy</td>
+                                    <td class="progress-data">
+
+                                        <div class="progress position-relative">
+                                            <div class="progress-bar {% if energy_progress == 100 %}pb-success{% endif %}"
+                                            role="progressbar" style="width: {{ energy_progress }}%"
+                                            aria-valuenow="{{ energy_progress }}" aria-valuemin="0"
+                                            aria-valuemax="100">
+                                            </div>
+                                        </div>
+
+                                    </td>
+                                    <td>{{ by_name.energy.intake| floatformat }} / {{ energy_requirement| floatformat }}</td>
+                                    <td>kcal</td>
+                                </tr>
+                                {% include "core/data/micronutrient_table_row.html" with nutrient=by_name.protein rec=by_name.protein.recommendations.amdr %}
+                                {% include "core/data/micronutrient_table_row.html" with nutrient=by_name.carbohydrate rec=by_name.carbohydrate.recommendations.amdr ignore_children=True %}
+                                {% include "core/data/micronutrient_table_row.html" with nutrient=by_name.lipid rec=by_name.lipid.recommendations.amdr %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row grid" data-masonry='{"percentPosition": true }'>
+
+    {# Carbohydrates #}
+    <div class="col-lg-6 col-12 grid-item">
+        <div class="card table-card bordered">
+            <div class="card-body">
+                <table class="table table-sm intake-table">
+                    <thead>
+                        <tr class="nutrient-table-label">
+                            <th class="nutrient-label">Carbohydrates</th>
+                            <th class="nutrient-progress"></th>
+                            <th class="nutrient-amount"></th>
+                            <th class="nutrient-unit"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="carbohydrates-table">
+                        {% include "core/data/micronutrient_table_row.html" with nutrient=by_name.fiber %}
+                        {% for name, nutrient in by_type.carbohydrate.items %}
+                        {% include "core/data/micronutrient_table_row.html" %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# Lipids #}
+    <div class="col-lg-6 col-12 grid-item">
+        <div class="card table-card bordered">
+            <div class="card-body">
+                <table class="table table-sm intake-table">
+                    <thead>
+                        <tr class="nutrient-table-label">
+                            <th class="nutrient-label">Lipids</th>
+                            <th class="nutrient-progress"></th>
+                            <th class="nutrient-amount"></th>
+                            <th class="nutrient-unit"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="lipids-table">
+                        {% for name, nutrient in by_type.fatty_acid_type.items %}
+                        {% include "core/data/micronutrient_table_row.html" %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# Vitamins #}
+    <div class="col-lg-6 col-12 grid-item">
+        <div class="card table-card bordered">
+            <div class="card-body">
+                <table class="table table-sm intake-table">
+                    <thead>
+                        <tr class="nutrient-table-label">
+                            <th class="nutrient-label">Vitamins</th>
+                            <th class="nutrient-progress"></th>
+                            <th class="nutrient-amount"></th>
+                            <th class="nutrient-unit"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="vitamin-table">
+                        {% for name, nutrient in by_type.vitamin.items %}
+                            {% if name != "vitamin_d2" and name != "vitamin_d3" %}
+                                {% include "core/data/micronutrient_table_row.html" %}
+                            {% endif %}
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# Minerals #}
+    <div class="col-lg-6 col-12 grid-item">
+        <div class="card table-card bordered">
+            <div class="card-body">
+                <table class="table table-sm intake-table">
+                    <thead>
+                        <tr class="nutrient-table-label">
+                            <th class="nutrient-label">Minerals</th>
+                            <th class="nutrient-progress"></th>
+                            <th class="nutrient-amount"></th>
+                            <th class="nutrient-unit"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="minerals-table">
+                        {% for name, nutrient in by_type.mineral.items %}
+                            {% include "core/data/micronutrient_table_row.html" %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# Amino Acids #}
+    <div class="col-lg-6 col-12 grid-item">
+        <div class="card table-card bordered">
+            <div class="card-body">
+                <table class="table table-sm intake-table">
+                    <thead>
+                        <tr class="nutrient-table-label">
+                            <th class="nutrient-label">Amino Acids</th>
+                            <th class="nutrient-progress"></th>
+                            <th class="nutrient-amount"></th>
+                            <th class="nutrient-unit"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="amino-acids-table">
+                        {% for name, nutrient in by_type.indispensable_amino_acid.items %}
+                            {% if name == "methionine" %}
+                            {% include "core/data/micronutrient_table_row.html" with nutrient=by_name.methionine_cysteine %}
+                            {% elif name == "phenylalanine" %}
+                            {% include "core/data/micronutrient_table_row.html" with nutrient=by_name.phenylalanine_tyrosine %}
+                            {% else %}
+                            {% include "core/data/micronutrient_table_row.html" %}
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

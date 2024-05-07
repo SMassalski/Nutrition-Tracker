@@ -3,9 +3,9 @@ import os
 from tempfile import mkstemp
 
 import pytest
+from core.management.commands.loadfdcdata import Command
+from core.models import Ingredient, IngredientNutrient, Nutrient
 from django.core.management import CommandError, call_command
-from main.management.commands.loadfdcdata import Command
-from main.models import Ingredient, IngredientNutrient, Nutrient
 
 
 class TestLoadFdcDataCommand:

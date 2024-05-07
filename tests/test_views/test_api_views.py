@@ -1,8 +1,8 @@
-"""Tests of main app's API views"""
+"""Tests of core app's API views"""
 import json
 
 import pytest
-from main.views.api import api_views as views
+from core.views.api import api_views as views
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.status import is_success
@@ -88,7 +88,7 @@ class TestIngredientListView:
         response = logged_in_client.get(self.url)
 
         assert (
-            response.templates[0].name == "main/data/component_search_result_list.html"
+            response.templates[0].name == "core/data/component_search_result_list.html"
         )
 
 

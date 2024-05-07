@@ -11,8 +11,8 @@ ENV PATH="/root/.local/bin:$PATH"
 
 # Installing dependencies
 COPY poetry.lock pyproject.toml /usr/app/
-RUN poetry update -vvv --only main --no-ansi --no-interaction
-RUN poetry install -vvv --only main --no-root --no-ansi --no-interaction
+RUN poetry update -vvv --only core --no-ansi --no-interaction
+RUN poetry install -vvv --only core --no-root --no-ansi --no-interaction
 
 # Installing app
 COPY README.md /usr/app/

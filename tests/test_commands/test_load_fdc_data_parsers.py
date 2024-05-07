@@ -2,13 +2,13 @@
 import io
 
 import pytest
-from main import models
+from core import models
 
 # noinspection PyProtectedMember
-from main.management.commands._fdc_helpers import NoNutrientException
+from core.management.commands._fdc_helpers import NoNutrientException
 
 # noinspection PyProtectedMember
-from main.management.commands._fdc_parsers import (
+from core.management.commands._fdc_parsers import (
     FDC_DATASETS,
     parse_food_csv,
     parse_food_nutrient_csv,

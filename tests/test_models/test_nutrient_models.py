@@ -1,7 +1,7 @@
 import pytest
+from core import models
+from core.models.nutrient import NutrientTypeHierarchyError
 from django.db import IntegrityError
-from main import models
-from main.models.nutrient import NutrientTypeHierarchyError
 
 
 class TestNutrient:

@@ -1,0 +1,34 @@
+<div class="modal" id="{{ modal_id }}" tabindex="-1" role="dialog"
+     aria-labelledby="{{ modal_id }}" aria-hidden="true">
+    <div class="modal-dialog{% if size == 'large' %} modal-lg
+    {% elif size == 'small' %} modal-sm
+    {% endif %}"
+    role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Weight Measurement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="add-weight-measurement" hx-post="{% url "weight-measurement-list" %}?template=modal"
+            hx-swap="afterbegin" hx-select=".measurement-alert" hx-ext="response-targets"
+            hx-target-400="this" hx-target="#add-measurement-modal-alerts">
+                <div class="modal-body">
+                    <div id="add-measurement-modal-alerts">
+
+                    </div>
+                    {% if obj.id %}
+                    <div class="alert alert-success alert-dismissible fade show measurement-alert" role="alert" id="success-alert-{{ id }}">
+                        Measurement added successfully!
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% else %}
+                    {% include "core/components/weight_measurement_form_fields.html" %}
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Add Measurement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

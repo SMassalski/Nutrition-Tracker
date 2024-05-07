@@ -1,4 +1,4 @@
-from main import serializers
+from core import serializers
 
 
 class TestRecipeSerializer:

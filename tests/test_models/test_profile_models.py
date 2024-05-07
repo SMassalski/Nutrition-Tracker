@@ -2,8 +2,8 @@
 from datetime import date, datetime, timedelta
 
 import pytest
+from core import models
 from django.core.exceptions import ValidationError
-from main import models
 
 
 @pytest.fixture

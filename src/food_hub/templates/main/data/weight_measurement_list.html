@@ -1,8 +1,0 @@
-{% for obj in results %}
-    {% include "main/data/weight_measurement_list_row.html" %}
-{% endfor %}
-{% if next %}
-<tr hx-get="{{ next }}" hx-swap="outerHTML" hx-trigger="intersect once">
-    <td colspan="3"></td>
-</tr>
-{% endif %}

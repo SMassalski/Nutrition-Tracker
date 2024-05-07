@@ -1,5 +1,5 @@
 import pytest
-from main import models
+from core import models
 
 
 @pytest.fixture

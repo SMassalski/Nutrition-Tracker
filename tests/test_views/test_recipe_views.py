@@ -1,8 +1,8 @@
 """Test of recipe-related views."""
 import pytest
+from core import models
+from core.views.api.recipe_views import RecipeIntakeView, RecipeViewSet
 from django.conf import settings
-from main import models
-from main.views.api.recipe_views import RecipeIntakeView, RecipeViewSet
 from rest_framework.reverse import reverse
 from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND, is_success
 from rest_framework.test import APIRequestFactory, force_authenticate
@@ -311,9 +311,9 @@ class TestRecipeViewSet:
     @pytest.mark.parametrize(
         ("method", "target", "template"),
         (
-            ("get", None, "main/data/component_search_result_list.html"),
-            ("get", "edit", "main/data/recipe_search_result_list.html"),
-            ("post", None, "main/modals/new_recipe_form.html"),
+            ("get", None, "core/data/component_search_result_list.html"),
+            ("get", "edit", "core/data/recipe_search_result_list.html"),
+            ("post", None, "core/modals/new_recipe_form.html"),
         ),
     )
     def test_get_templates_list(self, recipe, user, method, target, template):
@@ -329,9 +329,9 @@ class TestRecipeViewSet:
     @pytest.mark.parametrize(
         ("method", "expected"),
         (
-            ("get", "main/data/recipe_detail_form.html"),
-            ("patch", "main/data/recipe_detail_form.html"),
-            ("delete", "main/blank.html"),
+            ("get", "core/data/recipe_detail_form.html"),
+            ("patch", "core/data/recipe_detail_form.html"),
+            ("delete", "core/blank.html"),
         ),
     )
     def test_get_templates_detail(self, recipe, user, method, expected):

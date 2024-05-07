@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "main",
+    "core",
     "authentication",
 ]
 
@@ -138,7 +138,7 @@ DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL")
 
 # User model
 
-AUTH_USER_MODEL = "main.User"
+AUTH_USER_MODEL = "authentication.User"
 
 # Authentication
 

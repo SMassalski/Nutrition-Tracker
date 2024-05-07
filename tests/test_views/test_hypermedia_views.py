@@ -1,5 +1,5 @@
 """Tests of views from the `hypermedia_views` module."""
-from main.views.api import hypermedia_views as views
+from core.views.api import hypermedia_views as views
 from rest_framework.reverse import reverse
 from rest_framework.status import is_success
 

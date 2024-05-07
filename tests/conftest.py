@@ -3,8 +3,9 @@ from datetime import date, datetime
 from typing import List
 
 import pytest
+from authentication.models import User
+from core import models
 from django.test.client import Client
-from main import models
 
 
 @pytest.fixture
@@ -96,7 +97,7 @@ def ingredient_nutrient_1_2(ingredient_1, nutrient_2):
 
 
 @pytest.fixture
-def user(db) -> models.User:
+def user(db) -> User:
     """
     A sample user record and instance.
 
@@ -104,7 +105,7 @@ def user(db) -> models.User:
     email: test@example.com
     password: pass
     """
-    return models.User.objects.create_user(
+    return User.objects.create_user(
         username="test_user", email="test@example.com", password="pass"
     )
 
@@ -393,9 +394,9 @@ def many_recommendations(nutrient_1, nutrient_2) -> List[models.IntakeRecommenda
 
 
 @pytest.fixture
-def new_user(db) -> models.User:
+def new_user(db) -> User:
     """Another saved user instance with a profile"""
-    user = models.User.objects.create_user("name")
+    user = User.objects.create_user("name")
     profile = models.Profile(
         user=user,
         age=20,

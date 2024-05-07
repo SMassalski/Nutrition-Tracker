@@ -1,10 +1,10 @@
-"""Tests of main app's regular (non-api) views."""
+"""Tests of core app's regular (non-api) views."""
 from datetime import date
 
+from core import models
+from core.views import main as views
 from django.urls import reverse
 from django.utils import timezone
-from main import models
-from main.views import main as views
 from rest_framework.status import is_success
 
 from .util import add_session, add_session_and_meal

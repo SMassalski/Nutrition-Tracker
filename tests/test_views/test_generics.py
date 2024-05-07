@@ -1,8 +1,8 @@
 """
 Tests of the custom generic views and view sets from the
-main.views.generics module.
+core.views.generics module.
 """
-from main.views.generics import GenericView, GenericViewSet
+from core.views.generics import GenericView, GenericViewSet
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 

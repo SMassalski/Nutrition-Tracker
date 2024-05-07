@@ -3,11 +3,11 @@ Tests of models related to food items, nutritional value and intake
 recommendations.
 """
 import pytest
-from django.db import IntegrityError
-from main import models
+from core import models
 
 # noinspection PyProtectedMember
-from main.models.foods import update_compound_nutrients
+from core.models.foods import update_compound_nutrients
+from django.db import IntegrityError
 
 
 class TestIngredient:
