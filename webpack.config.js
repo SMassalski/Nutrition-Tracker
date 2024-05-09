@@ -5,13 +5,13 @@ const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 module.exports = {
     mode: "production",
     entry: {
-        index: './src/food_hub/assets/scripts/index.js',
-        chart: './src/food_hub/assets/scripts/chart_util.js',
-        style: './src/food_hub/assets/style/style.scss'
+        index: './src/nutrition_tracker/assets/scripts/index.js',
+        chart: './src/nutrition_tracker/assets/scripts/chart_util.js',
+        style: './src/nutrition_tracker/assets/style/style.scss'
         },
     output: {
         filename: '[name].bundle.js',
-        path: path.resolve(__dirname, './src/food_hub/static'),
+        path: path.resolve(__dirname, './src/nutrition_tracker/static'),
     },
     module : {
         rules : [

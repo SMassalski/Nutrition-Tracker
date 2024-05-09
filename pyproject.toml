@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "food-hub"
+name = "nutrition-tracker"
 version = "0.1.0"
 description = ""
 authors = ["SMassalski <stanislaw.massalski@gmail.com>"]
 readme = "README.md"
-packages = [{include = "food_hub", from = "src"}]
+packages = [{include = "nutrition_tracker", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -36,8 +36,8 @@ profile = "black"
 
 [tool.pytest.ini_options]
 django_find_project = false
-pythonpath = [".", "src/food_hub"]
-DJANGO_SETTINGS_MODULE = "food_hub.settings.test"
+pythonpath = [".", "src/nutrition_tracker"]
+DJANGO_SETTINGS_MODULE = "nutrition_tracker.settings.test"
 addopts = "--no-migrations --cov --cov-report html"
 
 
@@ -45,7 +45,7 @@ addopts = "--no-migrations --cov --cov-report html"
 branch = true
 data_file = "coverage/.coverage"
 source = ["src"]
-omit = ["*/manage.py", "*/migrations/*", "src/food_hub/food_hub/*"]
+omit = ["*/manage.py", "*/migrations/*", "src/nutrition_tracker/nutrition_tracker/*"]
 
 [tool.coverage.report]
 skip_empty = true
@@ -54,4 +54,4 @@ exclude_also = ["def __str__"]
 
 [tool.coverage.html]
 directory = "coverage/html/"
-title = "Food Hub Test Coverage Report"
+title = "Nutrition Tracker Test Coverage Report"

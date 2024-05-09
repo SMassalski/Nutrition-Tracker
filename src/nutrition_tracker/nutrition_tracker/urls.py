@@ -1,4 +1,4 @@
-"""food_hub URL Configuration."""
+"""The nutrition_tracker project URL Configuration."""
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path

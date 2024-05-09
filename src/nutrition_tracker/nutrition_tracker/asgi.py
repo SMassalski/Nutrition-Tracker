@@ -1,5 +1,5 @@
 """
-ASGI config for food_hub project.
+ASGI config for the nutrition_tracker project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "food_hub.settings.base")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "nutrition_tracker.settings.base")
 
 application = get_asgi_application()

@@ -1,4 +1,4 @@
-# Food Hub
+# Nutrition Tracker
 
 [![License][license badge]][license]
 [![Docstr-coverage](docstr_cov/badge.svg)](https://docstr-coverage.readthedocs.io/en/stable/)

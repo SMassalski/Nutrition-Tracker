@@ -1,5 +1,5 @@
 """
-WSGI config for food_hub project.
+WSGI config for the nutrition_tracker project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "food_hub.settings.base")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "nutrition_tracker.settings.base")
 
 application = get_wsgi_application()
