@@ -799,8 +799,16 @@ class TestMealIntakeQuerySet:
         ingredient_nutrient_1_1,
         ingredient_nutrient_1_2,
         ingredient_nutrient_2_2,
+        nutrient_1,
+        nutrient_2,
     ):
-        expected = [1, 1, 2, 2, 2]
+        expected = [
+            nutrient_1.id,
+            nutrient_1.id,
+            nutrient_2.id,
+            nutrient_2.id,
+            nutrient_2.id,
+        ]
 
         queryset = models.Meal.objects.annotate_ingredient_nutrient_ids(
             "nut_id"
@@ -858,8 +866,10 @@ class TestMealIntakeQuerySet:
         ingredient_nutrient_1_1,
         ingredient_nutrient_1_2,
         ingredient_nutrient_2_2,
+        nutrient_1,
+        nutrient_2,
     ):
-        expected = [1] * 3 + [2] * 5
+        expected = [nutrient_1.id] * 3 + [nutrient_2.id] * 5
 
         queryset = models.Meal.objects.annotate_recipe_nutrient_ids("nut_id").values(
             "nut_id"
