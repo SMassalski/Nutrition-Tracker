@@ -124,7 +124,8 @@ class NoNutrientException(Exception):
 
 def create_compound_nutrient_amounts():
     """Create IngredientNutrient instances for compound nutrients."""
-    nutrients = models.Nutrient.objects.filter(components__isnull=False)
+    nutrients = models.Nutrient.objects.exclude(components=None)
+
     ingredient_nutrients = []
     for nut in nutrients:
         ingredient_nutrients += update_compound_nutrients(nut, commit=False)
