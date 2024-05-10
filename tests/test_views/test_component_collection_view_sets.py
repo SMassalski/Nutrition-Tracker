@@ -1,5 +1,6 @@
 """Tests of ComponentCollectionViewSet subclasses."""
 import pytest
+from core.models import Recipe
 from core.views.api.meal_views import MealIngredientViewSet, MealRecipeViewSet
 from core.views.api.recipe_views import RecipeIngredientViewSet
 from rest_framework.reverse import reverse
@@ -10,6 +11,10 @@ from tests.test_views.util import create_api_request
 
 class BaseModelCollectionViewsetTests:
     """Base class for tests subclassing ModelCollectionViewset.
+
+    Concrete classes inheriting from `BaseModelCollectionViewsetTests
+    must implement the `collection`, `component` and `extra_component`
+    fixtures, that return instances of their respective models.
 
     Required Attributes
     ------------------
@@ -418,11 +423,11 @@ class BaseModelCollectionViewsetTests:
         django_assert_num_queries,
         user,
         instance,
-        ingredient_2,
+        extra_component,
         collection,
         method,
     ):
-        data = {self.component_field: ingredient_2.id, "amount": 1}
+        data = {self.component_field: extra_component.id, "amount": 1}
         request = create_api_request(method, user, data)
         view = self.view_class.as_view(self.list_method_map, detail=False)
         lookup = {self.list_lookup: collection.pk}
@@ -483,6 +488,10 @@ class TestMealIngredientViewset(BaseModelCollectionViewsetTests):
         return ingredient_1
 
     @pytest.fixture
+    def extra_component(self, ingredient_2):
+        return ingredient_2
+
+    @pytest.fixture
     def instance(self, meal_ingredient):
         return meal_ingredient
 
@@ -527,6 +536,10 @@ class TestRecipeIngredientViewset(BaseModelCollectionViewsetTests):
         return ingredient_1
 
     @pytest.fixture
+    def extra_component(self, ingredient_2):
+        return ingredient_2
+
+    @pytest.fixture
     def instance(self, recipe_ingredient):
         return recipe_ingredient
 
@@ -545,3 +558,17 @@ class TestMealRecipeViewset(BaseModelCollectionViewsetTests):
     @pytest.fixture
     def component(self, recipe):
         return recipe
+
+    @pytest.fixture
+    def extra_component(self, meal):
+        """Recipe instance.
+
+        name: "S"
+        owner: saved_profile
+
+        ingredient: ingredient_1
+        amount: 50
+        """
+        recipe_2 = Recipe.objects.create(owner=meal.owner, name="S")
+
+        return recipe_2
