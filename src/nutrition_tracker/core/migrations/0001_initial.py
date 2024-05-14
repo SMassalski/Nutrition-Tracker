@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("external_id", models.IntegerField(blank=True, null=True)),
-                ("name", models.CharField(max_length=50)),
+                ("name", models.CharField(max_length=200)),
                 ("dataset", models.CharField(blank=True, max_length=50, null=True)),
                 (
                     "data_source",

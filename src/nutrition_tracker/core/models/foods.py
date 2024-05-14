@@ -34,7 +34,7 @@ class Ingredient(models.Model):
     )
     nutrients = models.ManyToManyField("core.Nutrient", through="IngredientNutrient")
 
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=200)
     dataset = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
