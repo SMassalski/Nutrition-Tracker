@@ -1,11 +1,41 @@
 services:
-  web:
+  app:
     build:
       context: ../
       dockerfile: docker/Dockerfile
-    container_name: nutrition_tracker_app
-    command: >
-      bash -c "poetry run python src/nutrition_tracker/manage.py migrate
-      && poetry run python src/nutrition_tracker/manage.py runserver 0.0.0.0:8000"
+    container_name: nutr-track-app
+    command: bash -c "gunicorn nutrition_tracker.wsgi:application --bind 0.0.0.0:8000"
+    expose:
+      - 8000
+    volumes:
+      - static:/app/src/nutrition_tracker/staticfiles
+    env_file:
+      - ../.env
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres
+    container_name: nutr-track-postgres
+    volumes:
+      # Required for data persistence
+      - postgres_data:/var/lib/postgresql/data/
+
+      # DB initialization script. Remember to chmod +x .sh files
+      - ./db_scripts/:/docker-entrypoint-initdb.d/
+    env_file:
+      - ../.env
+
+  nginx:
+    build: ./nginx
+    container_name: nutr-track-nginx
     ports:
-      - "8000:8000"
+      - 80:80
+    depends_on:
+      - app
+    volumes:
+      - static:/staticfiles
+
+volumes:
+  postgres_data:
+  static:

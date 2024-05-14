@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e  # Exit on error
+
+PASSWORD="'$DB_PASSWORD'"  # Won't work without adding the single quotes
+
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+	CREATE USER $DB_USER WITH PASSWORD $PASSWORD;
+	CREATE DATABASE $DB_NAME;
+	GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;
+	ALTER DATABASE $DB_NAME OWNER TO $DB_USER;
+EOSQL
