@@ -11,5 +11,5 @@ urlpatterns = [
     path("api-auth/", include("rest_framework.urls")),
 ]
 
-if settings.DEBUG:
+if settings.DEBUG and "debug_toolbar" in settings.INSTALLED_APPS:
     urlpatterns.append(path("__debug__/", include("debug_toolbar.urls")))
