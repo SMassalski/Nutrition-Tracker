@@ -101,7 +101,7 @@ class Ingredient(models.Model):
 
 class IngredientNutrient(models.Model):
     """
-    Represents the amount of a nutrient in 100g of an ingredient.
+    Represents the amount of a nutrient in 1g of an ingredient.
     """
 
     nutrient = models.ForeignKey("core.Nutrient", on_delete=models.CASCADE)
