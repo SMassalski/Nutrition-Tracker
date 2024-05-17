@@ -1,9 +1,12 @@
 # --- Static build ---
 FROM node:22-bullseye as static-build
-COPY package.json package-lock.json webpack.config.js /app/
-COPY src/nutrition_tracker/assets /app/src/nutrition_tracker/assets
 WORKDIR /app
-RUN npm install && npm run build
+
+COPY package.json package-lock.json webpack.config.js /app/
+RUN npm install
+
+COPY src/nutrition_tracker/assets /app/src/nutrition_tracker/assets
+RUN npm run build
 
 # --- Venv build ---
 FROM python:3.11-bullseye as venv-build
@@ -47,8 +50,9 @@ WORKDIR /app/src/nutrition_tracker
 COPY ./docker/entrypoint.sh .
 RUN chmod +x ./entrypoint.sh
 
-COPY --from=static-build /app/src/nutrition_tracker/static /app/src/nutrition_tracker/static
 COPY --from=venv-build /app /app
+# Static after venv to ensure that the built files are not overwritten
+COPY --from=static-build /app/src/nutrition_tracker/static /app/src/nutrition_tracker/static
 
 # Add venv to the path
 ENV PATH="/app/.venv/bin:$PATH"
