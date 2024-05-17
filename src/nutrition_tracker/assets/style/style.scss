@@ -244,6 +244,7 @@ body {
             th {
                 border-top: 0px;
                 border-bottom: 0px;
+                background-color: transparent;
 
                 &.nutrient-progress {
                     width: 100%;
@@ -273,6 +274,9 @@ body {
             &.highlighted {
                 background-color: #E1CFAE;
                 font-weight: bolder;
+                td {
+                    background-color: transparent;
+                }
             }
         }
 
