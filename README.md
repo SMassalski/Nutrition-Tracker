@@ -24,8 +24,13 @@ An app for counting calories and tracking nutrient intake, built with Django, DR
 - Calculate the nutrients that are the most under- and overconsumed by the user.
 - Browsable JSON API
 ##### Responive Design
-![Large](images/dashboard_lg.jpg )
-![Medium](images/dashboard_md.jpg) ![Small](images/dashboard_sm.jpg )
+|              Large               |
+|:--------------------------------:|
+|![Large](images/dashboard_lg.jpg )|
+
+|              Medium               |                Small               |
+:----------------------------------:|:-----------------------------------|
+![Medium](images/dashboard_md.jpg)  |  ![Small](images/dashboard_sm.jpg )
 ##### Management commands
 - `loadnutriendata` - Load built-in nutrient and intake recommendation data.
 - `loadfdcdata` - Load food data from [FoodData Central csv files](https://fdc.nal.usda.gov/download-datasets.html).
