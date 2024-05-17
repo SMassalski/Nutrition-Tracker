@@ -23,7 +23,7 @@ An app for counting calories and tracking nutrient intake, built with Django, DR
 - Users can select nutrients to track. Tracked nutrients are highlighted in intake summaries and intake charts for the nutrients are displayed in the dashboard.
 - Calculate the nutrients that are the most under- and overconsumed by the user.
 - Browsable JSON API
-##### Responive Design
+##### Responsive Design
 |              Large               |
 |:--------------------------------:|
 |![Large](images/dashboard_lg.jpg )|
